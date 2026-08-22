@@ -266,3 +266,96 @@ export async function seedTursoQuestions(questionsToSeed: Question[]): Promise<n
   const res = await client.batch(statements);
   return res.length;
 }
+
+/**
+ * Insert or update a single question into Turso (Admin)
+ */
+export async function insertTursoQuestion(q: Question): Promise<boolean> {
+  const client = getTursoClient();
+  if (!client) return false;
+
+  try {
+    await client.execute({
+      sql: `INSERT OR REPLACE INTO questions (
+        id, exam_code, subject, topic, year, difficulty, question_text, options, correct_option, explanation
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        q.id,
+        q.examCode || 'SSC_CGL',
+        q.subject,
+        q.topic,
+        q.year || 2023,
+        q.difficulty || 'medium',
+        q.questionText,
+        JSON.stringify(q.options),
+        q.correctOption,
+        q.explanation || '',
+      ],
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to insert Turso question:', err);
+    return false;
+  }
+}
+
+/**
+ * Delete a single question from Turso (Admin)
+ */
+export async function deleteTursoQuestion(id: string): Promise<boolean> {
+  const client = getTursoClient();
+  if (!client) return false;
+
+  try {
+    await client.execute({
+      sql: 'DELETE FROM questions WHERE id = ?',
+      args: [id],
+    });
+    return true;
+  } catch (err) {
+    console.error('Failed to delete Turso question:', err);
+    return false;
+  }
+}
+
+/**
+ * Get count metrics for Turso Edge DB
+ */
+export async function getTursoDatabaseMetrics(): Promise<{
+  totalQuestions: number;
+  totalExams: number;
+  totalTopics: number;
+  isOnline: boolean;
+}> {
+  const client = getTursoClient();
+  if (!client) {
+    return {
+      totalQuestions: seedQuestions.length,
+      totalExams: seedExams.length,
+      totalTopics: seedTopics.length,
+      isOnline: false,
+    };
+  }
+
+  try {
+    const [qRes, eRes, tRes] = await Promise.all([
+      client.execute('SELECT COUNT(*) as total FROM questions'),
+      client.execute('SELECT COUNT(*) as total FROM exams'),
+      client.execute('SELECT COUNT(*) as total FROM topics'),
+    ]);
+
+    return {
+      totalQuestions: Number(qRes.rows[0].total) || 0,
+      totalExams: Number(eRes.rows[0].total) || 0,
+      totalTopics: Number(tRes.rows[0].total) || 0,
+      isOnline: true,
+    };
+  } catch {
+    return {
+      totalQuestions: seedQuestions.length,
+      totalExams: seedExams.length,
+      totalTopics: seedTopics.length,
+      isOnline: false,
+    };
+  }
+}

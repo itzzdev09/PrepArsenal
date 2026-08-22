@@ -266,3 +266,11 @@ export function getSemanticCacheMetrics(): CacheStats {
     estimatedCostUsd: Number(((tokens / 1000) * 0.00035).toFixed(4)),
   };
 }
+
+/**
+ * Clear the in-memory cache
+ */
+export function clearSemanticCache(): void {
+  memoryCache.clear();
+}
+

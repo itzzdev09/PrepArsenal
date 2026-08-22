@@ -16,6 +16,8 @@ const navItems = [
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
   { label: 'NCERT Sprint', icon: '📚', href: '/ncert-sprint' },
+  { label: 'My Profile', icon: '👤', href: '/profile' },
+  { label: 'Admin Portal', icon: '⚙️', href: '/admin' },
 ];
 
 const comingSoonItems: any[] = [];

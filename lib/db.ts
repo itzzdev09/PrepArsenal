@@ -1,9 +1,20 @@
 import { SupabaseClient } from '@supabase/supabase-js';
-import { getTursoExams, getTursoTopics, getTursoQuestions } from './turso';
+import { 
+  getTursoExams, 
+  getTursoTopics, 
+  getTursoQuestions, 
+  insertTursoQuestion, 
+  deleteTursoQuestion, 
+  getTursoDatabaseMetrics 
+} from './turso';
+import type { Question } from './data';
 
 export interface UserProfile {
   id: string;
   full_name: string;
+  email?: string;
+  phone_number?: string;
+  bio?: string;
   target_exams: string[];
   exam_dates: Record<string, any>;
   streak_count: number;
@@ -12,6 +23,7 @@ export interface UserProfile {
   created_at: string;
   xp?: number;
   current_level?: number;
+  role?: 'user' | 'admin';
 }
 
 export async function getUserProfile(supabase: SupabaseClient, userId: string): Promise<UserProfile | null> {
@@ -26,9 +38,123 @@ export async function getUserProfile(supabase: SupabaseClient, userId: string): 
   const examDates = (data.exam_dates as Record<string, any>) || {};
   return {
     ...data,
+    phone_number: examDates.phone_number || '',
+    bio: examDates.bio || '',
+    role: examDates.role || 'user',
     xp: examDates.xp || 0,
     current_level: examDates.current_level || 1
   } as UserProfile;
+}
+
+export async function updateUserProfile(
+  supabase: SupabaseClient,
+  userId: string,
+  updates: {
+    full_name?: string;
+    phone_number?: string;
+    bio?: string;
+    target_exams?: string[];
+  }
+): Promise<boolean> {
+  const profile = await getUserProfile(supabase, userId);
+  const currentExamDates = profile?.exam_dates || {};
+
+  const updatedExamDates = {
+    ...currentExamDates,
+    ...(updates.phone_number !== undefined ? { phone_number: updates.phone_number } : {}),
+    ...(updates.bio !== undefined ? { bio: updates.bio } : {}),
+  };
+
+  const payload: any = {
+    exam_dates: updatedExamDates,
+  };
+
+  if (updates.full_name !== undefined) {
+    payload.full_name = updates.full_name;
+  }
+  if (updates.target_exams !== undefined) {
+    payload.target_exams = updates.target_exams;
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(payload)
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error updating user profile:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function getAllUserProfiles(supabase: SupabaseClient): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error || !data) return [];
+    return data.map(d => {
+      const ed = (d.exam_dates as Record<string, any>) || {};
+      return {
+        ...d,
+        phone_number: ed.phone_number || '',
+        bio: ed.bio || '',
+        role: ed.role || 'user',
+        xp: ed.xp || 0,
+        current_level: ed.current_level || 1
+      } as UserProfile;
+    });
+  } catch (err) {
+    console.error('Error fetching all user profiles:', err);
+    return [];
+  }
+}
+
+export async function saveAdminQuestion(
+  supabase: SupabaseClient,
+  question: Question
+): Promise<boolean> {
+  // Sync to Turso Edge DB
+  await insertTursoQuestion(question);
+
+  // Sync to Supabase
+  try {
+    await supabase.from('questions').upsert({
+      id: question.id,
+      exam_code: question.examCode,
+      subject: question.subject,
+      topic: question.topic,
+      year: question.year,
+      difficulty: question.difficulty,
+      question_text: question.questionText,
+      options: question.options,
+      correct_option: question.correctOption,
+      explanation: question.explanation,
+    });
+  } catch (err) {
+    console.warn('Supabase question upsert notice:', err);
+  }
+
+  return true;
+}
+
+export async function deleteAdminQuestion(
+  supabase: SupabaseClient,
+  questionId: string
+): Promise<boolean> {
+  await deleteTursoQuestion(questionId);
+
+  try {
+    await supabase.from('questions').delete().eq('id', questionId);
+  } catch (err) {
+    console.warn('Supabase question delete notice:', err);
+  }
+
+  return true;
 }
 
 export async function createUserProfile(
