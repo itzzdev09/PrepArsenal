@@ -1,37 +1,31 @@
-// PrepArsenal — LLM Gateway (Gemini primary, Groq fallback)
+// PrepArsenal — LLM Gateway with RAG Engine & Semantic Cache
+import { retrieveRelevantPassages, buildRagPromptContext, type RagSearchResult } from './rag/rag-engine';
+import { querySemanticCache, storeInSemanticCache } from './cache/semantic-cache';
 
-interface ChatMessage {
+export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
 
-interface LLMResponse {
+export interface LLMResponse {
   content: string;
-  provider: 'gemini' | 'groq' | 'local';
+  provider: 'gemini' | 'groq' | 'semantic-cache' | 'local';
+  cached?: boolean;
+  similarityScore?: number;
+  latencyMs?: number;
+  citations?: RagSearchResult[];
   error?: string;
 }
 
-const SYSTEM_PROMPT = `You are PrepArsenal AI — an expert tutor for Indian government competitive exams (SSC CGL, RBI Grade B, NABARD, SEBI, RRB NTPC, UPSC APFO, LIC AAO, ACIO-II, IRDAI).
+const BASE_SYSTEM_PROMPT = `You are PrepArsenal AI — an elite AI tutor for Indian government competitive exams (SSC CGL, UPSC Prelims, RBI Grade B, NABARD, RRB NTPC, ACIO-II, LIC AAO).
 
-Your job is to:
-1. Explain concepts clearly with examples
-2. Break down problem-solving into step-by-step approaches
-3. Share shortcuts and tricks commonly used in competitive exams
-4. Relate topics to exam patterns — what gets asked and how
-5. Use simple language — many users are Hindi-medium or come from non-English backgrounds
+Your core mandates:
+1. Explain concepts rigorously, highlighting mathematical shortcuts and exam patterns.
+2. When answering polity, history, or economics questions, reference verified textbooks and NCERT chapters where applicable.
+3. Keep answers highly structured with ✅ ❌ 💡 📌 emojis and clear markdown headers.
+4. If the prompt includes RAG verified citations, use them as authoritative evidence without inventing facts.`;
 
-When explaining math problems:
-- Show the complete working
-- Highlight the shortcut method vs. the long method
-- Mention if this type of question is frequently asked
-
-When explaining GK/GA:
-- Give context and connections to related facts
-- Mention if this is a "repeat" topic in exams
-
-Be encouraging, concise, and exam-focused. Use ✅ ❌ 💡 📌 emojis to make explanations scannable.`;
-
-async function callGemini(messages: ChatMessage[]): Promise<LLMResponse> {
+async function callGemini(messages: ChatMessage[], systemPrompt: string): Promise<{ content: string }> {
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -46,17 +40,17 @@ async function callGemini(messages: ChatMessage[]): Promise<LLMResponse> {
     }));
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents,
         systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }]
+          parts: [{ text: systemPrompt }]
         },
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.6,
           maxOutputTokens: 2048,
         }
       })
@@ -71,10 +65,10 @@ async function callGemini(messages: ChatMessage[]): Promise<LLMResponse> {
   const data = await response.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
   
-  return { content: text, provider: 'gemini' };
+  return { content: text };
 }
 
-async function callGroq(messages: ChatMessage[]): Promise<LLMResponse> {
+async function callGroq(messages: ChatMessage[], systemPrompt: string): Promise<{ content: string }> {
   const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY || process.env.GROQ_API_KEY;
   
   if (!apiKey) {
@@ -82,7 +76,7 @@ async function callGroq(messages: ChatMessage[]): Promise<LLMResponse> {
   }
 
   const formattedMessages = [
-    { role: 'system' as const, content: SYSTEM_PROMPT },
+    { role: 'system' as const, content: systemPrompt },
     ...messages.map(m => ({ role: m.role, content: m.content }))
   ];
 
@@ -95,7 +89,7 @@ async function callGroq(messages: ChatMessage[]): Promise<LLMResponse> {
     body: JSON.stringify({
       model: 'llama3-70b-8192',
       messages: formattedMessages,
-      temperature: 0.7,
+      temperature: 0.6,
       max_tokens: 2048
     })
   });
@@ -108,49 +102,95 @@ async function callGroq(messages: ChatMessage[]): Promise<LLMResponse> {
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content || 'No response generated';
   
-  return { content: text, provider: 'groq' };
+  return { content: text };
 }
 
-// Local fallback — basic responses without API
-function localFallback(messages: ChatMessage[]): LLMResponse {
+// Local fallback with RAG guidance
+function localFallback(messages: ChatMessage[], citations: RagSearchResult[]): LLMResponse {
   const lastMessage = messages[messages.length - 1]?.content || '';
   
-  const content = `⚠️ **AI Tutor is running in offline mode** (no API keys configured)
+  let fallbackContent = `⚠️ **AI Tutor running in offline mode**\n\nI noticed you asked: "${lastMessage.slice(0, 100)}..."\n\n`;
+  
+  if (citations.length > 0) {
+    fallbackContent += `📚 **Verified Knowledge Base Insights:**\n`;
+    for (const c of citations) {
+      fallbackContent += `\n**${c.chunk.title}** (${c.chunk.book}, p.${c.chunk.pageNumber}):\n${c.chunk.content}\n`;
+    }
+  } else {
+    fallbackContent += `To enable full AI tutor responses, add your free **Gemini API key** in \`.env.local\`!`;
+  }
 
-I noticed you asked: "${lastMessage.slice(0, 100)}..."
-
-To enable the full AI tutor experience:
-1. Get a free **Gemini API key** from [Google AI Studio](https://aistudio.google.com)
-2. Get a free **Groq API key** from [Groq Console](https://console.groq.com)
-3. Add them to your \`.env.local\` file:
-   \`\`\`
-   NEXT_PUBLIC_GEMINI_API_KEY=your_key_here
-   NEXT_PUBLIC_GROQ_API_KEY=your_key_here
-   \`\`\`
-
-💡 **Meanwhile, check the explanation below the question for a detailed breakdown!**`;
-
-  return { content, provider: 'local' };
+  return {
+    content: fallbackContent,
+    provider: 'local',
+    citations,
+  };
 }
 
-// Main chat function with failover
+/**
+ * Main chat function orchestrating:
+ * 1. Semantic Vector Cache lookup (0ms)
+ * 2. RAG retrieval of textbook citations
+ * 3. Gemini / Groq streaming with augmented prompt
+ * 4. Cache write-back
+ */
 export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
-  // Try Gemini first
+  const startTime = Date.now();
+  const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
+
+  // 1. Check Semantic Cache
+  if (lastUserMessage) {
+    const cacheResult = querySemanticCache(lastUserMessage, 0.86);
+    if (cacheResult.hit && cacheResult.content) {
+      const citations = retrieveRelevantPassages(lastUserMessage, { topK: 2 });
+      return {
+        content: cacheResult.content,
+        provider: 'semantic-cache',
+        cached: true,
+        similarityScore: cacheResult.similarity,
+        latencyMs: Date.now() - startTime,
+        citations,
+      };
+    }
+  }
+
+  // 2. RAG Knowledge Base Retrieval
+  const citations = retrieveRelevantPassages(lastUserMessage, { topK: 3 });
+  const ragPromptContext = buildRagPromptContext(citations);
+  const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}${ragPromptContext}`;
+
+  // 3. Try Gemini first
   try {
-    return await callGemini(messages);
+    const res = await callGemini(messages, fullSystemPrompt);
+    storeInSemanticCache(lastUserMessage, res.content, 'gemini');
+    return {
+      content: res.content,
+      provider: 'gemini',
+      cached: false,
+      latencyMs: Date.now() - startTime,
+      citations,
+    };
   } catch (geminiError) {
-    console.warn('Gemini failed, trying Groq...', geminiError);
+    console.warn('Gemini call failed, falling back to Groq...', geminiError);
   }
 
-  // Try Groq as fallback
+  // 4. Try Groq as secondary
   try {
-    return await callGroq(messages);
+    const res = await callGroq(messages, fullSystemPrompt);
+    storeInSemanticCache(lastUserMessage, res.content, 'groq');
+    return {
+      content: res.content,
+      provider: 'groq',
+      cached: false,
+      latencyMs: Date.now() - startTime,
+      citations,
+    };
   } catch (groqError) {
-    console.warn('Groq also failed, using local fallback', groqError);
+    console.warn('Groq also failed, using local RAG fallback', groqError);
   }
 
-  // Local fallback
-  return localFallback(messages);
+  // 5. Local fallback
+  return localFallback(messages, citations);
 }
 
 // Build context for a question

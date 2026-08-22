@@ -1,13 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Question } from '@/lib/data';
 import { savePracticeSession, updateStreak, getExams, getTopics, getQuestions } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
+import {
+  createInitialIRTState,
+  selectNextAdaptiveQuestion,
+  updateAbilityAfterResponse,
+  generateIRTDiagnosticReport,
+  type IRTUserState,
+  type IRTDiagnosticReport,
+} from '@/lib/adaptive/irt-engine';
 
 type Phase = 'select' | 'solving' | 'review';
+type Mode = 'standard' | 'adaptive';
 
 export default function PracticePage() {
+  // Mode
+  const [practiceMode, setPracticeMode] = useState<Mode>('adaptive');
+
   // Selection state
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
@@ -28,6 +40,11 @@ export default function PracticePage() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // IRT Adaptive State
+  const [irtState, setIrtState] = useState<IRTUserState>(createInitialIRTState(0.0));
+  const [irtReport, setIrtReport] = useState<IRTDiagnosticReport | null>(null);
+  const answeredIdsRef = useRef<Set<string>>(new Set());
+
   // DB Data
   const [dbExams, setDbExams] = useState<any[]>([]);
   const [dbTopics, setDbTopics] = useState<any[]>([]);
@@ -39,7 +56,6 @@ export default function PracticePage() {
       if (data.user) setUserId(data.user.id);
     });
     
-    // Fetch real data from Supabase
     async function fetchPrepData() {
       const [exms, tops, qs] = await Promise.all([
         getExams(supabase),
@@ -85,16 +101,28 @@ export default function PracticePage() {
       filtered = filtered.filter(q => q.topic === selectedTopic);
     }
 
-    // Shuffle
-    filtered.sort(() => Math.random() - 0.5);
-    filtered = filtered.slice(0, questionCount);
-
     if (filtered.length === 0) {
       alert('No questions found for this selection. Try different filters.');
       return;
     }
 
-    setActiveQuestions(filtered);
+    answeredIdsRef.current = new Set();
+    const initialIrt = createInitialIRTState(0.0);
+    setIrtState(initialIrt);
+
+    if (practiceMode === 'adaptive') {
+      // Pick first question using IRT optimal selection
+      const firstSelection = selectNextAdaptiveQuestion(filtered, answeredIdsRef.current, initialIrt.theta);
+      const startingQuestion = firstSelection?.question || filtered[0];
+      
+      setActiveQuestions([startingQuestion]);
+      answeredIdsRef.current.add(startingQuestion.id);
+    } else {
+      filtered.sort(() => Math.random() - 0.5);
+      const selectedSlice = filtered.slice(0, questionCount);
+      setActiveQuestions(selectedSlice);
+    }
+
     setCurrentIdx(0);
     setAnswers({});
     setShowExplanation(false);
@@ -104,18 +132,48 @@ export default function PracticePage() {
   };
 
   const selectAnswer = (optionIdx: number) => {
-    if (showExplanation) return; // Already answered
+    if (showExplanation) return;
     const q = activeQuestions[currentIdx];
     setAnswers(prev => ({ ...prev, [q.id]: optionIdx }));
     setShowExplanation(true);
+
+    const isCorrect = optionIdx === q.correctOption;
+
+    if (practiceMode === 'adaptive') {
+      const updatedIrt = updateAbilityAfterResponse(irtState, q, isCorrect, 25);
+      setIrtState(updatedIrt);
+    }
   };
 
   const nextQuestion = () => {
     setShowExplanation(false);
-    if (currentIdx < activeQuestions.length - 1) {
-      setCurrentIdx(prev => prev + 1);
+
+    if (practiceMode === 'adaptive') {
+      if (activeQuestions.length >= questionCount) {
+        finishQuiz();
+        return;
+      }
+
+      // Select next best question adapting to new theta
+      let candidatePool = [...dbQuestions];
+      if (selectedExams.length > 0) candidatePool = candidatePool.filter(q => selectedExams.includes(q.examCode));
+      if (selectedSubject) candidatePool = candidatePool.filter(q => q.subject === selectedSubject);
+
+      const nextSelection = selectNextAdaptiveQuestion(candidatePool, answeredIdsRef.current, irtState.theta);
+
+      if (nextSelection) {
+        answeredIdsRef.current.add(nextSelection.question.id);
+        setActiveQuestions(prev => [...prev, nextSelection.question]);
+        setCurrentIdx(prev => prev + 1);
+      } else {
+        finishQuiz();
+      }
     } else {
-      finishQuiz();
+      if (currentIdx < activeQuestions.length - 1) {
+        setCurrentIdx(prev => prev + 1);
+      } else {
+        finishQuiz();
+      }
     }
   };
 
@@ -123,11 +181,12 @@ export default function PracticePage() {
     setIsTimerRunning(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const score = activeQuestions.reduce((acc, q) => {
-      return acc + (answers[q.id] === q.correctOption ? 1 : 0);
-    }, 0);
+    if (practiceMode === 'adaptive') {
+      const report = generateIRTDiagnosticReport(irtState);
+      setIrtReport(report);
+    }
 
-    setPhase('review'); // Optimistic UI update
+    setPhase('review');
 
     if (userId) {
       const correctOptions = activeQuestions.reduce((acc, q) => {
@@ -154,9 +213,9 @@ export default function PracticePage() {
     setShowExplanation(false);
     setTimer(0);
     setIsTimerRunning(false);
+    setIrtReport(null);
   };
 
-  // Get available subjects/topics based on selection
   const availableSubjects = selectedExams.length > 0
     ? [...new Set(dbQuestions.filter(q => selectedExams.includes(q.examCode)).map(q => q.subject))]
     : [...new Set(dbQuestions.map(q => q.subject))];
@@ -167,7 +226,6 @@ export default function PracticePage() {
         .map(q => q.topic))]
     : [];
 
-  // ===== LOADING PHASE =====
   if (isLoading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -189,7 +247,40 @@ export default function PracticePage() {
             background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-subtle);
           }
-          .select-body { padding: 2rem; max-width: 800px; }
+          .select-body { padding: 2rem; max-width: 840px; }
+          .mode-selector-card {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+          }
+          .mode-card {
+            padding: 1.25rem;
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 200ms;
+            text-align: left;
+          }
+          .mode-card.active {
+            border-color: var(--accent-blue);
+            background: rgba(59,130,246,0.08);
+            box-shadow: 0 0 20px rgba(59,130,246,0.15);
+          }
+          .mode-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+          }
+          .mode-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+          }
           .filter-section { margin-bottom: 2rem; }
           .filter-label {
             font-size: 0.85rem;
@@ -265,11 +356,39 @@ export default function PracticePage() {
         <div className="select-header">
           <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>⏱️ Practice Arena</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Choose your exam, subject, and topic — then solve with a timer.
+            Choose standard quiz or AI Adaptive Testing powered by Item Response Theory (IRT 3PL).
           </p>
         </div>
 
         <div className="select-body">
+          {/* Mode Selector */}
+          <div className="mode-selector-card">
+            <div
+              className={`mode-card ${practiceMode === 'adaptive' ? 'active' : ''}`}
+              onClick={() => setPracticeMode('adaptive')}
+            >
+              <div className="mode-title">
+                <span>🎯 AI Adaptive Test (IRT CAT)</span>
+                <span className="badge badge-purple" style={{ fontSize: '0.65rem' }}>AI Powered</span>
+              </div>
+              <div className="mode-desc">
+                Questions dynamically scale in difficulty based on your answers using psychometric 3PL models to calculate your true mastery $\theta$.
+              </div>
+            </div>
+
+            <div
+              className={`mode-card ${practiceMode === 'standard' ? 'active' : ''}`}
+              onClick={() => setPracticeMode('standard')}
+            >
+              <div className="mode-title">
+                <span>📝 Standard Practice</span>
+              </div>
+              <div className="mode-desc">
+                Static randomized question drill with fixed subject/topic filters and instant explanations.
+              </div>
+            </div>
+          </div>
+
           <div className="filter-section">
             <label className="filter-label">Select Exam (optional — leave empty for mixed)</label>
             <div className="filter-grid">
@@ -293,7 +412,6 @@ export default function PracticePage() {
             </div>
           </div>
 
-          {/* Subject Selection */}
           <div className="filter-section">
             <label className="filter-label">Select Subject</label>
             <div className="filter-grid">
@@ -312,8 +430,7 @@ export default function PracticePage() {
             </div>
           </div>
 
-          {/* Topic Selection */}
-          {availableTopics.length > 0 && (
+          {availableTopics.length > 0 && practiceMode === 'standard' && (
             <div className="filter-section">
               <label className="filter-label">Select Topic (optional)</label>
               <div className="filter-grid">
@@ -330,28 +447,22 @@ export default function PracticePage() {
             </div>
           )}
 
-          {/* Question Count */}
           <div className="filter-section">
             <label className="filter-label">Number of Questions</label>
             <div className="count-selector">
               <button className="count-btn" onClick={() => setQuestionCount(prev => Math.max(5, prev - 5))}>−</button>
               <span className="count-display">{questionCount}</span>
-              <button className="count-btn" onClick={() => setQuestionCount(prev => Math.min(50, prev + 5))}>+</button>
+              <button className="count-btn" onClick={() => setQuestionCount(prev => Math.min(30, prev + 5))}>+</button>
             </div>
           </div>
 
-          {/* Start */}
           <div className="start-section">
             <div className="summary-text">
-              <strong>{questionCount}</strong> questions
-              {selectedExams.length > 0 && (
-                <> • <strong>{selectedExams.map(code => dbExams.find(e => e.code === code)?.name || code).join(', ')}</strong></>
-              )}
+              <strong>{questionCount}</strong> questions ({practiceMode === 'adaptive' ? 'Adaptive Mode' : 'Standard Mode'})
               {selectedSubject && <> • <strong>{selectedSubject}</strong></>}
-              {selectedTopic && <> • <strong>{selectedTopic}</strong></>}
             </div>
             <button className="btn btn-primary btn-lg" onClick={startQuiz}>
-              Start Practice →
+              Start {practiceMode === 'adaptive' ? 'Adaptive Test' : 'Practice'} →
             </button>
           </div>
         </div>
@@ -365,7 +476,7 @@ export default function PracticePage() {
     const selectedAnswer = answers[q.id];
     const isAnswered = selectedAnswer !== undefined;
     const isCorrect = selectedAnswer === q.correctOption;
-    const progress = ((currentIdx + (isAnswered ? 1 : 0)) / activeQuestions.length) * 100;
+    const progress = ((currentIdx + (isAnswered ? 1 : 0)) / questionCount) * 100;
 
     return (
       <div>
@@ -381,13 +492,28 @@ export default function PracticePage() {
           .quiz-progress-info {
             display: flex;
             align-items: center;
-            gap: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
           }
           .quiz-counter {
             font-weight: 700;
             font-size: 0.9rem;
           }
           .quiz-counter span { color: var(--accent-blue); font-family: 'JetBrains Mono', monospace; }
+          
+          .irt-live-card {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(168, 85, 247, 0.12);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #c084fc;
+          }
+
           .quiz-timer-display {
             font-family: 'JetBrains Mono', monospace;
             font-weight: 700;
@@ -496,10 +622,15 @@ export default function PracticePage() {
         <div className="quiz-header">
           <div className="quiz-progress-info">
             <span className="quiz-counter">
-              Question <span>{currentIdx + 1}</span> of <span>{activeQuestions.length}</span>
+              Question <span>{currentIdx + 1}</span> of <span>{questionCount}</span>
             </span>
             <div className="badge badge-blue">{q.subject}</div>
-            <div className="badge badge-purple">{q.topic}</div>
+            {practiceMode === 'adaptive' && (
+              <div className="irt-live-card">
+                <span>🎯 Ability &theta;: {irtState.theta >= 0 ? `+${irtState.theta}` : irtState.theta}</span>
+                <span>• Elo: {irtState.eloRating}</span>
+              </div>
+            )}
           </div>
           <div className="quiz-timer-display">
             ⏱ {formatTime(timer)}
@@ -517,12 +648,11 @@ export default function PracticePage() {
             <span className={`badge ${q.difficulty === 'easy' ? 'badge-green' : q.difficulty === 'hard' ? 'badge-red' : 'badge-amber'}`}>
               {q.difficulty}
             </span>
+            <span className="badge badge-purple">{q.topic}</span>
           </div>
 
-          {/* Question */}
           <div className="q-text">{q.questionText}</div>
 
-          {/* Options */}
           <div className="options-container">
             {q.options.map((opt, i) => {
               let cls = 'opt';
@@ -544,7 +674,6 @@ export default function PracticePage() {
             })}
           </div>
 
-          {/* Explanation */}
           {showExplanation && (
             <div className="explanation-box">
               <div className="explanation-header" style={{ color: isCorrect ? 'var(--success)' : 'var(--error)' }}>
@@ -556,12 +685,11 @@ export default function PracticePage() {
             </div>
           )}
 
-          {/* Actions */}
           <div className="quiz-actions">
             <button className="quit-btn" onClick={resetQuiz}>← Quit</button>
             {showExplanation && (
               <button className="btn btn-primary" onClick={nextQuestion}>
-                {currentIdx < activeQuestions.length - 1 ? 'Next Question →' : 'Finish & Review →'}
+                {currentIdx < questionCount - 1 ? 'Next Question →' : 'Finish & View Diagnostic →'}
               </button>
             )}
           </div>
@@ -585,21 +713,56 @@ export default function PracticePage() {
             border-bottom: 1px solid var(--border-subtle);
             text-align: center;
           }
-          .review-body { padding: 2rem; max-width: 800px; margin: 0 auto; }
+          .review-body { padding: 2rem; max-width: 840px; margin: 0 auto; }
           .score-display {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 900;
             font-family: 'JetBrains Mono', monospace;
-            margin: 1rem 0;
+            margin: 0.5rem 0;
           }
           .score-display.great { color: var(--success); }
           .score-display.good { color: var(--accent-blue); }
           .score-display.poor { color: var(--error); }
+          
+          .irt-report-card {
+            background: rgba(168, 85, 247, 0.08);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            margin: 1.5rem auto 2rem;
+            max-width: 760px;
+            text-align: left;
+          }
+          .irt-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+          }
+          .irt-metric {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 0.75rem;
+            padding: 0.85rem;
+            text-align: center;
+          }
+          .irt-val {
+            font-size: 1.35rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            color: #c084fc;
+          }
+          .irt-lbl {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+          }
+
           .review-stats {
             display: flex;
             justify-content: center;
             gap: 2rem;
-            margin: 1.5rem 0 2rem;
+            margin: 1rem 0 1.5rem;
           }
           .review-stat { text-align: center; }
           .review-stat .rs-val {
@@ -608,11 +771,12 @@ export default function PracticePage() {
             font-family: 'JetBrains Mono', monospace;
           }
           .review-stat .rs-label { font-size: 0.8rem; color: var(--text-secondary); }
+          
           .review-actions {
             display: flex;
             justify-content: center;
             gap: 1rem;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
           }
           .review-q {
             padding: 1.25rem;
@@ -630,19 +794,19 @@ export default function PracticePage() {
             margin-bottom: 0.5rem;
           }
           .rq-text { font-size: 0.9rem; margin-bottom: 0.5rem; }
-          .rq-answer {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-          }
+          .rq-answer { font-size: 0.8rem; color: var(--text-secondary); }
           .rq-answer strong { color: var(--success); }
           .rq-answer .wrong-ans { color: var(--error); text-decoration: line-through; margin-right: 0.5rem; }
         `}</style>
 
         <div className="review-header">
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Practice Complete!</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+            {practiceMode === 'adaptive' ? '🎯 Psychometric Diagnostic Complete' : 'Practice Complete!'}
+          </h1>
           <div className={`score-display ${accuracy >= 80 ? 'great' : accuracy >= 50 ? 'good' : 'poor'}`}>
             {accuracy}%
           </div>
+
           <div className="review-stats">
             <div className="review-stat">
               <div className="rs-val" style={{ color: 'var(--success)' }}>{score}</div>
@@ -661,6 +825,47 @@ export default function PracticePage() {
               <div className="rs-label">Avg / Question</div>
             </div>
           </div>
+
+          {/* IRT Diagnostic Report */}
+          {irtReport && (
+            <div className="irt-report-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#c084fc' }}>
+                  📊 Item Response Theory (IRT 3PL) Assessment
+                </span>
+                <span className="badge badge-purple">{irtReport.tier}</span>
+              </div>
+
+              <div className="irt-grid">
+                <div className="irt-metric">
+                  <div className="irt-val">{irtReport.finalTheta >= 0 ? `+${irtReport.finalTheta}` : irtReport.finalTheta}</div>
+                  <div className="irt-lbl">Latent Ability (&theta;)</div>
+                </div>
+                <div className="irt-metric">
+                  <div className="irt-val">{irtReport.eloRating}</div>
+                  <div className="irt-lbl">Calibrated Elo</div>
+                </div>
+                <div className="irt-metric">
+                  <div className="irt-val">{irtReport.percentile}%</div>
+                  <div className="irt-lbl">Est. Percentile</div>
+                </div>
+                <div className="irt-metric">
+                  <div className="irt-val" style={{ color: 'var(--success)' }}>{irtReport.predictedCutoffProb}%</div>
+                  <div className="irt-lbl">Cutoff Clearance</div>
+                </div>
+              </div>
+
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.75rem' }}>
+                <strong>💡 Recommendations:</strong>
+                <ul style={{ paddingLeft: '1.25rem', marginTop: '0.25rem' }}>
+                  {irtReport.recommendations.map((rec, rIdx) => (
+                    <li key={rIdx}>{rec}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           <div className="review-actions">
             <button className="btn btn-primary" onClick={startQuiz}>Try Again</button>
             <button className="btn btn-secondary" onClick={resetQuiz}>New Practice</button>
@@ -676,7 +881,7 @@ export default function PracticePage() {
               <div key={q.id} className={`review-q ${correct ? 'correct-q' : 'wrong-q'}`}>
                 <div className="rq-header">
                   <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
-                    Q{i + 1} • {q.topic}
+                    Q{i + 1} • {q.subject} &gt; {q.topic} ({q.difficulty})
                   </span>
                   <span>{correct ? '✅' : '❌'}</span>
                 </div>

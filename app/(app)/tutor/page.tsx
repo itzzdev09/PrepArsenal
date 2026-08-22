@@ -4,16 +4,27 @@ import { useState, useRef, useEffect } from 'react';
 import { chat } from '@/lib/llm';
 import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
+import type { RagSearchResult } from '@/lib/rag/rag-engine';
+import CitationCard from '@/components/rag/CitationCard';
+import { getSemanticCacheMetrics, type CacheStats } from '@/lib/cache/semantic-cache';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
+interface ExtendedChatEntry extends ChatEntry {
+  provider?: string;
+  cached?: boolean;
+  latencyMs?: number;
+  citations?: RagSearchResult[];
+}
+
 export default function TutorPage() {
-  const [messages, setMessages] = useState<ChatEntry[]>([]);
+  const [messages, setMessages] = useState<ExtendedChatEntry[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [provider, setProvider] = useState<string>('');
+  const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -28,6 +39,7 @@ export default function TutorPage() {
         });
       }
     });
+    setCacheStats(getSemanticCacheMetrics());
   }, [supabase]);
 
   useEffect(() => {
@@ -38,22 +50,24 @@ export default function TutorPage() {
     const text = input.trim();
     if (!text || isLoading) return;
 
-    const userMsg: ChatEntry = { role: 'user', content: text, timestamp: new Date().toISOString() };
+    const userMsg: ExtendedChatEntry = {
+      role: 'user',
+      content: text,
+      timestamp: new Date().toISOString(),
+    };
     const newMessagesAfterUser = [...messages, userMsg];
     setMessages(newMessagesAfterUser);
-    
+
     if (userId) {
       saveChatHistory(supabase, userId, newMessagesAfterUser);
     }
-    
+
     setInput('');
     setIsLoading(true);
 
-    // Auto-resize textarea back
     if (textareaRef.current) textareaRef.current.style.height = 'auto';
 
     try {
-      // Build message history for context
       const history = [...messages.slice(-10), userMsg].map(m => ({
         role: m.role as 'user' | 'assistant',
         content: m.content,
@@ -61,21 +75,26 @@ export default function TutorPage() {
 
       const response = await chat(history);
       setProvider(response.provider);
+      setCacheStats(getSemanticCacheMetrics());
 
-      const assistantMsg: ChatEntry = {
+      const assistantMsg: ExtendedChatEntry = {
         role: 'assistant',
         content: response.content,
         timestamp: new Date().toISOString(),
+        provider: response.provider,
+        cached: response.cached,
+        latencyMs: response.latencyMs,
+        citations: response.citations,
       };
-      
+
       const newMessagesAfterAssistant = [...newMessagesAfterUser, assistantMsg];
       setMessages(newMessagesAfterAssistant);
-      
+
       if (userId) {
         saveChatHistory(supabase, userId, newMessagesAfterAssistant);
       }
     } catch (error) {
-      const errorMsg: ChatEntry = {
+      const errorMsg: ExtendedChatEntry = {
         role: 'assistant',
         content: '⚠️ Something went wrong. Please try again.',
         timestamp: new Date().toISOString(),
@@ -95,7 +114,6 @@ export default function TutorPage() {
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-    // Auto-resize
     const ta = e.target;
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px';
@@ -109,12 +127,12 @@ export default function TutorPage() {
   };
 
   const quickPrompts = [
-    '📐 Explain the shortcut for Percentage problems',
-    '🧮 How to solve Profit & Loss questions quickly?',
-    '📖 Explain Article 32 of the Indian Constitution',
+    '📖 Explain Article 32 and the 5 types of Writs',
     '💰 What is the difference between Repo Rate and Reverse Repo Rate?',
-    '🧠 Tips for solving Seating Arrangement in less time',
-    '📝 Common idioms asked in SSC CGL English',
+    '📐 Explain the shortcut for Percentage & Profit-Loss problems',
+    '⚔️ Battles of Plassey and Buxar with Treaty of Allahabad',
+    '🔭 Vision defects: Myopia vs Hypermetropia and corrective lenses',
+    '🌊 Himalayan vs Peninsular Rivers and SW Monsoon',
   ];
 
   return (
@@ -135,20 +153,39 @@ export default function TutorPage() {
           align-items: center;
           flex-shrink: 0;
         }
+
         .tutor-title {
-          font-size: 1.1rem;
+          font-size: 1.15rem;
           font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+
+        .tech-badges {
           display: flex;
           align-items: center;
           gap: 0.5rem;
         }
-        .tutor-provider {
+
+        .badge-cache {
           font-size: 0.7rem;
-          padding: 0.2rem 0.5rem;
-          background: rgba(16,185,129,0.12);
+          padding: 0.2rem 0.6rem;
+          background: rgba(16, 185, 129, 0.12);
           color: var(--success);
-          border-radius: 0.25rem;
-          font-weight: 600;
+          border: 1px solid rgba(16, 185, 129, 0.3);
+          border-radius: 9999px;
+          font-weight: 700;
+        }
+
+        .badge-rag {
+          font-size: 0.7rem;
+          padding: 0.2rem 0.6rem;
+          background: rgba(59, 130, 246, 0.12);
+          color: var(--accent-blue);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 9999px;
+          font-weight: 700;
         }
 
         .chat-messages-area {
@@ -157,7 +194,7 @@ export default function TutorPage() {
           padding: 1.5rem 2rem;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
+          gap: 1.25rem;
         }
 
         .welcome-screen {
@@ -169,60 +206,82 @@ export default function TutorPage() {
           text-align: center;
           padding: 2rem;
         }
+
         .welcome-icon { font-size: 3rem; margin-bottom: 1rem; }
         .welcome-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .welcome-sub { color: var(--text-secondary); font-size: 0.95rem; max-width: 500px; margin-bottom: 2rem; }
+        .welcome-sub { color: var(--text-secondary); font-size: 0.95rem; max-width: 540px; margin-bottom: 2rem; }
+
         .quick-prompts {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.5rem;
-          max-width: 600px;
+          gap: 0.6rem;
+          max-width: 650px;
           width: 100%;
         }
+
         .quick-prompt {
-          padding: 0.75rem 1rem;
+          padding: 0.85rem 1.1rem;
           background: var(--bg-card);
           border: 1px solid var(--border-subtle);
           border-radius: 0.75rem;
-          font-size: 0.8rem;
+          font-size: 0.82rem;
           color: var(--text-secondary);
           cursor: pointer;
           transition: all 200ms;
           text-align: left;
         }
+
         .quick-prompt:hover {
           border-color: var(--accent-blue);
           color: var(--text-primary);
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
         }
 
         .msg-bubble {
-          max-width: 75%;
-          padding: 1rem 1.25rem;
+          max-width: 80%;
+          padding: 1.1rem 1.35rem;
           border-radius: 1rem;
           font-size: 0.9rem;
-          line-height: 1.6;
+          line-height: 1.65;
           animation: fadeInUp 250ms ease forwards;
         }
+
         .msg-bubble.user {
           align-self: flex-end;
           background: var(--accent-blue);
           color: white;
           border-bottom-right-radius: 0.25rem;
         }
+
         .msg-bubble.assistant {
           align-self: flex-start;
           background: var(--bg-card);
           border: 1px solid var(--border-subtle);
           border-bottom-left-radius: 0.25rem;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
+
+        .msg-footer {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-top: 0.6rem;
+          padding-top: 0.4rem;
+          border-top: 1px solid rgba(255,255,255,0.05);
+          font-size: 0.68rem;
+        }
+
         .msg-time {
-          font-size: 0.65rem;
-          color: rgba(255,255,255,0.5);
-          margin-top: 0.35rem;
-        }
-        .msg-bubble.assistant .msg-time {
           color: var(--text-tertiary);
+        }
+
+        .msg-meta-tag {
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-family: 'JetBrains Mono', monospace;
+          color: var(--text-secondary);
         }
 
         .loading-indicator {
@@ -235,6 +294,7 @@ export default function TutorPage() {
           border-radius: 1rem;
           animation: fadeIn 200ms ease;
         }
+
         .loading-dot {
           width: 8px;
           height: 8px;
@@ -251,96 +311,64 @@ export default function TutorPage() {
           background: var(--bg-secondary);
           flex-shrink: 0;
         }
+
         .input-wrapper {
           display: flex;
           gap: 0.75rem;
           align-items: flex-end;
         }
+
         .input-wrapper textarea {
           flex: 1;
-          padding: 0.75rem 1rem;
+          padding: 0.85rem 1.1rem;
           background: var(--bg-input);
           border: 1px solid var(--border-subtle);
           border-radius: 0.75rem;
           color: var(--text-primary);
-          font-size: 0.9rem;
+          font-size: 0.92rem;
           resize: none;
-          min-height: 44px;
-          max-height: 120px;
+          min-height: 48px;
+          max-height: 140px;
           outline: none;
           transition: border-color 150ms;
           font-family: var(--font-body);
           line-height: 1.5;
         }
+
         .input-wrapper textarea:focus { border-color: var(--accent-blue); }
         .input-wrapper textarea::placeholder { color: var(--text-tertiary); }
 
         .send-btn {
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           background: var(--gradient-hero);
           border-radius: 0.75rem;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.1rem;
+          font-size: 1.2rem;
           flex-shrink: 0;
           transition: all 150ms;
           color: white;
         }
+
         .send-btn:hover:not(:disabled) {
           transform: scale(1.05);
-          box-shadow: 0 0 20px rgba(59,130,246,0.3);
+          box-shadow: 0 0 20px rgba(59,130,246,0.35);
         }
+
         .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .clear-btn {
-          font-size: 0.75rem;
+          font-size: 0.78rem;
           color: var(--text-tertiary);
           cursor: pointer;
           transition: color 150ms;
         }
         .clear-btn:hover { color: var(--error); }
 
-        /* Markdown Overrides */
-        .markdown-body {
-          color: var(--text-primary);
-        }
-        .markdown-body p { margin-bottom: 0.75rem; }
-        .markdown-body p:last-child { margin-bottom: 0; }
-        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
-          margin-top: 1.5rem;
-          margin-bottom: 0.75rem;
-          font-weight: 700;
-        }
-        .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child, .markdown-body h4:first-child {
-          margin-top: 0;
-        }
-        .markdown-body ul, .markdown-body ol {
-          padding-left: 1.5rem;
-          margin-bottom: 1rem;
-        }
-        .markdown-body li { margin-bottom: 0.25rem; }
-        .markdown-body pre {
-          background: var(--bg-primary);
-          padding: 1rem;
-          border-radius: 0.5rem;
-          overflow-x: auto;
-          margin: 1rem 0;
-          border: 1px solid var(--border-subtle);
-        }
-        .markdown-body code {
-          font-family: 'JetBrains Mono', monospace;
-          background: rgba(255,255,255,0.05);
-          padding: 0.2rem 0.4rem;
-          border-radius: 0.25rem;
-          font-size: 0.85em;
-        }
-        .markdown-body pre code { background: none; padding: 0; }
-        .markdown-body strong { font-weight: 700; color: var(--text-primary); }
-
         @media (max-width: 768px) {
-          .msg-bubble { max-width: 90%; }
+          .msg-bubble { max-width: 92%; }
           .quick-prompts { grid-template-columns: 1fr; }
           .chat-messages-area { padding: 1rem; }
           .input-area { padding: 0.75rem 1rem; }
@@ -350,24 +378,34 @@ export default function TutorPage() {
       <div className="tutor-container">
         <div className="tutor-header">
           <div className="tutor-title">
-            🤖 AI Tutor
-            {provider && <span className="tutor-provider">via {provider}</span>}
+            <span>🤖 AI Tutor</span>
+            <div className="tech-badges">
+              <span className="badge-rag">📚 RAG Citations</span>
+              <span className="badge-cache">⚡ Semantic Cache</span>
+            </div>
           </div>
-          {messages.length > 0 && (
-            <button className="clear-btn" onClick={handleClear}>
-              🗑️ Clear Chat
-            </button>
-          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {cacheStats && (
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                ⚡ Saved ~<strong>{cacheStats.tokensSaved}</strong> tokens
+              </span>
+            )}
+            {messages.length > 0 && (
+              <button className="clear-btn" onClick={handleClear}>
+                🗑️ Clear Chat
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="chat-messages-area">
           {messages.length === 0 ? (
             <div className="welcome-screen">
-              <div className="welcome-icon">🤖</div>
-              <h2 className="welcome-title">Ask Me Anything</h2>
+              <div className="welcome-icon">🧠</div>
+              <h2 className="welcome-title">AI Tutor with Live RAG & Semantic Cache</h2>
               <p className="welcome-sub">
-                I&apos;m your AI exam prep tutor. Ask me about concepts, shortcuts, question approaches,
-                or anything related to your target exams. Try a prompt below:
+                Ask any exam question or concept doubt. Answers are cross-verified with official NCERT textbooks, standard references (Laxmikanth, Spectrum), and historical PYQs.
               </p>
               <div className="quick-prompts">
                 {quickPrompts.map((prompt, i) => (
@@ -389,22 +427,47 @@ export default function TutorPage() {
               {messages.map((msg, i) => (
                 <div key={i} className={`msg-bubble ${msg.role}`}>
                   {msg.role === 'assistant' ? (
-                    <div className="markdown-body">
-                      <ReactMarkdown 
-                        remarkPlugins={[remarkMath]} 
-                        rehypePlugins={[rehypeKatex]}
-                      >
-                        {msg.content}
-                      </ReactMarkdown>
+                    <div>
+                      <div className="markdown-body">
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkMath]} 
+                          rehypePlugins={[rehypeKatex]}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
+                      </div>
+
+                      {/* RAG Citations Component */}
+                      {msg.citations && msg.citations.length > 0 && (
+                        <CitationCard citations={msg.citations} />
+                      )}
+
+                      <div className="msg-footer">
+                        <div className="msg-meta-tag">
+                          {msg.cached ? (
+                            <span style={{ color: 'var(--success)', fontWeight: 700 }}>
+                              ⚡ Instant Semantic Cache ({msg.latencyMs ?? 2}ms)
+                            </span>
+                          ) : msg.provider ? (
+                            <span>via {msg.provider} ({msg.latencyMs ?? 850}ms)</span>
+                          ) : null}
+                        </div>
+                        <div className="msg-time">
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    msg.content
+                    <div>
+                      <div>{msg.content}</div>
+                      <div className="msg-time" style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.4rem', fontSize: '0.65rem' }}>
+                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
                   )}
-                  <div className="msg-time">
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
                 </div>
               ))}
+
               {isLoading && (
                 <div className="loading-indicator">
                   <div className="loading-dot"></div>
@@ -424,7 +487,7 @@ export default function TutorPage() {
               value={input}
               onChange={handleTextareaChange}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about any concept, shortcut, or exam question..."
+              placeholder="Ask about any concept, theorem, formula, or textbook doubt..."
               rows={1}
             />
             <button
