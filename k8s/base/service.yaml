@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: preparsenal-web
+  namespace: preparsenal
+  labels:
+    app.kubernetes.io/name: preparsenal
+    app.kubernetes.io/component: web
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: preparsenal
+    app.kubernetes.io/component: web

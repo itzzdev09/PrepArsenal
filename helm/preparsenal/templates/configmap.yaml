@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "preparsenal.fullname" . }}-config
+  labels:
+    {{- include "preparsenal.labels" . | nindent 4 }}
+data:
+  NODE_ENV: {{ .Values.config.nodeEnv | quote }}
+  PORT: "3000"
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_SUPABASE_URL: {{ .Values.config.supabaseUrl | quote }}
+  REDIS_URL: {{ .Values.config.redisUrl | quote }}

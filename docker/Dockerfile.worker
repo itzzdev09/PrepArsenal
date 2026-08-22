@@ -1,0 +1,32 @@
+# Python Worker Dockerfile for PrepArsenal
+# Executes ML Trend Engine and Dataset Ingestion pipelines
+
+FROM python:3.11-slim AS runner
+
+WORKDIR /app
+
+# Install system dependencies needed for python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1001 appuser
+
+# Copy scripts requirements and install
+COPY scripts/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python data scripts
+COPY scripts/ ./scripts/
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app/scripts
+
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Default command runs the ML trend engine
+CMD ["python", "scripts/ml_trend_engine.py"]

@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: preparsenal-prod
+
+namePrefix: prod-
+
+bases:
+  - ../../base
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: preparsenal-web
+    spec:
+      replicas: 4
+      template:
+        spec:
+          containers:
+            - name: web
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+                limits:
+                  cpu: 2000m
+                  memory: 1536Mi
+  - |-
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: preparsenal-hpa
+    spec:
+      minReplicas: 3
+      maxReplicas: 25

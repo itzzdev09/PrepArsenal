@@ -1,0 +1,13 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: preparsenal-pdb
+  namespace: preparsenal
+  labels:
+    app.kubernetes.io/name: preparsenal
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: preparsenal
+      app.kubernetes.io/component: web

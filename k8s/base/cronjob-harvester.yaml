@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pyq-harvester-weekly
+  namespace: preparsenal
+  labels:
+    app.kubernetes.io/name: preparsenal
+    app.kubernetes.io/component: harvester-worker
+spec:
+  # Run every Sunday at 04:00 AM UTC
+  schedule: "0 4 * * 0"
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600 # 60 minutes max
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: preparsenal
+            app.kubernetes.io/component: harvester-worker
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: harvester
+              image: ghcr.io/itzzdev09/preparsenal/worker:latest
+              imagePullPolicy: IfNotPresent
+              command: ["python", "scripts/dataset_harvester.py"]
+              envFrom:
+                - configMapRef:
+                    name: preparsenal-config
+                - secretRef:
+                    name: preparsenal-secrets
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 1024Mi
+                limits:
+                  cpu: 1500m
+                  memory: 2048Mi

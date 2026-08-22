@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js build output
+.next
+out
+
+# Environment files
+.env
+.env*.local
+
+# IDE and OS files
+.vscode
+.idea
+.DS_Store
+*.pem
+
+# Python artifacts
+scripts/__pycache__
+scripts/*.pyc
+scripts/.env
+.venv
+venv
+__pycache__
+
+# Markdown / docs / git workflows
+*.md
+.github
+
+# Kubernetes & Helm
+k8s
+helm
+docker

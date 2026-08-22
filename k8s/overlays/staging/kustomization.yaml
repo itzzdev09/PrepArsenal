@@ -1,0 +1,39 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: preparsenal-staging
+
+namePrefix: staging-
+
+bases:
+  - ../../base
+
+patchesStrategicMerge:
+  - |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: preparsenal-web
+    spec:
+      replicas: 1
+  - |-
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: preparsenal-ingress
+    spec:
+      tls:
+        - hosts:
+            - staging.preparsenal.com
+          secretName: staging-preparsenal-tls-secret
+      rules:
+        - host: staging.preparsenal.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: staging-preparsenal-web
+                    port:
+                      number: 80

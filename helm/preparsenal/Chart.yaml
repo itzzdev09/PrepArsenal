@@ -1,0 +1,15 @@
+apiVersion: v2
+name: preparsenal
+description: Helm chart for PrepArsenal — AI-Powered Govt Exam Prep Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+maintainers:
+  - name: PrepArsenal Team
+    email: ops@preparsenal.com
+keywords:
+  - nextjs
+  - education
+  - ai-tutor
+  - exam-prep
+  - kubernetes

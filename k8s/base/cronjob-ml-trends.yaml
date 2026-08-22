@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ml-trend-engine-daily
+  namespace: preparsenal
+  labels:
+    app.kubernetes.io/name: preparsenal
+    app.kubernetes.io/component: ml-worker
+spec:
+  # Run daily at 02:00 AM UTC
+  schedule: "0 2 * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800 # 30 minutes max
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: preparsenal
+            app.kubernetes.io/component: ml-worker
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ml-engine
+              image: ghcr.io/itzzdev09/preparsenal/worker:latest
+              imagePullPolicy: IfNotPresent
+              command: ["python", "scripts/ml_trend_engine.py"]
+              envFrom:
+                - configMapRef:
+                    name: preparsenal-config
+                - secretRef:
+                    name: preparsenal-secrets
+              resources:
+                requests:
+                  cpu: 300m
+                  memory: 512Mi
+                limits:
+                  cpu: 1000m
+                  memory: 1536Mi

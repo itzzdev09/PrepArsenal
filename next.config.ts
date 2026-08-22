@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     // Tree-shake large packages so only used exports are bundled
     optimizePackageImports: ["lucide-react", "framer-motion", "@supabase/supabase-js"],
