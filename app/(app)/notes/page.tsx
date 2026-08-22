@@ -225,7 +225,7 @@ export default function NotesPage() {
                 <div className="note-item-title">{note.title || 'Untitled'}</div>
                 <div className="note-item-meta">
                   <span>{note.subject}</span>
-                  <span>{new Date(note.updatedAt).toLocaleDateString()}</span>
+                  <span suppressHydrationWarning>{new Date(note.updatedAt).toLocaleDateString()}</span>
                 </div>
               </div>
             ))

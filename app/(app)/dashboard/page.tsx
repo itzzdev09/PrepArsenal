@@ -489,7 +489,7 @@ export default function DashboardPage() {
         <h1 className="dash-greeting">
           Welcome back, <span className="name">{profile.full_name}</span> 👋
         </h1>
-        <p className="dash-sub">
+        <p className="dash-sub" suppressHydrationWarning>
           {profile.target_exams.length} target exam{profile.target_exams.length !== 1 ? 's' : ''} •{' '}
           Day {Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000))} of your prep journey
         </p>

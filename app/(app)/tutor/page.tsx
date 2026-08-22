@@ -452,7 +452,7 @@ export default function TutorPage() {
                             <span>via {msg.provider} ({msg.latencyMs ?? 850}ms)</span>
                           ) : null}
                         </div>
-                        <div className="msg-time">
+                        <div className="msg-time" suppressHydrationWarning>
                           {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </div>
@@ -460,7 +460,7 @@ export default function TutorPage() {
                   ) : (
                     <div>
                       <div>{msg.content}</div>
-                      <div className="msg-time" style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.4rem', fontSize: '0.65rem' }}>
+                      <div className="msg-time" suppressHydrationWarning style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.4rem', fontSize: '0.65rem' }}>
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
