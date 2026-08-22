@@ -486,7 +486,6 @@ export default function DashboardPage() {
             {targetExamData.map(exam => {
               if (!exam) return null;
               const examQuestions = getQuestionsByExam(exam.code);
-              const examTrends = getTrendsByExam(exam.code);
               return (
                 <Link href={`/practice?exam=${exam.code}`} key={exam.code} className="target-exam-card" style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div className="tec-header">

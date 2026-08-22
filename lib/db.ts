@@ -4,7 +4,7 @@ export interface UserProfile {
   id: string;
   full_name: string;
   target_exams: string[];
-  exam_dates: Record<string, string>;
+  exam_dates: Record<string, any>;
   streak_count: number;
   last_study_date: string | null;
   total_study_minutes: number;
@@ -285,15 +285,14 @@ export interface StudyPlanItem {
 export async function getStudyPlan(supabase: SupabaseClient, userId: string): Promise<StudyPlanItem[]> {
   const { data, error } = await supabase
     .from('profiles')
-    .select('metadata')
+    .select('exam_dates')
     .eq('id', userId)
     .single();
     
-  if (error || !data || !data.metadata) return [];
+  if (error || !data || !data.exam_dates) return [];
   
-  // Type assertion since we know we are storing it in a study_plan key
-  const metadata = data.metadata as Record<string, any>;
-  return (metadata.study_plan as StudyPlanItem[]) || [];
+  const examDates = data.exam_dates as Record<string, any>;
+  return (examDates.study_plan as StudyPlanItem[]) || [];
 }
 
 export async function updateStudyPlan(
@@ -301,26 +300,110 @@ export async function updateStudyPlan(
   userId: string, 
   plan: StudyPlanItem[]
 ): Promise<boolean> {
-  // First fetch existing metadata to merge
+  // First fetch existing exam_dates to merge
   const { data, error: fetchErr } = await supabase
     .from('profiles')
-    .select('metadata')
+    .select('exam_dates')
     .eq('id', userId)
     .single();
     
   if (fetchErr) return false;
   
-  const metadata = (data.metadata as Record<string, any>) || {};
-  metadata.study_plan = plan;
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  examDates.study_plan = plan;
   
   const { error } = await supabase
     .from('profiles')
-    .update({ metadata })
+    .update({ exam_dates: examDates })
     .eq('id', userId);
     
-  if (error) {
+    if (error) {
     console.error('Error updating study plan:', error);
     return false;
   }
   return true;
+}
+
+// ===== PHASE 6: SMART NOTES & FORMULA VAULT =====
+
+export interface SmartNote {
+  id: string;
+  title: string;
+  content: string;
+  subject: string;
+  updatedAt: string;
+}
+
+export async function getSmartNotes(supabase: SupabaseClient, userId: string): Promise<SmartNote[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+    
+  if (error || !data || !data.exam_dates) return [];
+  
+  const examDates = data.exam_dates as Record<string, any>;
+  return (examDates.smart_notes as SmartNote[]) || [];
+}
+
+export async function updateSmartNotes(
+  supabase: SupabaseClient, 
+  userId: string, 
+  notes: SmartNote[]
+): Promise<boolean> {
+  const { data, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+    
+  if (fetchErr) return false;
+  
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  examDates.smart_notes = notes;
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ exam_dates: examDates })
+    .eq('id', userId);
+    
+  return !error;
+}
+
+export async function getFavoriteFormulas(supabase: SupabaseClient, userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+    
+  if (error || !data || !data.exam_dates) return [];
+  
+  const examDates = data.exam_dates as Record<string, any>;
+  return (examDates.favorite_formulas as string[]) || [];
+}
+
+export async function updateFavoriteFormulas(
+  supabase: SupabaseClient, 
+  userId: string, 
+  formulaIds: string[]
+): Promise<boolean> {
+  const { data, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+    
+  if (fetchErr) return false;
+  
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  examDates.favorite_formulas = formulaIds;
+  
+  const { error } = await supabase
+    .from('profiles')
+    .update({ exam_dates: examDates })
+    .eq('id', userId);
+    
+  return !error;
 }
