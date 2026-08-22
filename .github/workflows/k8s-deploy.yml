@@ -1,0 +1,72 @@
+name: Kubernetes Deploy Pipeline
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker Images"]
+    types:
+      - completed
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Determine Environment
+        id: env_select
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "ENV=production" >> $GITHUB_ENV
+          else
+            echo "ENV=staging" >> $GITHUB_ENV
+          fi
+
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      # Configure kubeconfig from GitHub Secrets
+      - name: Set Kubernetes Context
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      # Deploy using Kustomize overlay
+      - name: Deploy via Kustomize
+        run: |
+          echo "Deploying to environment: ${{ env.ENV }}"
+          cd k8s/overlays/${{ env.ENV }}
+          kustomize edit set image ghcr.io/itzzdev09/preparsenal/web=ghcr.io/${{ github.repository }}/web:${{ github.sha }}
+          kustomize build . | kubectl apply -f -
+
+      # Rollout Status Verification
+      - name: Verify Deployment Rollout
+        run: |
+          NAMESPACE="preparsenal-${{ env.ENV }}"
+          if [ "${{ env.ENV }}" = "production" ]; then
+            NAMESPACE="preparsenal-prod"
+          fi
+          echo "Checking rollout status in namespace $NAMESPACE..."
+          kubectl rollout status deployment/prod-preparsenal-web -n $NAMESPACE --timeout=180s || \
+          kubectl rollout status deployment/staging-preparsenal-web -n $NAMESPACE --timeout=180s || \
+          kubectl rollout status deployment/preparsenal-web -n $NAMESPACE --timeout=180s
