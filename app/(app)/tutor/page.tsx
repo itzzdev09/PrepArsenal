@@ -98,7 +98,6 @@ export default function TutorPage() {
 
   useEffect(() => {
     setMounted(true);
-    shufflePrompts('All');
 
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
@@ -118,7 +117,7 @@ export default function TutorPage() {
         sessionStorage.removeItem('tutor_initial_prompt');
       }
     }
-  }, [supabase, shufflePrompts]);
+  }, [supabase]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -514,12 +513,12 @@ export default function TutorPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            {cacheStats && (
+            {mounted && cacheStats && (
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }} suppressHydrationWarning>
                 ⚡ Saved ~<strong>{cacheStats.tokensSaved}</strong> tokens
               </span>
             )}
-            {messages.length > 0 && (
+            {mounted && messages.length > 0 && (
               <button className="clear-btn" onClick={handleClear}>
                 🗑️ Clear Chat
               </button>
