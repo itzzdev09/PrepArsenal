@@ -8,15 +8,15 @@ import { signout } from '@/app/login/actions';
 const navItems = [
   { label: 'Dashboard', icon: '📊', href: '/dashboard' },
   { label: 'Practice Arena', icon: '⏱️', href: '/practice' },
+  { label: 'Mock Tests', icon: '🎯', href: '/mock' },
   { label: 'Smart Planner', icon: '📅', href: '/planner' },
+  { label: 'Smart Notes', icon: '📝', href: '/notes' },
+  { label: 'Formula Vault', icon: '⚡', href: '/vault' },
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
 ];
 
-const comingSoonItems = [
-  { label: 'Smart Notes', icon: '📝', href: '#' },
-  { label: 'Formula Vault', icon: '⚡', href: '#' },
-];
+const comingSoonItems: any[] = [];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -123,20 +123,24 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
 
-          <span className="sidebar-section-label" style={{ marginTop: '0.5rem' }}>Coming Soon</span>
-          {comingSoonItems.map(item => (
-            <div
-              key={item.label}
-              className="nav-item"
-              style={{ opacity: 0.4, cursor: 'not-allowed' }}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
-              <span className="nav-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '0.65rem' }}>
-                SOON
-              </span>
-            </div>
-          ))}
+          {comingSoonItems.length > 0 && (
+            <>
+              <span className="sidebar-section-label" style={{ marginTop: '0.5rem' }}>Coming Soon</span>
+              {comingSoonItems.map(item => (
+                <div
+                  key={item.label}
+                  className="nav-item"
+                  style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                >
+                  <span className="nav-icon">{item.icon}</span>
+                  <span>{item.label}</span>
+                  <span className="nav-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: '0.65rem' }}>
+                    SOON
+                  </span>
+                </div>
+              ))}
+            </>
+          )}
         </nav>
 
         <div className="sidebar-footer">
