@@ -20,50 +20,93 @@ interface ExtendedChatEntry extends ChatEntry {
 }
 
 const ALL_PROMPT_POOL = [
-  // Polity & Constitution
+  // ===== POLITY & CONSTITUTION =====
   { text: '📖 Explain Article 32 and the 5 types of Writs with exam examples', category: 'Polity', icon: '🏛️' },
   { text: '📜 Key differences between Money Bill (Art 110) vs Financial Bill (Art 117)', category: 'Polity', icon: '⚖️' },
   { text: '🏛️ What is the Basic Structure Doctrine and Kesavananda Bharati case?', category: 'Polity', icon: '📜' },
   { text: '🚨 Emergency Provisions: National (Art 352) vs State (Art 356) vs Financial (Art 360)', category: 'Polity', icon: '🚨' },
-  { text: '🗳️ Election Commission of India: Powers, Composition & Key Articles', category: 'Polity', icon: '🗳️' },
+  { text: '🗳️ Election Commission of India: Powers, Composition & Key Articles (324-329)', category: 'Polity', icon: '🗳️' },
+  { text: '⚖️ Fundamental Rights (Part III) vs Directive Principles of State Policy (Part IV)', category: 'Polity', icon: '⚖️' },
+  { text: '👑 Powers & Discretions of the President of India vs Governors (Art 72 vs Art 161)', category: 'Polity', icon: '👑' },
+  { text: '🏛️ Parliamentary Committees: Public Accounts (PAC) vs Estimates Committee vs CoPU', category: 'Polity', icon: '🏛️' },
+  { text: '📑 10th Schedule Anti-Defection Law: 52nd & 91st Constitutional Amendments', category: 'Polity', icon: '📑' },
+  { text: '🏘️ 73rd and 74th Amendments: Panchayati Raj & Municipalities 3-tier structure', category: 'Polity', icon: '🏘️' },
 
-  // Quantitative Aptitude
+  // ===== QUANTITATIVE APTITUDE & SHORTCUTS =====
   { text: '📐 Explain the 20-second shortcut for Percentage & Successive Discount', category: 'Quant', icon: '📐' },
   { text: '💰 Compound Interest vs Simple Interest 2-year & 3-year difference shortcuts', category: 'Quant', icon: '🧮' },
   { text: '⏱️ Time, Speed & Distance: Train crossing moving pole / bridge tricks', category: 'Quant', icon: '🚆' },
   { text: '📊 Alligation & Mixture rule: Step-by-step method for fast solving', category: 'Quant', icon: '📊' },
   { text: '🔢 Fast tricks to find Unit Digits, Remainder Theorem & Divisibility rules', category: 'Quant', icon: '🔢' },
+  { text: '🚣 Boats & Streams: Upstream, Downstream and Average Speed shortcuts', category: 'Quant', icon: '🚣' },
+  { text: '👥 Time & Work: Efficiency method and Pipes & Cisterns negative work tricks', category: 'Quant', icon: '👥' },
+  { text: '📐 Geometry: Incenter, Circumcenter, Orthocenter & Centroid properties', category: 'Quant', icon: '📐' },
+  { text: '🔺 Trigonometry: Heights & Distances 30°-60°-90° and 45°-45°-90° ratio shortcuts', category: 'Quant', icon: '🔺' },
+  { text: '📦 Mensuration 3D: Volume & Surface Area shortcuts for Cones, Spheres & Frustums', category: 'Quant', icon: '📦' },
+  { text: '🎲 Probability & Permutations: Card deck, Dice & Word arrangement rules', category: 'Quant', icon: '🎲' },
 
-  // Economics & Banking
+  // ===== ECONOMICS & BANKING =====
   { text: '🏦 What is the difference between Repo Rate, Reverse Repo Rate and SDF?', category: 'Economics', icon: '🏦' },
   { text: '📈 Inflation types: Cost-Push vs Demand-Pull vs Core Inflation explained', category: 'Economics', icon: '📈' },
   { text: '💵 Balance of Payments (BoP): Current Account vs Capital Account breakdown', category: 'Economics', icon: '💵' },
   { text: '🌾 Priority Sector Lending (PSL) targets for Commercial & Regional Rural Banks', category: 'Economics', icon: '🌾' },
   { text: '📉 Fiscal Deficit vs Revenue Deficit vs Primary Deficit formulas and meaning', category: 'Economics', icon: '📉' },
+  { text: '🛡️ Basel III Norms: Capital Adequacy Ratio (CAR), Tier 1 vs Tier 2 Capital', category: 'Economics', icon: '🛡️' },
+  { text: '📊 Monetary Policy Committee (MPC): Composition, Voting & Inflation Target (4% ± 2%)', category: 'Economics', icon: '📊' },
+  { text: '🏷️ Direct vs Indirect Taxes: GST slabs, Input Tax Credit & Direct Tax reforms', category: 'Economics', icon: '🏷️' },
+  { text: '💹 Money Multiplier & Broad Money (M0, M1, M2, M3, M4) explained simply', category: 'Economics', icon: '💹' },
+  { text: '🌐 Foreign Exchange Reserves: Components of India\'s Forex (Gold, SDRs, RTP)', category: 'Economics', icon: '🌐' },
 
-  // Modern & Ancient History
+  // ===== MODERN & ANCIENT HISTORY =====
   { text: '⚔️ Battles of Plassey (1757) & Buxar (1764) with Treaty of Allahabad details', category: 'History', icon: '⚔️' },
   { text: '📜 Chronology of Governor Generals & Viceroys from Dalhousie to Mountbatten', category: 'History', icon: '📜' },
   { text: '🔥 Non-Cooperation Movement (1920) vs Civil Disobedience Movement (1930)', category: 'History', icon: '🔥' },
   { text: '🏛️ Indus Valley Civilization: Major sites, Town Planning & Lothal Dockyard', category: 'History', icon: '🏛️' },
   { text: '👑 Buddhism vs Jainism: Councils, Key Doctrines & Four Noble Truths', category: 'History', icon: '👑' },
+  { text: '🏹 Revolt of 1857: Causes, Key Leaders, Centers & Suppression timeline', category: 'History', icon: '🏹' },
+  { text: '📜 Major INC Sessions: 1906 Calcutta, 1907 Surat Split, 1916 Lucknow, 1929 Lahore', category: 'History', icon: '📜' },
+  { text: '🏰 Delhi Sultanate Chronology: Mamluk, Khilji, Tughlaq, Sayyid, Lodi Dynasties', category: 'History', icon: '🏰' },
+  { text: '🐘 Mauryan Empire: Ashokan Edicts, Dhamma policy & Megasthenes\' Indica', category: 'History', icon: '🐘' },
+  { text: '🌿 Bhakti and Sufi Movements: Kabir, Mirabai, Guru Nanak & Chishti Order', category: 'History', icon: '🌿' },
 
-  // Geography & Climate
+  // ===== GEOGRAPHY & ENVIRONMENT =====
   { text: '🌊 Himalayan vs Peninsular Rivers and why Narmada/Tapi form Estuaries', category: 'Geography', icon: '🌊' },
   { text: '🌧️ Southwest Monsoon mechanism & why Tamil Nadu coast receives Winter rain', category: 'Geography', icon: '🌧️' },
   { text: '🌍 Major Ocean Currents: Warm vs Cold currents (Gulf Stream, Labrador, Kuroshio)', category: 'Geography', icon: '🌍' },
   { text: '🏔️ Mountain Passes of India: Nathu La, Zoji La, Shipki La & Rohtang tricks', category: 'Geography', icon: '🏔️' },
+  { text: '🌋 Earth\'s Interior & Seismic Waves: P-waves vs S-waves Shadow Zones', category: 'Geography', icon: '🌋' },
+  { text: '🌱 Soils of India: Alluvial, Black (Regur), Red, Laterite characteristics', category: 'Geography', icon: '🌱' },
+  { text: '⛅ Layers of Atmosphere: Troposphere, Stratosphere (Ozone), Ionosphere traits', category: 'Geography', icon: '⛅' },
+  { text: '🐅 Biosphere Reserves & Tiger Reserves in India: UNESCO MAB list essentials', category: 'Geography', icon: '🐅' },
+  { text: '☀️ Solstices, Equinoxes & Reasons for Seasons explained with diagrams', category: 'Geography', icon: '☀️' },
 
-  // General Science
+  // ===== GENERAL SCIENCE & TECH =====
   { text: '🔭 Vision defects: Myopia vs Hypermetropia, causes and corrective lenses', category: 'Science', icon: '🔭' },
   { text: '💡 Total Internal Reflection (TIR): Diamonds, Mirage & Optical Fibres in exams', category: 'Science', icon: '💡' },
   { text: '🧬 DNA vs RNA and Mitosis vs Meiosis differences frequently asked in PYQs', category: 'Science', icon: '🧬' },
   { text: '⚡ Newton\'s 3 Laws of Motion with real-world competitive exam examples', category: 'Science', icon: '⚡' },
+  { text: '🧪 Acids, Bases & Salts: pH Scale, Bleaching Powder, Plaster of Paris formulas', category: 'Science', icon: '🧪' },
+  { text: '🔋 Electric Current & Resistance: Ohm\'s Law, Series vs Parallel combinations', category: 'Science', icon: '🔋' },
+  { text: '🩺 Vitamins, Chemical Names & Deficiency Diseases complete high-yield table', category: 'Science', icon: '🩺' },
+  { text: '🚀 ISRO Launch Vehicles: PSLV vs GSLV vs LVM3 and Gaganyaan Mission overview', category: 'Science', icon: '🚀' },
+  { text: '🦠 Bacterial vs Viral vs Fungal human diseases for SSC & RRB NTPC', category: 'Science', icon: '🦠' },
 
-  // Reasoning & English
+  // ===== REASONING & PUZZLES =====
   { text: '🧠 Quick elimination strategies for Syllogisms (Some, All, No, Only a few)', category: 'Reasoning', icon: '🧠' },
   { text: '🪑 Circle and Linear Seating Arrangement: Left vs Right direction tips', category: 'Reasoning', icon: '🪑' },
+  { text: '🩸 Blood Relations: Family tree drawing method for Coded & Statement questions', category: 'Reasoning', icon: '🩸' },
+  { text: '⏰ Clocks & Calendars: Angle between hands formula and Odd days shortcut', category: 'Reasoning', icon: '⏰' },
+  { text: '🔢 Number Series & Missing Number patterns: Step differences & Prime squares', category: 'Reasoning', icon: '🔢' },
+  { text: '⚖️ Coded Inequalities: Direct sign comparison without writing full equations', category: 'Reasoning', icon: '⚖️' },
+  { text: '🧊 Dice & Cube: Opposite face rules for open vs folded dice in SSC CGL', category: 'Reasoning', icon: '🧊' },
+
+  // ===== ENGLISH LANGUAGE =====
   { text: '📝 Top 25 high-frequency Idioms and One-Word Substitutions in SSC CGL', category: 'English', icon: '📝' },
+  { text: '📖 Subject-Verb Agreement: 10 Golden Rules with exception cases', category: 'English', icon: '📖' },
+  { text: '🔄 Active vs Passive Voice conversion rules for Tenses and Imperative sentences', category: 'English', icon: '🔄' },
+  { text: '🗣️ Direct to Indirect Speech conversion rules for Interrogative & Exclamatory', category: 'English', icon: '🗣️' },
+  { text: '🎯 Confusing Words pairs: Affect/Effect, Principal/Principle, Compliment/Complement', category: 'English', icon: '🎯' },
+  { text: '🔤 High-yield Root Words (e.g., -phil, -phob, -mal, -bene, -chron) for fast Vocab', category: 'English', icon: '🔤' },
 ];
 
 function getRandomSubset<T>(array: T[], size: number): T[] {
@@ -208,7 +251,7 @@ export default function TutorPage() {
     }
   };
 
-  const categories = ['All', 'Quant', 'Polity', 'Economics', 'History', 'Geography', 'Science', 'Reasoning'];
+  const categories = ['All', 'Quant', 'Polity', 'Economics', 'History', 'Geography', 'Science', 'Reasoning', 'English'];
 
   return (
     <div suppressHydrationWarning>
