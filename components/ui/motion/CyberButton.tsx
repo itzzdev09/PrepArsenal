@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type HTMLMotionProps } from 'framer-motion';
 
-interface CyberButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface CyberButtonProps extends HTMLMotionProps<'button'> {
   children: React.ReactNode;
   variant?: 'primary' | 'secondary' | 'glow' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   icon?: React.ReactNode;
   className?: string;
-  onClick?: () => void;
 }
 
 /**
