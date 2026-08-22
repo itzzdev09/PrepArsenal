@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { chat } from '@/lib/llm';
 import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
@@ -19,6 +19,58 @@ interface ExtendedChatEntry extends ChatEntry {
   citations?: RagSearchResult[];
 }
 
+const ALL_PROMPT_POOL = [
+  // Polity & Constitution
+  { text: '📖 Explain Article 32 and the 5 types of Writs with exam examples', category: 'Polity', icon: '🏛️' },
+  { text: '📜 Key differences between Money Bill (Art 110) vs Financial Bill (Art 117)', category: 'Polity', icon: '⚖️' },
+  { text: '🏛️ What is the Basic Structure Doctrine and Kesavananda Bharati case?', category: 'Polity', icon: '📜' },
+  { text: '🚨 Emergency Provisions: National (Art 352) vs State (Art 356) vs Financial (Art 360)', category: 'Polity', icon: '🚨' },
+  { text: '🗳️ Election Commission of India: Powers, Composition & Key Articles', category: 'Polity', icon: '🗳️' },
+
+  // Quantitative Aptitude
+  { text: '📐 Explain the 20-second shortcut for Percentage & Successive Discount', category: 'Quant', icon: '📐' },
+  { text: '💰 Compound Interest vs Simple Interest 2-year & 3-year difference shortcuts', category: 'Quant', icon: '🧮' },
+  { text: '⏱️ Time, Speed & Distance: Train crossing moving pole / bridge tricks', category: 'Quant', icon: '🚆' },
+  { text: '📊 Alligation & Mixture rule: Step-by-step method for fast solving', category: 'Quant', icon: '📊' },
+  { text: '🔢 Fast tricks to find Unit Digits, Remainder Theorem & Divisibility rules', category: 'Quant', icon: '🔢' },
+
+  // Economics & Banking
+  { text: '🏦 What is the difference between Repo Rate, Reverse Repo Rate and SDF?', category: 'Economics', icon: '🏦' },
+  { text: '📈 Inflation types: Cost-Push vs Demand-Pull vs Core Inflation explained', category: 'Economics', icon: '📈' },
+  { text: '💵 Balance of Payments (BoP): Current Account vs Capital Account breakdown', category: 'Economics', icon: '💵' },
+  { text: '🌾 Priority Sector Lending (PSL) targets for Commercial & Regional Rural Banks', category: 'Economics', icon: '🌾' },
+  { text: '📉 Fiscal Deficit vs Revenue Deficit vs Primary Deficit formulas and meaning', category: 'Economics', icon: '📉' },
+
+  // Modern & Ancient History
+  { text: '⚔️ Battles of Plassey (1757) & Buxar (1764) with Treaty of Allahabad details', category: 'History', icon: '⚔️' },
+  { text: '📜 Chronology of Governor Generals & Viceroys from Dalhousie to Mountbatten', category: 'History', icon: '📜' },
+  { text: '🔥 Non-Cooperation Movement (1920) vs Civil Disobedience Movement (1930)', category: 'History', icon: '🔥' },
+  { text: '🏛️ Indus Valley Civilization: Major sites, Town Planning & Lothal Dockyard', category: 'History', icon: '🏛️' },
+  { text: '👑 Buddhism vs Jainism: Councils, Key Doctrines & Four Noble Truths', category: 'History', icon: '👑' },
+
+  // Geography & Climate
+  { text: '🌊 Himalayan vs Peninsular Rivers and why Narmada/Tapi form Estuaries', category: 'Geography', icon: '🌊' },
+  { text: '🌧️ Southwest Monsoon mechanism & why Tamil Nadu coast receives Winter rain', category: 'Geography', icon: '🌧️' },
+  { text: '🌍 Major Ocean Currents: Warm vs Cold currents (Gulf Stream, Labrador, Kuroshio)', category: 'Geography', icon: '🌍' },
+  { text: '🏔️ Mountain Passes of India: Nathu La, Zoji La, Shipki La & Rohtang tricks', category: 'Geography', icon: '🏔️' },
+
+  // General Science
+  { text: '🔭 Vision defects: Myopia vs Hypermetropia, causes and corrective lenses', category: 'Science', icon: '🔭' },
+  { text: '💡 Total Internal Reflection (TIR): Diamonds, Mirage & Optical Fibres in exams', category: 'Science', icon: '💡' },
+  { text: '🧬 DNA vs RNA and Mitosis vs Meiosis differences frequently asked in PYQs', category: 'Science', icon: '🧬' },
+  { text: '⚡ Newton\'s 3 Laws of Motion with real-world competitive exam examples', category: 'Science', icon: '⚡' },
+
+  // Reasoning & English
+  { text: '🧠 Quick elimination strategies for Syllogisms (Some, All, No, Only a few)', category: 'Reasoning', icon: '🧠' },
+  { text: '🪑 Circle and Linear Seating Arrangement: Left vs Right direction tips', category: 'Reasoning', icon: '🪑' },
+  { text: '📝 Top 25 high-frequency Idioms and One-Word Substitutions in SSC CGL', category: 'English', icon: '📝' },
+];
+
+function getRandomSubset<T>(array: T[], size: number): T[] {
+  const shuffled = [...array].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, size);
+}
+
 export default function TutorPage() {
   const [messages, setMessages] = useState<ExtendedChatEntry[]>([]);
   const [input, setInput] = useState('');
@@ -26,11 +78,28 @@ export default function TutorPage() {
   const [provider, setProvider] = useState<string>('');
   const [cacheStats, setCacheStats] = useState<CacheStats | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Dynamic Prompt Rotation state
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [activePrompts, setActivePrompts] = useState<typeof ALL_PROMPT_POOL>(ALL_PROMPT_POOL.slice(0, 6));
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const supabase = createClient();
 
+  const shufflePrompts = useCallback((category = selectedCategory) => {
+    let pool = ALL_PROMPT_POOL;
+    if (category !== 'All') {
+      pool = ALL_PROMPT_POOL.filter(p => p.category === category);
+    }
+    setActivePrompts(getRandomSubset(pool, Math.min(6, pool.length)));
+  }, [selectedCategory]);
+
   useEffect(() => {
+    setMounted(true);
+    shufflePrompts('All');
+
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
         setUserId(data.user.id);
@@ -49,11 +118,16 @@ export default function TutorPage() {
         sessionStorage.removeItem('tutor_initial_prompt');
       }
     }
-  }, [supabase]);
+  }, [supabase, shufflePrompts]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleCategoryChange = (cat: string) => {
+    setSelectedCategory(cat);
+    shufflePrompts(cat);
+  };
 
   const handleSend = async () => {
     const text = input.trim();
@@ -135,26 +209,19 @@ export default function TutorPage() {
     }
   };
 
-  const quickPrompts = [
-    '📖 Explain Article 32 and the 5 types of Writs',
-    '💰 What is the difference between Repo Rate and Reverse Repo Rate?',
-    '📐 Explain the shortcut for Percentage & Profit-Loss problems',
-    '⚔️ Battles of Plassey and Buxar with Treaty of Allahabad',
-    '🔭 Vision defects: Myopia vs Hypermetropia and corrective lenses',
-    '🌊 Himalayan vs Peninsular Rivers and SW Monsoon',
-  ];
+  const categories = ['All', 'Quant', 'Polity', 'Economics', 'History', 'Geography', 'Science', 'Reasoning'];
 
   return (
-    <div>
+    <div suppressHydrationWarning>
       <style jsx>{`
         .tutor-container {
           display: flex;
           flex-direction: column;
-          height: calc(100vh);
+          height: calc(100vh - 64px);
         }
 
         .tutor-header {
-          padding: 1.25rem 2rem;
+          padding: 1rem 2rem;
           background: var(--bg-secondary);
           border-bottom: 1px solid var(--border-subtle);
           display: flex;
@@ -165,7 +232,7 @@ export default function TutorPage() {
 
         .tutor-title {
           font-size: 1.15rem;
-          font-weight: 700;
+          font-weight: 800;
           display: flex;
           align-items: center;
           gap: 0.6rem;
@@ -216,15 +283,63 @@ export default function TutorPage() {
           padding: 2rem;
         }
 
-        .welcome-icon { font-size: 3rem; margin-bottom: 1rem; }
-        .welcome-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
-        .welcome-sub { color: var(--text-secondary); font-size: 0.95rem; max-width: 540px; margin-bottom: 2rem; }
+        .welcome-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+        .welcome-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .welcome-sub { color: var(--text-secondary); font-size: 0.92rem; max-width: 580px; margin-bottom: 1.75rem; line-height: 1.55; }
+
+        .prompt-controls {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          max-width: 680px;
+          width: 100%;
+          margin-bottom: 1rem;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+        }
+
+        .category-pills {
+          display: flex;
+          gap: 0.4rem;
+          overflow-x: auto;
+        }
+
+        .cat-pill {
+          padding: 0.3rem 0.65rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 9999px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 150ms;
+          white-space: nowrap;
+        }
+        .cat-pill:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+        .cat-pill.active { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
+
+        .shuffle-btn {
+          padding: 0.35rem 0.75rem;
+          background: rgba(168, 85, 247, 0.12);
+          border: 1px solid rgba(168, 85, 247, 0.3);
+          border-radius: 0.5rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #c084fc;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          transition: all 150ms;
+        }
+        .shuffle-btn:hover { background: rgba(168, 85, 247, 0.22); transform: scale(1.03); }
 
         .quick-prompts {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 0.6rem;
-          max-width: 650px;
+          gap: 0.65rem;
+          max-width: 680px;
           width: 100%;
         }
 
@@ -238,13 +353,17 @@ export default function TutorPage() {
           cursor: pointer;
           transition: all 200ms;
           text-align: left;
+          display: flex;
+          align-items: flex-start;
+          gap: 0.5rem;
+          line-height: 1.45;
         }
 
         .quick-prompt:hover {
           border-color: var(--accent-blue);
           color: var(--text-primary);
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+          box-shadow: 0 4px 14px rgba(59, 130, 246, 0.18);
         }
 
         .msg-bubble {
@@ -396,7 +515,7 @@ export default function TutorPage() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {cacheStats && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }} suppressHydrationWarning>
                 ⚡ Saved ~<strong>{cacheStats.tokensSaved}</strong> tokens
               </span>
             )}
@@ -414,19 +533,46 @@ export default function TutorPage() {
               <div className="welcome-icon">🧠</div>
               <h2 className="welcome-title">AI Tutor & Knowledge Base</h2>
               <p className="welcome-sub">
-                Ask any exam question or concept doubt. Answers are cross-verified with official NCERT textbooks, standard references (Laxmikanth, Spectrum), and historical PYQs.
+                Ask any exam question, shortcut formula, or concept doubt. Answers are verified against official NCERT textbooks, standard references (Laxmikanth, Spectrum), and historical PYQs.
               </p>
+
+              {/* Dynamic Prompt Controls */}
+              <div className="prompt-controls">
+                <div className="category-pills">
+                  {categories.map(cat => (
+                    <button
+                      key={cat}
+                      className={`cat-pill ${selectedCategory === cat ? 'active' : ''}`}
+                      onClick={() => handleCategoryChange(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  className="shuffle-btn"
+                  onClick={() => shufflePrompts(selectedCategory)}
+                  title="Show different questions"
+                >
+                  <span>🔄</span>
+                  <span>Shuffle Prompts</span>
+                </button>
+              </div>
+
+              {/* Dynamic Prompt Cards */}
               <div className="quick-prompts">
-                {quickPrompts.map((prompt, i) => (
+                {activePrompts.map((prompt, i) => (
                   <button
                     key={i}
                     className="quick-prompt"
                     onClick={() => {
-                      setInput(prompt);
+                      setInput(prompt.text);
                       if (textareaRef.current) textareaRef.current.focus();
                     }}
                   >
-                    {prompt}
+                    <span>{prompt.icon}</span>
+                    <span>{prompt.text}</span>
                   </button>
                 ))}
               </div>
@@ -446,7 +592,7 @@ export default function TutorPage() {
                         </ReactMarkdown>
                       </div>
 
-                      {/* RAG Citations Component */}
+                      {/* Verified Citations Component */}
                       {msg.citations && msg.citations.length > 0 && (
                         <CitationCard citations={msg.citations} />
                       )}
@@ -462,7 +608,7 @@ export default function TutorPage() {
                           ) : null}
                         </div>
                         <div className="msg-time" suppressHydrationWarning>
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {mounted && msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                         </div>
                       </div>
                     </div>
@@ -470,7 +616,7 @@ export default function TutorPage() {
                     <div>
                       <div>{msg.content}</div>
                       <div className="msg-time" suppressHydrationWarning style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.4rem', fontSize: '0.65rem' }}>
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {mounted && msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                       </div>
                     </div>
                   )}
