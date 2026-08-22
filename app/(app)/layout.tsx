@@ -342,27 +342,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Dynamic Sidebar Profile Card matching Role */}
         <Link
-          href={userRole === 'admin' ? '/admin' : '/profile'}
+          href={mounted && userRole === 'admin' ? '/admin' : '/profile'}
           className="sidebar-profile-card"
           onClick={() => setSidebarOpen(false)}
+          suppressHydrationWarning
         >
-          <div className={`sp-avatar ${userRole === 'admin' ? 'admin' : ''}`}>
-            {userRole === 'admin' ? '🛡️' : (userName ? userName.charAt(0).toUpperCase() : '👤')}
+          <div className={`sp-avatar ${mounted && userRole === 'admin' ? 'admin' : ''}`}>
+            {mounted && userRole === 'admin' ? '🛡️' : (userName ? userName.charAt(0).toUpperCase() : '👤')}
           </div>
           <div className="sp-info">
-            <div className="sp-name">
-              {userRole === 'admin' ? 'Administrator' : userName}
+            <div className="sp-name" suppressHydrationWarning>
+              {mounted && userRole === 'admin' ? 'Administrator' : userName}
             </div>
-            <div className="sp-sub">
-              {userRole === 'admin' ? 'System & Question Control' : `Level ${userLevel} • ${userXp} XP 🎖️`}
+            <div className="sp-sub" suppressHydrationWarning>
+              {mounted && userRole === 'admin' ? 'System & Question Control' : `Level ${userLevel} • ${userXp} XP 🎖️`}
             </div>
           </div>
-          <span style={{ fontSize: '0.75rem', color: userRole === 'admin' ? 'var(--error)' : 'var(--accent-blue)' }}>
+          <span style={{ fontSize: '0.75rem', color: mounted && userRole === 'admin' ? 'var(--error)' : 'var(--accent-blue)' }}>
             ⚙️
           </span>
         </Link>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" suppressHydrationWarning>
           <span className="sidebar-section-label">Navigation</span>
           {activeNavItems.map(item => (
             <Link
@@ -370,9 +371,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               href={item.href}
               className={`nav-item ${pathname === item.href ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
+              suppressHydrationWarning
             >
               <span className="nav-icon">{item.icon}</span>
-              <span>{item.label}</span>
+              <span suppressHydrationWarning>{item.label}</span>
             </Link>
           ))}
         </nav>
@@ -392,22 +394,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content with Top Global Header Bar */}
-      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'auto' }}>
-        <header className="top-global-header">
+      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'auto' }} suppressHydrationWarning>
+        <header className="top-global-header" suppressHydrationWarning>
           <div className="header-left">
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
               ⚔️ PrepArsenal Platform
             </span>
           </div>
 
-          <div className="header-right">
+          <div className="header-right" suppressHydrationWarning>
             {/* Role Switcher Button for Instant Testing */}
             <button
               className="role-switch-badge"
               onClick={toggleRole}
               title="Click to switch between Student and Admin views"
+              suppressHydrationWarning
             >
-              {userRole === 'admin' ? '🛡️ Admin Mode (Click for Student)' : '🎓 Student Mode (Click for Admin)'}
+              {mounted && userRole === 'admin' ? '🛡️ Admin Mode (Click for Student)' : '🎓 Student Mode (Click for Admin)'}
             </button>
 
             <Link href="/tutor" className="quick-nav-btn" title="AI Tutor">
@@ -416,19 +419,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
 
             {/* Role-Specific Header Pill */}
-            {userRole === 'admin' ? (
-              <Link href="/admin" className="top-profile-pill" title="Admin Portal">
+            {mounted && userRole === 'admin' ? (
+              <Link href="/admin" className="top-profile-pill" title="Admin Portal" suppressHydrationWarning>
                 <div className="pill-avatar admin">🛡️</div>
-                <span className="pill-name">Admin Portal</span>
+                <span className="pill-name" suppressHydrationWarning>Admin Portal</span>
                 <span className="pill-badge admin">ADMIN</span>
               </Link>
             ) : (
-              <Link href="/profile" className="top-profile-pill" title="My Account Profile">
+              <Link href="/profile" className="top-profile-pill" title="My Account Profile" suppressHydrationWarning>
                 <div className="pill-avatar">
                   {userName ? userName.charAt(0).toUpperCase() : '👤'}
                 </div>
-                <span className="pill-name">{userName}</span>
-                <span className="pill-badge">Lvl {userLevel}</span>
+                <span className="pill-name" suppressHydrationWarning>{userName}</span>
+                <span className="pill-badge" suppressHydrationWarning>Lvl {userLevel}</span>
               </Link>
             )}
           </div>
