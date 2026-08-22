@@ -1,0 +1,458 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import {
+  exams,
+  questions,
+  getQuestionsByExam,
+  getTrendsByExam,
+  getTopicById,
+  trendData
+} from '@/lib/data';
+import {
+  getUserProfile,
+  createDefaultProfile,
+  getPracticeSessions,
+  getOverallAccuracy,
+  getTotalQuestionsAttempted,
+  type UserProfile,
+} from '@/lib/store';
+
+export default function DashboardPage() {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [selectedExams, setSelectedExams] = useState<string[]>([]);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    const existing = getUserProfile();
+    if (existing) {
+      setProfile(existing);
+    } else {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const handleOnboarding = () => {
+    if (!userName.trim()) return;
+    const examList = selectedExams.length > 0 ? selectedExams : ['SSC_CGL'];
+    const newProfile = createDefaultProfile(userName.trim(), examList);
+    setProfile(newProfile);
+    setShowOnboarding(false);
+  };
+
+  const toggleExamSelection = (code: string) => {
+    setSelectedExams(prev =>
+      prev.includes(code) ? prev.filter(e => e !== code) : [...prev, code]
+    );
+  };
+
+  if (showOnboarding) {
+    return (
+      <div>
+        <style jsx>{`
+          .onboarding {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+          }
+          .onboarding-card {
+            max-width: 600px;
+            width: 100%;
+            padding: 3rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 1.5rem;
+            animation: fadeInUp 400ms ease forwards;
+          }
+          .onboarding-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+          }
+          .onboarding-sub {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+          }
+          .field-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+            color: var(--text-secondary);
+          }
+          .exam-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+          }
+          .exam-select-item {
+            padding: 0.75rem;
+            background: var(--bg-input);
+            border: 2px solid var(--border-subtle);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 200ms;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+          }
+          .exam-select-item:hover {
+            border-color: var(--border-default);
+          }
+          .exam-select-item.selected {
+            border-color: var(--accent-blue);
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+          }
+          .exam-select-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.25rem;
+          }
+          @media (max-width: 600px) {
+            .exam-select-grid { grid-template-columns: repeat(2, 1fr); }
+          }
+        `}</style>
+        <div className="onboarding">
+          <div className="onboarding-card">
+            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚔️</div>
+            <h1 className="onboarding-title">Welcome to PrepArsenal</h1>
+            <p className="onboarding-sub">Let&apos;s set up your exam preparation profile.</p>
+
+            <label className="field-label">Your Name</label>
+            <input
+              className="input"
+              placeholder="Enter your name"
+              value={userName}
+              onChange={e => setUserName(e.target.value)}
+              style={{ marginBottom: '1.5rem' }}
+              onKeyDown={e => e.key === 'Enter' && handleOnboarding()}
+            />
+
+            <label className="field-label">Select Target Exams</label>
+            <div className="exam-select-grid">
+              {exams.map(exam => (
+                <div
+                  key={exam.code}
+                  className={`exam-select-item ${selectedExams.includes(exam.code) ? 'selected' : ''}`}
+                  onClick={() => toggleExamSelection(exam.code)}
+                >
+                  <span className="exam-select-icon">{exam.icon}</span>
+                  {exam.name}
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="btn btn-primary btn-lg"
+              style={{ width: '100%' }}
+              onClick={handleOnboarding}
+              disabled={!userName.trim()}
+            >
+              Start My Preparation →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  const sessions = getPracticeSessions();
+  const totalAttempted = getTotalQuestionsAttempted();
+  const accuracy = getOverallAccuracy();
+  const targetExamData = profile.targetExams.map(code => exams.find(e => e.code === code)).filter(Boolean);
+
+  // Get top trending topics across target exams
+  const topTrends = profile.targetExams
+    .flatMap(code => getTrendsByExam(code))
+    .sort((a, b) => b.predictionScore - a.predictionScore)
+    .slice(0, 8);
+
+  // Unique topics
+  const seenTopics = new Set<string>();
+  const uniqueTopTrends = topTrends.filter(t => {
+    if (seenTopics.has(t.topicId)) return false;
+    seenTopics.add(t.topicId);
+    return true;
+  }).slice(0, 6);
+
+  return (
+    <div>
+      <style jsx>{`
+        .dash-header {
+          padding: 2rem 2rem 1.5rem;
+          background: var(--bg-secondary);
+          border-bottom: 1px solid var(--border-subtle);
+        }
+        .dash-greeting {
+          font-size: 1.5rem;
+          font-weight: 700;
+        }
+        .dash-greeting .name {
+          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        .dash-sub {
+          color: var(--text-secondary);
+          font-size: 0.9rem;
+          margin-top: 0.25rem;
+        }
+        .dash-body {
+          padding: 2rem;
+        }
+        .stats-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        .stat-box {
+          padding: 1.5rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 1rem;
+          transition: all 250ms;
+        }
+        .stat-box:hover {
+          border-color: var(--border-default);
+          transform: translateY(-2px);
+        }
+        .stat-box .s-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+        .stat-box .s-val { font-size: 1.75rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+        .stat-box .s-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+        .dash-section { margin-bottom: 2rem; }
+        .dash-section-title {
+          font-size: 1.1rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .target-exams-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 1rem;
+        }
+        .target-exam-card {
+          padding: 1.25rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 1rem;
+          cursor: pointer;
+          transition: all 250ms;
+        }
+        .target-exam-card:hover {
+          border-color: var(--border-default);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .tec-header {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-bottom: 0.75rem;
+        }
+        .tec-icon { font-size: 1.75rem; }
+        .tec-name { font-weight: 700; font-size: 1rem; }
+        .tec-category { font-size: 0.7rem; color: var(--text-tertiary); }
+        .tec-stat {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.8rem;
+          color: var(--text-secondary);
+          padding: 0.35rem 0;
+          border-top: 1px solid var(--border-subtle);
+        }
+        .tec-stat span:last-child { font-weight: 600; color: var(--text-primary); font-family: 'JetBrains Mono', monospace; }
+
+        .trend-pills {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+        .trend-pill {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 0.75rem;
+          font-size: 0.85rem;
+          transition: all 200ms;
+        }
+        .trend-pill:hover {
+          border-color: var(--accent-blue);
+          transform: translateY(-1px);
+        }
+        .tp-score {
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+          padding: 0.15rem 0.4rem;
+          border-radius: 0.25rem;
+        }
+        .tp-score.high { background: rgba(16,185,129,0.15); color: #10b981; }
+        .tp-score.med { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+        .quick-actions {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1rem;
+        }
+        .quick-action {
+          padding: 1.5rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 1rem;
+          text-align: center;
+          cursor: pointer;
+          transition: all 250ms;
+          text-decoration: none;
+          color: inherit;
+        }
+        .quick-action:hover {
+          border-color: var(--border-strong);
+          transform: translateY(-3px);
+          box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .qa-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .qa-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+        .qa-sub { font-size: 0.8rem; color: var(--text-secondary); }
+
+        @media (max-width: 768px) {
+          .stats-row { grid-template-columns: repeat(2, 1fr); }
+          .quick-actions { grid-template-columns: 1fr; }
+          .dash-body { padding: 1rem; }
+        }
+      `}</style>
+
+      <div className="dash-header">
+        <h1 className="dash-greeting">
+          Welcome back, <span className="name">{profile.name}</span> 👋
+        </h1>
+        <p className="dash-sub">
+          {profile.targetExams.length} target exam{profile.targetExams.length !== 1 ? 's' : ''} •{' '}
+          Day {Math.max(1, Math.floor((Date.now() - new Date(profile.joinedAt).getTime()) / 86400000))} of your prep journey
+        </p>
+      </div>
+
+      <div className="dash-body">
+        {/* Stats */}
+        <div className="stats-row">
+          <div className="stat-box">
+            <div className="s-icon">🔥</div>
+            <div className="s-val">{profile.streak}</div>
+            <div className="s-label">Day Streak</div>
+          </div>
+          <div className="stat-box">
+            <div className="s-icon">✅</div>
+            <div className="s-val">{totalAttempted}</div>
+            <div className="s-label">Questions Attempted</div>
+          </div>
+          <div className="stat-box">
+            <div className="s-icon">🎯</div>
+            <div className="s-val">{accuracy}%</div>
+            <div className="s-label">Overall Accuracy</div>
+          </div>
+          <div className="stat-box">
+            <div className="s-icon">📚</div>
+            <div className="s-val">{sessions.length}</div>
+            <div className="s-label">Practice Sessions</div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="dash-section">
+          <h2 className="dash-section-title">⚡ Quick Actions</h2>
+          <div className="quick-actions">
+            <Link href="/practice" className="quick-action">
+              <div className="qa-icon">⏱️</div>
+              <div className="qa-title">Practice Questions</div>
+              <div className="qa-sub">Timed solving with PYQs</div>
+            </Link>
+            <Link href="/trends" className="quick-action">
+              <div className="qa-icon">🧠</div>
+              <div className="qa-title">View Trends</div>
+              <div className="qa-sub">See what&apos;s most asked</div>
+            </Link>
+            <Link href="/tutor" className="quick-action">
+              <div className="qa-icon">🤖</div>
+              <div className="qa-title">Ask AI Tutor</div>
+              <div className="qa-sub">Get doubt explanations</div>
+            </Link>
+          </div>
+        </div>
+
+        {/* Target Exams */}
+        <div className="dash-section">
+          <h2 className="dash-section-title">🎯 Your Target Exams</h2>
+          <div className="target-exams-grid">
+            {targetExamData.map(exam => {
+              if (!exam) return null;
+              const examQuestions = getQuestionsByExam(exam.code);
+              const examTrends = getTrendsByExam(exam.code);
+              return (
+                <Link href={`/practice?exam=${exam.code}`} key={exam.code} className="target-exam-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className="tec-header">
+                    <span className="tec-icon">{exam.icon}</span>
+                    <div>
+                      <div className="tec-name">{exam.name}</div>
+                      <div className="tec-category">{exam.category}</div>
+                    </div>
+                  </div>
+                  <div className="tec-stat">
+                    <span>Questions Available</span>
+                    <span>{examQuestions.length}</span>
+                  </div>
+                  <div className="tec-stat">
+                    <span>Topics Tracked</span>
+                    <span>{examTrends.length}</span>
+                  </div>
+                  <div className="tec-stat">
+                    <span>Pattern</span>
+                    <span>{exam.totalQuestions}Q / {exam.totalTime}m</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Top Trends */}
+        <div className="dash-section">
+          <h2 className="dash-section-title">📈 High Priority Topics</h2>
+          <div className="trend-pills">
+            {uniqueTopTrends.map(trend => {
+              const topic = getTopicById(trend.topicId);
+              if (!topic) return null;
+              return (
+                <div key={`${trend.topicId}-${trend.examCode}`} className="trend-pill">
+                  <span className={`tp-score ${trend.predictionScore >= 90 ? 'high' : 'med'}`}>
+                    {trend.predictionScore}%
+                  </span>
+                  <span>{topic.name}</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                    {trend.difficultyTrend === 'harder' ? '📈' : trend.difficultyTrend === 'easier' ? '📉' : '➡️'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

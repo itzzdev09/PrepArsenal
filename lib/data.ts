@@ -1,0 +1,922 @@
+// PrepArsenal — Question Seed Data
+// Real PYQ-style questions for target exams with topic tagging
+
+export interface Question {
+  id: string;
+  examCode: string;
+  year: number;
+  shift?: string;
+  subject: string;
+  topic: string;
+  subtopic?: string;
+  questionText: string;
+  options: string[];
+  correctOption: number; // 0-indexed
+  explanation: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+export interface Exam {
+  code: string;
+  name: string;
+  fullName: string;
+  category: string;
+  subjects: string[];
+  totalQuestions: number;
+  totalTime: number; // minutes
+  negativeMark: number; // e.g., 0.25
+  icon: string;
+  color: string;
+}
+
+export interface Topic {
+  id: string;
+  name: string;
+  subject: string;
+  parentTopic?: string;
+  depth: number;
+}
+
+// ========== EXAMS ==========
+export const exams: Exam[] = [
+  {
+    code: 'SSC_CGL',
+    name: 'SSC CGL',
+    fullName: 'Staff Selection Commission - Combined Graduate Level',
+    category: 'SSC',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
+    totalQuestions: 100,
+    totalTime: 60,
+    negativeMark: 0.5,
+    icon: '🏛️',
+    color: '#3b82f6'
+  },
+  {
+    code: 'ACIO2',
+    name: 'ACIO-II',
+    fullName: 'Assistant Central Intelligence Officer Grade II',
+    category: 'Intelligence',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
+    totalQuestions: 100,
+    totalTime: 60,
+    negativeMark: 0.25,
+    icon: '🕵️',
+    color: '#8b5cf6'
+  },
+  {
+    code: 'RRB_NTPC',
+    name: 'RRB NTPC',
+    fullName: 'Railway Recruitment Board - Non Technical Popular Categories',
+    category: 'Railway',
+    subjects: ['Mathematics', 'Reasoning', 'General Awareness', 'General Science'],
+    totalQuestions: 100,
+    totalTime: 90,
+    negativeMark: 0.33,
+    icon: '🚂',
+    color: '#ef4444'
+  },
+  {
+    code: 'RBI_GRADEB',
+    name: 'RBI Grade B',
+    fullName: 'Reserve Bank of India - Grade B Officer',
+    category: 'Finance',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Finance & Economics'],
+    totalQuestions: 200,
+    totalTime: 120,
+    negativeMark: 0.25,
+    icon: '🏦',
+    color: '#10b981'
+  },
+  {
+    code: 'NABARD_GRADEA',
+    name: 'NABARD Grade A',
+    fullName: 'National Bank for Agriculture and Rural Development - Grade A',
+    category: 'Finance',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Agriculture & Rural Dev'],
+    totalQuestions: 200,
+    totalTime: 120,
+    negativeMark: 0.25,
+    icon: '🌾',
+    color: '#22c55e'
+  },
+  {
+    code: 'SEBI_GRADEA',
+    name: 'SEBI Grade A',
+    fullName: 'Securities and Exchange Board of India - Grade A Officer',
+    category: 'Finance',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Securities Markets'],
+    totalQuestions: 200,
+    totalTime: 120,
+    negativeMark: 0.25,
+    icon: '📈',
+    color: '#f59e0b'
+  },
+  {
+    code: 'LIC_AAO',
+    name: 'LIC AAO',
+    fullName: 'Life Insurance Corporation - Assistant Administrative Officer',
+    category: 'Insurance',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Insurance'],
+    totalQuestions: 160,
+    totalTime: 120,
+    negativeMark: 0.25,
+    icon: '🛡️',
+    color: '#06b6d4'
+  },
+  {
+    code: 'UPSC_APFO',
+    name: 'UPSC APFO',
+    fullName: 'Assistant Provident Fund Commissioner',
+    category: 'UPSC',
+    subjects: ['General Studies', 'Accounts', 'Quantitative Aptitude', 'English'],
+    totalQuestions: 120,
+    totalTime: 120,
+    negativeMark: 0.33,
+    icon: '📋',
+    color: '#ec4899'
+  },
+  {
+    code: 'IRDA',
+    name: 'IRDAI Assistant',
+    fullName: 'Insurance Regulatory and Development Authority of India',
+    category: 'Insurance',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
+    totalQuestions: 100,
+    totalTime: 60,
+    negativeMark: 0.25,
+    icon: '📑',
+    color: '#a855f7'
+  }
+];
+
+// ========== TOPICS ==========
+export const topics: Topic[] = [
+  // Quantitative Aptitude
+  { id: 'qa_percentage', name: 'Percentage', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_profit_loss', name: 'Profit & Loss', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_si_ci', name: 'Simple & Compound Interest', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_ratio', name: 'Ratio & Proportion', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_average', name: 'Average', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_tsd', name: 'Time, Speed & Distance', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_tw', name: 'Time & Work', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_number', name: 'Number System', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_algebra', name: 'Algebra', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_geometry', name: 'Geometry', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_mensuration', name: 'Mensuration', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_trigonometry', name: 'Trigonometry', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_di', name: 'Data Interpretation', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_mixture', name: 'Mixture & Alligation', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_permutation', name: 'Permutation & Combination', subject: 'Quantitative Aptitude', depth: 0 },
+  { id: 'qa_probability', name: 'Probability', subject: 'Quantitative Aptitude', depth: 0 },
+
+  // Reasoning
+  { id: 'lr_analogy', name: 'Analogy', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_series', name: 'Series', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_coding', name: 'Coding-Decoding', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_blood', name: 'Blood Relations', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_direction', name: 'Direction & Distance', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_syllogism', name: 'Syllogism', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_seating', name: 'Seating Arrangement', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_puzzle', name: 'Puzzles', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_inequality', name: 'Inequality', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_classification', name: 'Classification', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_ranking', name: 'Ranking & Order', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_venn', name: 'Venn Diagrams', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_statement', name: 'Statement & Conclusion', subject: 'Reasoning', depth: 0 },
+  { id: 'lr_matrix', name: 'Matrix Arrangement', subject: 'Reasoning', depth: 0 },
+
+  // English
+  { id: 'en_rc', name: 'Reading Comprehension', subject: 'English', depth: 0 },
+  { id: 'en_cloze', name: 'Cloze Test', subject: 'English', depth: 0 },
+  { id: 'en_error', name: 'Error Spotting', subject: 'English', depth: 0 },
+  { id: 'en_vocab', name: 'Vocabulary', subject: 'English', depth: 0 },
+  { id: 'en_synonym', name: 'Synonyms & Antonyms', subject: 'English', depth: 0 },
+  { id: 'en_idiom', name: 'Idioms & Phrases', subject: 'English', depth: 0 },
+  { id: 'en_oneword', name: 'One Word Substitution', subject: 'English', depth: 0 },
+  { id: 'en_para', name: 'Para Jumbles', subject: 'English', depth: 0 },
+  { id: 'en_fillblank', name: 'Fill in the Blanks', subject: 'English', depth: 0 },
+  { id: 'en_sentence', name: 'Sentence Improvement', subject: 'English', depth: 0 },
+  { id: 'en_active_passive', name: 'Active/Passive Voice', subject: 'English', depth: 0 },
+  { id: 'en_direct_indirect', name: 'Direct/Indirect Speech', subject: 'English', depth: 0 },
+
+  // General Awareness
+  { id: 'ga_history', name: 'History', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_polity', name: 'Indian Polity', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_geography', name: 'Geography', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_economy', name: 'Economy', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_science', name: 'General Science', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_current', name: 'Current Affairs', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_static', name: 'Static GK', subject: 'General Awareness', depth: 0 },
+  { id: 'ga_computer', name: 'Computer Knowledge', subject: 'General Awareness', depth: 0 },
+
+  // Finance & Economics (for RBI, NABARD, SEBI, LIC)
+  { id: 'fe_banking', name: 'Banking Awareness', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_rbi', name: 'RBI Functions & Policies', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_monetary', name: 'Monetary Policy', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_fiscal', name: 'Fiscal Policy', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_market', name: 'Financial Markets', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_insurance', name: 'Insurance Principles', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_securities', name: 'Securities & Regulations', subject: 'Finance & Economics', depth: 0 },
+  { id: 'fe_international', name: 'International Economy', subject: 'Finance & Economics', depth: 0 },
+];
+
+// ========== QUESTIONS (Seed Data — PYQ-style) ==========
+export const questions: Question[] = [
+  // ===== QUANTITATIVE APTITUDE =====
+  {
+    id: 'q001', examCode: 'SSC_CGL', year: 2023, shift: 'Shift 1',
+    subject: 'Quantitative Aptitude', topic: 'Percentage', subtopic: 'Basic',
+    questionText: 'If the price of an article is increased by 20% and then decreased by 20%, what is the net change in price?',
+    options: ['No change', '4% decrease', '4% increase', '2% decrease'],
+    correctOption: 1,
+    explanation: 'When a value is increased by x% and then decreased by x%, the net change is always -(x²/100)%. Here: -(20²/100) = -4%. So the price decreases by 4%.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q002', examCode: 'SSC_CGL', year: 2023, shift: 'Shift 2',
+    subject: 'Quantitative Aptitude', topic: 'Profit & Loss',
+    questionText: 'A shopkeeper marks his goods 40% above the cost price and gives a discount of 25%. What is his profit percentage?',
+    options: ['5%', '10%', '15%', '12%'],
+    correctOption: 0,
+    explanation: 'Let CP = 100. MP = 140. After 25% discount, SP = 140 × 0.75 = 105. Profit = 5%.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q003', examCode: 'SSC_CGL', year: 2022, shift: 'Shift 1',
+    subject: 'Quantitative Aptitude', topic: 'Simple & Compound Interest',
+    questionText: 'The difference between CI and SI on a sum of ₹8,000 at 10% p.a. for 2 years is:',
+    options: ['₹60', '₹80', '₹100', '₹120'],
+    correctOption: 1,
+    explanation: 'For 2 years, CI - SI = P(R/100)² = 8000 × (10/100)² = 8000 × 0.01 = ₹80.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q004', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Data Interpretation',
+    questionText: 'In a company, the ratio of male to female employees is 3:2. If 20% of males and 30% of females are in the HR department, and the total number of employees is 500, how many employees are in the HR department?',
+    options: ['120', '130', '115', '125'],
+    correctOption: 0,
+    explanation: 'Males = 500 × 3/5 = 300, Females = 500 × 2/5 = 200. HR males = 300 × 0.2 = 60. HR females = 200 × 0.3 = 60. Total HR = 120.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q005', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Time, Speed & Distance',
+    questionText: 'A train 300m long crosses a bridge 200m long in 25 seconds. What is the speed of the train?',
+    options: ['72 km/h', '80 km/h', '60 km/h', '54 km/h'],
+    correctOption: 0,
+    explanation: 'Total distance = 300 + 200 = 500m. Speed = 500/25 = 20 m/s = 20 × 18/5 = 72 km/h.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q006', examCode: 'RRB_NTPC', year: 2021,
+    subject: 'Quantitative Aptitude', topic: 'Time & Work',
+    questionText: 'A can complete a work in 12 days and B can complete it in 18 days. If they work together, in how many days will the work be completed?',
+    options: ['7.2 days', '8 days', '6 days', '9 days'],
+    correctOption: 0,
+    explanation: 'A\'s rate = 1/12, B\'s rate = 1/18. Combined = 1/12 + 1/18 = 5/36. Time = 36/5 = 7.2 days.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q007', examCode: 'SEBI_GRADEA', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Ratio & Proportion',
+    questionText: 'The ratio of ages of A and B is 4:3. After 6 years, the ratio becomes 5:4. What is the present age of A?',
+    options: ['24 years', '20 years', '28 years', '32 years'],
+    correctOption: 0,
+    explanation: 'Let ages be 4x and 3x. After 6 years: (4x+6)/(3x+6) = 5/4. Cross multiply: 16x+24 = 15x+30. x = 6. A\'s age = 4×6 = 24.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q008', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Average',
+    questionText: 'The average of 5 consecutive odd numbers is 41. What is the largest number?',
+    options: ['43', '45', '47', '49'],
+    correctOption: 1,
+    explanation: 'For consecutive odd numbers, the average is the middle number. So the numbers are 37, 39, 41, 43, 45. Largest = 45.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q009', examCode: 'RBI_GRADEB', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Probability',
+    questionText: 'Two dice are thrown simultaneously. What is the probability that the sum is more than 10?',
+    options: ['1/12', '1/6', '1/9', '1/18'],
+    correctOption: 0,
+    explanation: 'Favorable outcomes for sum > 10: (5,6), (6,5), (6,6) = 3 outcomes. Total = 36. P = 3/36 = 1/12.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q010', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Mensuration',
+    questionText: 'The radius of a cylinder is 7 cm and its height is 10 cm. Find the curved surface area.',
+    options: ['440 cm²', '420 cm²', '460 cm²', '400 cm²'],
+    correctOption: 0,
+    explanation: 'CSA = 2πrh = 2 × 22/7 × 7 × 10 = 440 cm².',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q011', examCode: 'NABARD_GRADEA', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Mixture & Alligation',
+    questionText: 'Two varieties of wheat costing ₹20/kg and ₹35/kg are mixed in the ratio 3:2. What is the cost of the mixture per kg?',
+    options: ['₹26/kg', '₹28/kg', '₹25/kg', '₹30/kg'],
+    correctOption: 0,
+    explanation: 'Cost = (20×3 + 35×2)/(3+2) = (60+70)/5 = 130/5 = ₹26/kg.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q012', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Algebra',
+    questionText: 'If x + 1/x = 5, find the value of x² + 1/x².',
+    options: ['23', '25', '27', '21'],
+    correctOption: 0,
+    explanation: '(x + 1/x)² = x² + 2 + 1/x². So x² + 1/x² = 5² - 2 = 23.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q013', examCode: 'LIC_AAO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Number System',
+    questionText: 'What is the remainder when 7^256 is divided by 10?',
+    options: ['1', '3', '7', '9'],
+    correctOption: 0,
+    explanation: 'Powers of 7 mod 10 cycle: 7,9,3,1 (cycle of 4). 256/4 = 64 with 0 remainder. So 7^256 mod 10 = 1.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q014', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Geometry',
+    questionText: 'In triangle ABC, if angle A = 70° and angle B = 50°, then angle C is:',
+    options: ['50°', '60°', '70°', '80°'],
+    correctOption: 1,
+    explanation: 'Sum of angles in a triangle = 180°. angle C = 180° - 70° - 50° = 60°.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q015', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Trigonometry',
+    questionText: 'If sin θ = 3/5, what is the value of cos θ?',
+    options: ['3/5', '4/5', '5/3', '5/4'],
+    correctOption: 1,
+    explanation: 'sin²θ + cos²θ = 1. cos²θ = 1 - 9/25 = 16/25. cos θ = 4/5.',
+    difficulty: 'easy'
+  },
+  
+  // ===== REASONING =====
+  {
+    id: 'q016', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Reasoning', topic: 'Analogy',
+    questionText: 'Doctor : Hospital :: Teacher : ?',
+    options: ['College', 'School', 'Education', 'Student'],
+    correctOption: 1,
+    explanation: 'A Doctor works in a Hospital, similarly a Teacher works in a School.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q017', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Reasoning', topic: 'Series',
+    questionText: 'Find the next number in the series: 2, 6, 12, 20, 30, ?',
+    options: ['40', '42', '44', '46'],
+    correctOption: 1,
+    explanation: 'Differences: 4, 6, 8, 10, 12. The pattern of differences increases by 2. So next = 30 + 12 = 42.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q018', examCode: 'RRB_NTPC', year: 2022,
+    subject: 'Reasoning', topic: 'Coding-Decoding',
+    questionText: 'If COMPUTER is coded as DPNQVUFS, how is PRINTER coded?',
+    options: ['QSJOUFS', 'QSJOUES', 'QSJOUFT', 'QSJOUES'],
+    correctOption: 0,
+    explanation: 'Each letter is replaced by the next letter in the alphabet (+1). P→Q, R→S, I→J, N→O, T→U, E→F, R→S.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q019', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Reasoning', topic: 'Blood Relations',
+    questionText: 'Pointing to a photograph, Arun said, "He is the son of the only daughter of the father of my brother." How is the person in the photograph related to Arun?',
+    options: ['Nephew', 'Son', 'Brother', 'Uncle'],
+    correctOption: 0,
+    explanation: 'Father of my brother = my father. Only daughter of my father = my sister. Son of my sister = my nephew.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q020', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Reasoning', topic: 'Syllogism',
+    questionText: 'Statements: All cats are dogs. Some dogs are tigers. Conclusions: I. Some cats are tigers. II. Some tigers are dogs.',
+    options: ['Only I follows', 'Only II follows', 'Both follow', 'Neither follows'],
+    correctOption: 1,
+    explanation: 'From "All cats are dogs" and "Some dogs are tigers", we cannot definitively say some cats are tigers (I doesn\'t follow). But the converse of "Some dogs are tigers" gives "Some tigers are dogs" (II follows).',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q021', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Reasoning', topic: 'Direction & Distance',
+    questionText: 'Ravi walks 10m north, then turns right and walks 15m, then turns right and walks 10m. How far is he from the starting point?',
+    options: ['10m', '15m', '25m', '5m'],
+    correctOption: 1,
+    explanation: 'After walking N(10m), E(15m), S(10m), he is back on the same latitude as start but 15m to the east. Distance = 15m.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q022', examCode: 'ACIO2', year: 2022,
+    subject: 'Reasoning', topic: 'Classification',
+    questionText: 'Find the odd one out: 121, 144, 169, __(196)__, __(224)__, 225',
+    options: ['121', '224', '169', '225'],
+    correctOption: 1,
+    explanation: '121=11², 144=12², 169=13², 196=14², 225=15². 224 is NOT a perfect square, so it\'s the odd one.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q023', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Reasoning', topic: 'Ranking & Order',
+    questionText: 'In a row of 40 students, Rajan is 13th from the left and Mohan is 18th from the right. How many students are between them?',
+    options: ['9', '10', '11', '8'],
+    correctOption: 1,
+    explanation: 'Mohan\'s position from left = 40 - 18 + 1 = 23rd. Students between 13th and 23rd = 23 - 13 - 1 = 9. Wait, let me recalculate: positions 14,15,16,17,18,19,20,21,22 = 9 students. Actually 23-13-1=9.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q024', examCode: 'LIC_AAO', year: 2022,
+    subject: 'Reasoning', topic: 'Inequality',
+    questionText: 'Statements: A > B ≥ C, C = D > E. Conclusions: I. A > D  II. B ≥ E',
+    options: ['Only I follows', 'Only II follows', 'Both follow', 'Neither follows'],
+    correctOption: 2,
+    explanation: 'A > B ≥ C = D, so A > D (I follows). B ≥ C = D > E, so B ≥ E (II follows). Both follow.',
+    difficulty: 'medium'
+  },
+
+  // ===== ENGLISH =====
+  {
+    id: 'q025', examCode: 'SSC_CGL', year: 2023,
+    subject: 'English', topic: 'Synonyms & Antonyms',
+    questionText: 'Choose the synonym of "AMBIGUOUS":',
+    options: ['Clear', 'Vague', 'Definite', 'Precise'],
+    correctOption: 1,
+    explanation: 'Ambiguous means unclear or having multiple meanings. Vague is the closest synonym.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q026', examCode: 'SSC_CGL', year: 2022,
+    subject: 'English', topic: 'Idioms & Phrases',
+    questionText: 'What does the idiom "A bolt from the blue" mean?',
+    options: ['A thunderstorm', 'A sudden unexpected event', 'A blue sky', 'A fast runner'],
+    correctOption: 1,
+    explanation: '"A bolt from the blue" means a sudden and unexpected event, like lightning from a clear sky.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q027', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Find the error: "Neither the manager (A) / nor the employees (B) / was present (C) / at the meeting (D)."',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 2,
+    explanation: 'With "neither...nor", the verb agrees with the subject closest to it ("employees" - plural). So it should be "were present".',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q028', examCode: 'SSC_CGL', year: 2023,
+    subject: 'English', topic: 'One Word Substitution',
+    questionText: 'One who cannot be corrected:',
+    options: ['Incorrigible', 'Invincible', 'Impregnable', 'Inevitable'],
+    correctOption: 0,
+    explanation: 'Incorrigible means a person who cannot be reformed or corrected.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q029', examCode: 'ACIO2', year: 2023,
+    subject: 'English', topic: 'Fill in the Blanks',
+    questionText: 'The committee has been asked to _____ a report by the end of this month.',
+    options: ['submit', 'submitted', 'submitting', 'submits'],
+    correctOption: 0,
+    explanation: 'After "asked to", we use the base form of the verb (infinitive without to in this construction). "Submit" is correct.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q030', examCode: 'SSC_CGL', year: 2022,
+    subject: 'English', topic: 'Sentence Improvement',
+    questionText: '"He has been working here since three years." Which part needs improvement?',
+    options: ['"since" should be replaced with "for"', '"has been" should be "was"', '"working" should be "worked"', 'No improvement needed'],
+    correctOption: 0,
+    explanation: 'With a duration of time (three years), we use "for" not "since". "Since" is used with a point in time.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q031', examCode: 'RBI_GRADEB', year: 2022,
+    subject: 'English', topic: 'Vocabulary',
+    questionText: 'Choose the antonym of "BENEVOLENT":',
+    options: ['Generous', 'Malevolent', 'Kind', 'Compassionate'],
+    correctOption: 1,
+    explanation: 'Benevolent means well-meaning and kindly. Malevolent (ill-intentioned) is its antonym.',
+    difficulty: 'easy'
+  },
+
+  // ===== GENERAL AWARENESS =====
+  {
+    id: 'q032', examCode: 'SSC_CGL', year: 2023,
+    subject: 'General Awareness', topic: 'Indian Polity',
+    questionText: 'The Indian Constitution was adopted on:',
+    options: ['26 January 1950', '15 August 1947', '26 November 1949', '2 October 1950'],
+    correctOption: 2,
+    explanation: 'The Indian Constitution was adopted on 26 November 1949 by the Constituent Assembly and came into effect on 26 January 1950.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q033', examCode: 'SSC_CGL', year: 2023,
+    subject: 'General Awareness', topic: 'History',
+    questionText: 'The Battle of Plassey was fought in the year:',
+    options: ['1755', '1757', '1761', '1764'],
+    correctOption: 1,
+    explanation: 'The Battle of Plassey was fought in 1757 between the British East India Company and the Nawab of Bengal, Siraj-ud-Daulah.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q034', examCode: 'RRB_NTPC', year: 2022,
+    subject: 'General Awareness', topic: 'Geography',
+    questionText: 'Which is the longest river in India?',
+    options: ['Godavari', 'Ganga', 'Brahmaputra', 'Krishna'],
+    correctOption: 1,
+    explanation: 'The Ganga (Ganges) is the longest river in India, flowing approximately 2,525 km through the country.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q035', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'General Awareness', topic: 'Economy',
+    questionText: 'The fiscal deficit is defined as:',
+    options: [
+      'Total expenditure - Total receipts excluding borrowings',
+      'Revenue expenditure - Revenue receipts',
+      'Total expenditure - Total receipts',
+      'Capital expenditure - Capital receipts'
+    ],
+    correctOption: 0,
+    explanation: 'Fiscal Deficit = Total Expenditure - Total Receipts (excluding borrowings). It indicates the total borrowing needs of the government.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q036', examCode: 'RRB_NTPC', year: 2022,
+    subject: 'General Awareness', topic: 'General Science',
+    questionText: 'Which vitamin is produced in the human body when exposed to sunlight?',
+    options: ['Vitamin A', 'Vitamin B12', 'Vitamin C', 'Vitamin D'],
+    correctOption: 3,
+    explanation: 'Vitamin D is synthesized in the skin when it is exposed to ultraviolet B (UVB) radiation from sunlight.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q037', examCode: 'SSC_CGL', year: 2022,
+    subject: 'General Awareness', topic: 'Indian Polity',
+    questionText: 'How many Fundamental Rights are recognized by the Indian Constitution?',
+    options: ['5', '6', '7', '8'],
+    correctOption: 1,
+    explanation: 'The Indian Constitution recognizes 6 Fundamental Rights (Articles 14-32): Equality, Freedom, Against Exploitation, Religion, Cultural & Educational Rights, and Constitutional Remedies.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q038', examCode: 'NABARD_GRADEA', year: 2023,
+    subject: 'General Awareness', topic: 'Economy',
+    questionText: 'The Minimum Support Price (MSP) is announced by which body?',
+    options: ['RBI', 'NABARD', 'CACP (now CCEA)', 'NITI Aayog'],
+    correctOption: 2,
+    explanation: 'MSP is recommended by the Commission for Agricultural Costs and Prices (CACP) and approved by the Cabinet Committee on Economic Affairs (CCEA).',
+    difficulty: 'medium'
+  },
+
+  // ===== FINANCE & ECONOMICS =====
+  {
+    id: 'q039', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Finance & Economics', topic: 'RBI Functions & Policies',
+    questionText: 'The Monetary Policy Committee (MPC) of RBI consists of how many members?',
+    options: ['4', '5', '6', '7'],
+    correctOption: 2,
+    explanation: 'The MPC consists of 6 members — 3 from RBI (Governor as chairperson, Deputy Governor, one RBI officer) and 3 external members appointed by the Government.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q040', examCode: 'RBI_GRADEB', year: 2022,
+    subject: 'Finance & Economics', topic: 'Monetary Policy',
+    questionText: 'The repo rate is the rate at which:',
+    options: [
+      'RBI lends to commercial banks',
+      'Commercial banks lend to RBI',
+      'Commercial banks lend to the public',
+      'RBI lends to the Government'
+    ],
+    correctOption: 0,
+    explanation: 'Repo (Repurchase Agreement) rate is the rate at which the RBI lends money to commercial banks against government securities.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q041', examCode: 'SEBI_GRADEA', year: 2023,
+    subject: 'Finance & Economics', topic: 'Securities & Regulations',
+    questionText: 'SEBI was established as a statutory body in which year?',
+    options: ['1988', '1990', '1992', '1994'],
+    correctOption: 2,
+    explanation: 'SEBI was established as a statutory body through the SEBI Act, 1992 (it was initially set up in 1988 as a non-statutory body).',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q042', examCode: 'LIC_AAO', year: 2023,
+    subject: 'Finance & Economics', topic: 'Insurance Principles',
+    questionText: 'The principle of "Utmost Good Faith" (Uberrima Fides) in insurance means:',
+    options: [
+      'Both parties must disclose all material facts honestly',
+      'The insurer must always pay the claim',
+      'Premium must be paid in good faith',
+      'Only the insured must be honest'
+    ],
+    correctOption: 0,
+    explanation: 'Utmost Good Faith requires both the insurer and the insured to disclose all material facts honestly and completely. Failure to do so can void the contract.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q043', examCode: 'NABARD_GRADEA', year: 2022,
+    subject: 'Finance & Economics', topic: 'Banking Awareness',
+    questionText: 'Priority Sector Lending (PSL) target for domestic scheduled commercial banks is:',
+    options: ['30% of ANBC', '35% of ANBC', '40% of ANBC', '45% of ANBC'],
+    correctOption: 2,
+    explanation: 'Domestic scheduled commercial banks must lend 40% of their Adjusted Net Bank Credit (ANBC) to priority sectors like agriculture, MSME, education, etc.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q044', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Finance & Economics', topic: 'Financial Markets',
+    questionText: 'Which of the following is NOT a money market instrument?',
+    options: ['Treasury Bill', 'Commercial Paper', 'Equity Share', 'Certificate of Deposit'],
+    correctOption: 2,
+    explanation: 'Equity Shares are capital market instruments (long-term). Treasury Bills, Commercial Papers, and CDs are all short-term money market instruments.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q045', examCode: 'SEBI_GRADEA', year: 2022,
+    subject: 'Finance & Economics', topic: 'Securities & Regulations',
+    questionText: 'What is the minimum lot size for trading in the futures market as prescribed by SEBI?',
+    options: ['₹2 lakh', '₹5 lakh', '₹10 lakh', '₹15 lakh'],
+    correctOption: 1,
+    explanation: 'SEBI mandates a minimum lot size of ₹5 lakh (notional value) for trading in the futures & options segment.',
+    difficulty: 'medium'
+  },
+
+  // ===== More cross-exam questions =====
+  {
+    id: 'q046', examCode: 'ACIO2', year: 2023,
+    subject: 'General Awareness', topic: 'Indian Polity',
+    questionText: 'Which Article of the Indian Constitution deals with the Right to Constitutional Remedies?',
+    options: ['Article 19', 'Article 21', 'Article 32', 'Article 44'],
+    correctOption: 2,
+    explanation: 'Article 32 provides the Right to Constitutional Remedies, which Dr. B.R. Ambedkar called the "heart and soul" of the Constitution.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q047', examCode: 'UPSC_APFO', year: 2022,
+    subject: 'General Awareness', topic: 'Indian Polity',
+    questionText: 'The Comptroller and Auditor General of India (CAG) is appointed under which Article?',
+    options: ['Article 148', 'Article 155', 'Article 165', 'Article 280'],
+    correctOption: 0,
+    explanation: 'Article 148 of the Constitution provides for the CAG of India, who audits the accounts of the Union and State governments.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q048', examCode: 'SSC_CGL', year: 2023,
+    subject: 'General Awareness', topic: 'Static GK',
+    questionText: 'Kaziranga National Park is famous for:',
+    options: ['Bengal Tiger', 'One-horned Rhinoceros', 'Asiatic Lion', 'Snow Leopard'],
+    correctOption: 1,
+    explanation: 'Kaziranga National Park in Assam is famous for the Indian one-horned rhinoceros and is a UNESCO World Heritage Site.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q049', examCode: 'RRB_NTPC', year: 2021,
+    subject: 'General Awareness', topic: 'General Science',
+    questionText: 'The chemical formula of common salt is:',
+    options: ['NaCl', 'KCl', 'CaCl₂', 'MgCl₂'],
+    correctOption: 0,
+    explanation: 'Common salt (table salt) is Sodium Chloride with the chemical formula NaCl.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q050', examCode: 'SSC_CGL', year: 2022,
+    subject: 'General Awareness', topic: 'History',
+    questionText: 'Who founded the Arya Samaj?',
+    options: ['Raja Ram Mohan Roy', 'Swami Dayanand Saraswati', 'Swami Vivekananda', 'Ishwar Chandra Vidyasagar'],
+    correctOption: 1,
+    explanation: 'Swami Dayanand Saraswati founded the Arya Samaj in 1875 in Bombay (now Mumbai) to reform Hindu society.',
+    difficulty: 'easy'
+  },
+
+  // More Quant — Medium/Hard
+  {
+    id: 'q051', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Percentage',
+    questionText: 'In an election, candidate A gets 60% of total votes. If candidate A wins by 7200 votes, what is the total number of votes?',
+    options: ['36000', '30000', '24000', '18000'],
+    correctOption: 0,
+    explanation: 'A gets 60%, B gets 40%. Difference = 20% = 7200. Total votes = 7200/0.20 = 36000.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q052', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Simple & Compound Interest',
+    questionText: 'At what rate of compound interest will ₹10,000 amount to ₹13,310 in 3 years?',
+    options: ['8%', '10%', '12%', '15%'],
+    correctOption: 1,
+    explanation: 'A = P(1+R/100)^n. 13310 = 10000(1+R/100)³. (1+R/100)³ = 1.331 = 1.1³. R = 10%.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q053', examCode: 'SSC_CGL', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Profit & Loss',
+    questionText: 'A man bought 20 articles for ₹60 and sold them at ₹4 each. His gain percentage is:',
+    options: ['25%', '30%', '33.33%', '20%'],
+    correctOption: 2,
+    explanation: 'CP of 20 articles = ₹60 (₹3 each). SP = ₹4 each. Profit per article = ₹1. Gain% = (1/3)×100 = 33.33%.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q054', examCode: 'SEBI_GRADEA', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Permutation & Combination',
+    questionText: 'In how many ways can 5 people be seated in a row?',
+    options: ['60', '120', '24', '720'],
+    correctOption: 1,
+    explanation: '5 people in a row = 5! = 5×4×3×2×1 = 120 ways.',
+    difficulty: 'easy'
+  },
+
+  // More Reasoning — variety
+  {
+    id: 'q055', examCode: 'SSC_CGL', year: 2023,
+    subject: 'Reasoning', topic: 'Venn Diagrams',
+    questionText: 'Which diagram best represents the relationship: India, Asia, World?',
+    options: ['Three separate circles', 'Three concentric circles (India inside Asia inside World)', 'Overlapping circles', 'Two circles inside one'],
+    correctOption: 1,
+    explanation: 'India is part of Asia, and Asia is part of the World. So they form concentric circles with India innermost.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q056', examCode: 'RBI_GRADEB', year: 2022,
+    subject: 'Reasoning', topic: 'Statement & Conclusion',
+    questionText: 'Statement: "All employees must attend the training program." Assumptions: I. Training improves performance. II. All employees need improvement.',
+    options: ['Only I is implicit', 'Only II is implicit', 'Both are implicit', 'Neither is implicit'],
+    correctOption: 0,
+    explanation: 'The statement implies training is beneficial (Assumption I). But it doesn\'t assume all employees NEED improvement — it could be for skill upgrade or compliance (Assumption II not necessarily implicit).',
+    difficulty: 'hard'
+  },
+
+  // More English
+  {
+    id: 'q057', examCode: 'SSC_CGL', year: 2023,
+    subject: 'English', topic: 'Active/Passive Voice',
+    questionText: 'Change to passive voice: "The manager will complete the project by Friday."',
+    options: [
+      'The project will be completed by the manager by Friday.',
+      'The project will completed by the manager by Friday.',
+      'The project will have completed by Friday by the manager.',
+      'By Friday the project will complete by the manager.'
+    ],
+    correctOption: 0,
+    explanation: 'Active (will + V1) → Passive (will be + V3). "The project will be completed by the manager by Friday."',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q058', examCode: 'SSC_CGL', year: 2022,
+    subject: 'English', topic: 'Direct/Indirect Speech',
+    questionText: 'He said, "I am going to the market." Change to indirect speech:',
+    options: [
+      'He said that he was going to the market.',
+      'He said that he is going to the market.',
+      'He said that I am going to the market.',
+      'He told that he was going to the market.'
+    ],
+    correctOption: 0,
+    explanation: 'In indirect speech, "I am" changes to "he was" (pronoun change + tense shift). "He said that he was going to the market."',
+    difficulty: 'easy'
+  },
+
+  // More GA for cross-exam coverage
+  {
+    id: 'q059', examCode: 'SSC_CGL', year: 2023,
+    subject: 'General Awareness', topic: 'Geography',
+    questionText: 'Which state has the longest coastline in India?',
+    options: ['Gujarat', 'Tamil Nadu', 'Maharashtra', 'Andhra Pradesh'],
+    correctOption: 0,
+    explanation: 'Gujarat has the longest coastline in India, approximately 1,600 km.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q060', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Finance & Economics', topic: 'Fiscal Policy',
+    questionText: 'The FRBM Act mandates the fiscal deficit target for the Central Government as:',
+    options: ['2% of GDP', '3% of GDP', '4% of GDP', '5% of GDP'],
+    correctOption: 1,
+    explanation: 'The Fiscal Responsibility and Budget Management (FRBM) Act targets fiscal deficit of 3% of GDP for the Central Government.',
+    difficulty: 'medium'
+  },
+];
+
+// ========== TREND DATA (Pre-computed) ==========
+export interface TrendData {
+  topicId: string;
+  examCode: string;
+  yearlyFrequency: Record<number, number>; // year -> count
+  predictionScore: number; // 0-100
+  difficultyTrend: 'easier' | 'stable' | 'harder';
+  avgQuestionsPerYear: number;
+}
+
+export const trendData: TrendData[] = [
+  // SSC CGL Trends
+  { topicId: 'qa_percentage', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 5}, predictionScore: 92, difficultyTrend: 'stable', avgQuestionsPerYear: 3.8 },
+  { topicId: 'qa_profit_loss', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 3, 2021: 3, 2022: 2, 2023: 3}, predictionScore: 88, difficultyTrend: 'stable', avgQuestionsPerYear: 2.6 },
+  { topicId: 'qa_si_ci', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 2, 2021: 3, 2022: 3, 2023: 2}, predictionScore: 85, difficultyTrend: 'stable', avgQuestionsPerYear: 2.4 },
+  { topicId: 'qa_tsd', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 3, 2021: 2, 2022: 3, 2023: 4}, predictionScore: 90, difficultyTrend: 'harder', avgQuestionsPerYear: 3.0 },
+  { topicId: 'qa_tw', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 2, 2021: 2, 2022: 3, 2023: 2}, predictionScore: 82, difficultyTrend: 'stable', avgQuestionsPerYear: 2.2 },
+  { topicId: 'qa_ratio', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 3, 2021: 2, 2022: 2, 2023: 3}, predictionScore: 85, difficultyTrend: 'stable', avgQuestionsPerYear: 2.4 },
+  { topicId: 'qa_algebra', examCode: 'SSC_CGL', yearlyFrequency: {2019: 4, 2020: 5, 2021: 4, 2022: 5, 2023: 6}, predictionScore: 95, difficultyTrend: 'harder', avgQuestionsPerYear: 4.8 },
+  { topicId: 'qa_geometry', examCode: 'SSC_CGL', yearlyFrequency: {2019: 4, 2020: 4, 2021: 5, 2022: 4, 2023: 5}, predictionScore: 93, difficultyTrend: 'harder', avgQuestionsPerYear: 4.4 },
+  { topicId: 'qa_trigonometry', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 3}, predictionScore: 88, difficultyTrend: 'stable', avgQuestionsPerYear: 3.4 },
+  { topicId: 'qa_mensuration', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 3, 2021: 3, 2022: 3, 2023: 3}, predictionScore: 87, difficultyTrend: 'stable', avgQuestionsPerYear: 2.8 },
+  { topicId: 'qa_di', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 4, 2021: 4, 2022: 5, 2023: 5}, predictionScore: 94, difficultyTrend: 'harder', avgQuestionsPerYear: 4.2 },
+  { topicId: 'qa_number', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 2, 2021: 1, 2022: 2, 2023: 2}, predictionScore: 75, difficultyTrend: 'stable', avgQuestionsPerYear: 1.8 },
+  { topicId: 'qa_average', examCode: 'SSC_CGL', yearlyFrequency: {2019: 1, 2020: 2, 2021: 2, 2022: 1, 2023: 2}, predictionScore: 72, difficultyTrend: 'easier', avgQuestionsPerYear: 1.6 },
+  { topicId: 'qa_mixture', examCode: 'SSC_CGL', yearlyFrequency: {2019: 1, 2020: 1, 2021: 2, 2022: 1, 2023: 1}, predictionScore: 65, difficultyTrend: 'stable', avgQuestionsPerYear: 1.2 },
+  { topicId: 'lr_analogy', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 3, 2021: 2, 2022: 3, 2023: 3}, predictionScore: 88, difficultyTrend: 'stable', avgQuestionsPerYear: 2.8 },
+  { topicId: 'lr_series', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 4}, predictionScore: 91, difficultyTrend: 'stable', avgQuestionsPerYear: 3.6 },
+  { topicId: 'lr_coding', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 2, 2021: 3, 2022: 2, 2023: 2}, predictionScore: 80, difficultyTrend: 'stable', avgQuestionsPerYear: 2.2 },
+  { topicId: 'lr_blood', examCode: 'SSC_CGL', yearlyFrequency: {2019: 1, 2020: 2, 2021: 1, 2022: 2, 2023: 1}, predictionScore: 70, difficultyTrend: 'stable', avgQuestionsPerYear: 1.4 },
+  { topicId: 'lr_syllogism', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 2, 2021: 2, 2022: 3, 2023: 2}, predictionScore: 82, difficultyTrend: 'stable', avgQuestionsPerYear: 2.2 },
+  { topicId: 'en_rc', examCode: 'SSC_CGL', yearlyFrequency: {2019: 5, 2020: 5, 2021: 5, 2022: 5, 2023: 5}, predictionScore: 98, difficultyTrend: 'stable', avgQuestionsPerYear: 5.0 },
+  { topicId: 'en_error', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 3, 2021: 4, 2022: 3, 2023: 4}, predictionScore: 90, difficultyTrend: 'stable', avgQuestionsPerYear: 3.4 },
+  { topicId: 'en_idiom', examCode: 'SSC_CGL', yearlyFrequency: {2019: 2, 2020: 3, 2021: 2, 2022: 3, 2023: 3}, predictionScore: 85, difficultyTrend: 'stable', avgQuestionsPerYear: 2.6 },
+  { topicId: 'en_synonym', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 2, 2021: 3, 2022: 3, 2023: 2}, predictionScore: 85, difficultyTrend: 'stable', avgQuestionsPerYear: 2.6 },
+  { topicId: 'ga_polity', examCode: 'SSC_CGL', yearlyFrequency: {2019: 4, 2020: 5, 2021: 4, 2022: 5, 2023: 5}, predictionScore: 95, difficultyTrend: 'stable', avgQuestionsPerYear: 4.6 },
+  { topicId: 'ga_history', examCode: 'SSC_CGL', yearlyFrequency: {2019: 4, 2020: 4, 2021: 5, 2022: 4, 2023: 5}, predictionScore: 93, difficultyTrend: 'stable', avgQuestionsPerYear: 4.4 },
+  { topicId: 'ga_geography', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 4}, predictionScore: 90, difficultyTrend: 'stable', avgQuestionsPerYear: 3.6 },
+  { topicId: 'ga_economy', examCode: 'SSC_CGL', yearlyFrequency: {2019: 3, 2020: 3, 2021: 4, 2022: 3, 2023: 4}, predictionScore: 88, difficultyTrend: 'harder', avgQuestionsPerYear: 3.4 },
+  { topicId: 'ga_science', examCode: 'SSC_CGL', yearlyFrequency: {2019: 4, 2020: 5, 2021: 4, 2022: 5, 2023: 4}, predictionScore: 92, difficultyTrend: 'stable', avgQuestionsPerYear: 4.4 },
+
+  // RBI Grade B Trends
+  { topicId: 'qa_di', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 8, 2020: 10, 2021: 9, 2022: 10, 2023: 12}, predictionScore: 97, difficultyTrend: 'harder', avgQuestionsPerYear: 9.8 },
+  { topicId: 'qa_probability', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 2, 2020: 3, 2021: 3, 2022: 2, 2023: 3}, predictionScore: 85, difficultyTrend: 'harder', avgQuestionsPerYear: 2.6 },
+  { topicId: 'qa_permutation', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 2, 2020: 2, 2021: 3, 2022: 2, 2023: 3}, predictionScore: 82, difficultyTrend: 'harder', avgQuestionsPerYear: 2.4 },
+  { topicId: 'lr_puzzle', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 5, 2020: 6, 2021: 5, 2022: 7, 2023: 7}, predictionScore: 95, difficultyTrend: 'harder', avgQuestionsPerYear: 6.0 },
+  { topicId: 'lr_seating', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 4, 2020: 5, 2021: 5, 2022: 5, 2023: 6}, predictionScore: 93, difficultyTrend: 'harder', avgQuestionsPerYear: 5.0 },
+  { topicId: 'lr_syllogism', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 4}, predictionScore: 90, difficultyTrend: 'stable', avgQuestionsPerYear: 3.6 },
+  { topicId: 'en_rc', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 8, 2020: 10, 2021: 8, 2022: 10, 2023: 10}, predictionScore: 98, difficultyTrend: 'harder', avgQuestionsPerYear: 9.2 },
+  { topicId: 'fe_rbi', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 5, 2020: 6, 2021: 6, 2022: 7, 2023: 8}, predictionScore: 97, difficultyTrend: 'harder', avgQuestionsPerYear: 6.4 },
+  { topicId: 'fe_monetary', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 4, 2020: 5, 2021: 5, 2022: 6, 2023: 6}, predictionScore: 95, difficultyTrend: 'harder', avgQuestionsPerYear: 5.2 },
+  { topicId: 'fe_market', examCode: 'RBI_GRADEB', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 5}, predictionScore: 90, difficultyTrend: 'harder', avgQuestionsPerYear: 3.8 },
+
+  // RRB NTPC Trends
+  { topicId: 'ga_science', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 8, 2020: 8, 2021: 9, 2022: 8, 2023: 9}, predictionScore: 96, difficultyTrend: 'stable', avgQuestionsPerYear: 8.4 },
+  { topicId: 'ga_polity', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 5, 2020: 6, 2021: 5, 2022: 6, 2023: 6}, predictionScore: 93, difficultyTrend: 'stable', avgQuestionsPerYear: 5.6 },
+  { topicId: 'ga_history', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 5, 2020: 5, 2021: 6, 2022: 5, 2023: 6}, predictionScore: 92, difficultyTrend: 'stable', avgQuestionsPerYear: 5.4 },
+  { topicId: 'ga_geography', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 4, 2020: 5, 2021: 4, 2022: 5, 2023: 5}, predictionScore: 90, difficultyTrend: 'stable', avgQuestionsPerYear: 4.6 },
+  { topicId: 'qa_percentage', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 2, 2020: 3, 2021: 2, 2022: 3, 2023: 3}, predictionScore: 85, difficultyTrend: 'stable', avgQuestionsPerYear: 2.6 },
+  { topicId: 'lr_analogy', examCode: 'RRB_NTPC', yearlyFrequency: {2019: 3, 2020: 4, 2021: 3, 2022: 4, 2023: 3}, predictionScore: 88, difficultyTrend: 'stable', avgQuestionsPerYear: 3.4 },
+];
+
+// ========== HELPER FUNCTIONS ==========
+export function getExamByCode(code: string): Exam | undefined {
+  return exams.find(e => e.code === code);
+}
+
+export function getQuestionsByExam(examCode: string): Question[] {
+  return questions.filter(q => q.examCode === examCode);
+}
+
+export function getQuestionsByTopic(topic: string): Question[] {
+  return questions.filter(q => q.topic === topic);
+}
+
+export function getQuestionsBySubject(subject: string): Question[] {
+  return questions.filter(q => q.subject === subject);
+}
+
+export function getTrendsByExam(examCode: string): TrendData[] {
+  return trendData.filter(t => t.examCode === examCode);
+}
+
+export function getTopicById(topicId: string): Topic | undefined {
+  return topics.find(t => t.id === topicId);
+}
+
+export function getTopicsBySubject(subject: string): Topic[] {
+  return topics.filter(t => t.subject === subject);
+}
+
+export function getSubjectsForExam(examCode: string): string[] {
+  const exam = getExamByCode(examCode);
+  return exam?.subjects || [];
+}
+
+// Get unique subjects from all questions
+export function getAllSubjects(): string[] {
+  return [...new Set(questions.map(q => q.subject))];
+}
+
+// Get all unique topics for a subject
+export function getTopicsForSubject(subject: string): string[] {
+  return [...new Set(questions.filter(q => q.subject === subject).map(q => q.topic))];
+}
+
+// Cross-exam topic overlap
+export function getSharedTopics(examCode1: string, examCode2: string): string[] {
+  const topics1 = new Set(questions.filter(q => q.examCode === examCode1).map(q => q.topic));
+  const topics2 = new Set(questions.filter(q => q.examCode === examCode2).map(q => q.topic));
+  return [...topics1].filter(t => topics2.has(t));
+}
