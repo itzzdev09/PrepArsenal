@@ -20,6 +20,11 @@ from db_client import get_db_client
 # deliberately measured at paper level, rather than requiring the *same* topic
 # to occur in every year: a topic absent from a paper is meaningful zero data.
 MIN_PYQ_YEARS = 3
+MIN_TOPIC_OCCURRENCE_YEARS = 2
+# A handful of hand-curated questions can validate provenance, but cannot
+# estimate paper frequency. Wait for a meaningful extraction before labelling
+# anything "high priority" to students.
+MIN_VERIFIED_PYQS_PER_EXAM = 50
 
 @dataclass
 class TopicTrendResult:
@@ -162,15 +167,23 @@ if __name__ == "__main__":
         for q in verified_pyqs:
             exam_years[q['exam_code']].add(q['year'])
 
+        verified_counts_by_exam = defaultdict(int)
+        for q in verified_pyqs:
+            verified_counts_by_exam[q['exam_code']] += 1
+
         eligible_exam_years = {
             exam_code: sorted(years)
             for exam_code, years in exam_years.items()
-            if len(years) >= MIN_PYQ_YEARS
+            if (
+                len(years) >= MIN_PYQ_YEARS
+                and verified_counts_by_exam[exam_code] >= MIN_VERIFIED_PYQS_PER_EXAM
+            )
         }
         skipped_exams = sorted(set(exam_years) - set(eligible_exam_years))
         if skipped_exams:
             print(
-                'Waiting for three distinct source-attributed PYQ years for: '
+                f'Waiting for {MIN_PYQ_YEARS} distinct source-attributed PYQ years and '
+                f'{MIN_VERIFIED_PYQS_PER_EXAM} extracted questions for: '
                 + ', '.join(skipped_exams)
             )
 
@@ -198,6 +211,13 @@ if __name__ == "__main__":
                 year: data['yearly_counts'].get(year, 0)
                 for year in eligible_exam_years[exam_code]
             }
+            occurrence_years = sum(count > 0 for count in yearly_counts.values())
+            if occurrence_years < MIN_TOPIC_OCCURRENCE_YEARS:
+                print(
+                    f"Skipping {exam_code}/{topic_id}: only appears in "
+                    f"{occurrence_years} of {len(yearly_counts)} eligible PYQ years."
+                )
+                continue
 
             avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts)
             diff_trend = engine.analyze_difficulty_trend(data['difficulties'])

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { NCERT_QUESTION_TEXTS, NCERT_TRACKS, type NcertChapter } from '@/lib/ncert-booster';
+import { NCERT_CLASSWISE_SCOPE, NCERT_QUESTION_TEXTS, NCERT_TRACKS, type NcertChapter } from '@/lib/ncert-booster';
 import { getQuestionMatchesByText, type QuestionTextMatch } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 
@@ -17,6 +17,7 @@ export default function NcertSprintPage() {
 
   const track = NCERT_TRACKS.find(item => item.id === trackId) ?? NCERT_TRACKS[0];
   const chapter: NcertChapter = track.chapters.find(item => item.id === chapterId) ?? track.chapters[0];
+  const classScope = NCERT_CLASSWISE_SCOPE.filter(item => item.subject === track.subject);
 
   useEffect(() => {
     async function load() {
@@ -54,7 +55,7 @@ export default function NcertSprintPage() {
         .chapters { padding: .7rem; } .chapter { width: 100%; border: 0; background: transparent; color: var(--text-secondary); text-align: left; padding: .85rem; border-radius: .7rem; cursor: pointer; display: flex; gap: .75rem; }
         .chapter:hover { background: var(--bg-input); } .chapter.active { background: rgba(59,130,246,.13); color: var(--text-primary); }
         .chapter-number { color: var(--accent-blue); font-weight: 800; } .chapter-title { font-weight: 650; font-size: .9rem; }
-        .content { padding: 1.75rem; } .book { color: var(--text-tertiary); font-size: .9rem; margin-top: -.2rem; }
+        .content { padding: 1.75rem; } .book { color: var(--text-tertiary); font-size: .9rem; margin-top: -.2rem; } .coverage { margin: 1rem 0 1.4rem; padding: .9rem; background: var(--bg-input); border-radius: .7rem; } .coverage h3 { margin: 0 0 .6rem; font-size: .9rem; } .coverage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: .55rem; } .coverage-item { font-size: .8rem; color: var(--text-secondary); } .coverage-item strong { color: var(--text-primary); }
         .notes { padding-left: 1.25rem; color: var(--text-secondary); line-height: 1.65; } .source { display: inline-flex; margin: .5rem 0 1.5rem; color: var(--accent-blue); font-size: .88rem; }
         .question { border-top: 1px solid var(--border-subtle); margin-top: 1.25rem; padding-top: 1.25rem; } .question h3 { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.5; }
         .options { display: grid; gap: .6rem; } .option { text-align: left; border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); padding: .75rem .9rem; border-radius: .6rem; cursor: pointer; }
@@ -73,12 +74,13 @@ export default function NcertSprintPage() {
       <div className="layout">
         <aside className="chapters" aria-label={`${track.subject} chapters`}>{track.chapters.map(item => <button key={item.id} className={`chapter ${item.id === chapter.id ? 'active' : ''}`} onClick={() => setChapterId(item.id)}><span className="chapter-number">{item.order}</span><span className="chapter-title">{item.title}</span></button>)}</aside>
         <section className="content">
-          <div className="eyebrow">{track.subject} · Chapter {chapter.order}</div><h2>{chapter.title}</h2><p className="book">Study sequence: {chapter.book}</p>
+          <div className="eyebrow">{track.subject} · Chapter {chapter.order}</div><h2>{chapter.title}</h2><p className="book">Study sequence: {chapter.book}</p>{chapter.sourceFocus && <p className="book">Official source focus: {chapter.sourceFocus}</p>}
           <a className="source" href={track.sourceUrl} target="_blank" rel="noreferrer">Open the official NCERT textbook catalogue ↗</a>
+          {classScope.length > 0 && <div className="coverage"><h3>Class 6–12 authoring sequence</h3><div className="coverage-grid">{classScope.map(item => <div key={item.classLevel} className="coverage-item"><strong>Class {item.classLevel}</strong><br />{item.books.join(' · ')}</div>)}</div></div>}
           <ul className="notes">{chapter.notes.map(note => <li key={note}>{note}</li>)}</ul>
           {chapter.questions.map(question => {
             const isRevealed = revealed[question.id]; const selected = answers[question.id]; const existing = questionMatches(question.questionText);
-            return <article className="question" key={question.id}><h3>Quick check: {question.questionText}</h3><div className="options">{question.options.map((option, index) => {
+            return <article className="question" key={question.id}><div className="eyebrow">{question.type === 'line-detail' ? 'Line-detail check' : question.type === 'application' ? 'Concept application' : 'Concept check'}</div><h3>{question.questionText}</h3><div className="options">{question.options.map((option, index) => {
               const classNames = ['option']; if (selected === index) classNames.push('selected'); if (isRevealed && index === question.correctOption) classNames.push('correct'); if (isRevealed && selected === index && index !== question.correctOption) classNames.push('wrong');
               return <button key={option} className={classNames.join(' ')} onClick={() => !isRevealed && setAnswers(previous => ({ ...previous, [question.id]: index }))}>{String.fromCharCode(65 + index)}. {option}</button>;
             })}</div><button className="reveal" onClick={() => setRevealed(previous => ({ ...previous, [question.id]: true }))}>{isRevealed ? 'Answer revealed' : 'Check answer'}</button>{isRevealed && <p className="explanation">{question.explanation}</p>}<div className="pyq">{existing.length > 0 ? <><strong>PYQ match:</strong> {existing.map(match => `${match.exam_code} ${match.year}`).join(', ')}</> : 'No exact PYQ match in the current question database.'}</div></article>;

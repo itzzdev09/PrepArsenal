@@ -100,3 +100,43 @@ export const NCERT_TRACKS: NcertTrack[] = [
 export const NCERT_QUESTION_TEXTS = NCERT_TRACKS.flatMap(track =>
   track.chapters.flatMap(chapter => chapter.questions.map(question => question.questionText))
 );
+
+export interface NcertClassScope {
+  subject: Extract<NcertSubject, 'Polity' | 'History' | 'Geography' | 'Economics'>;
+  classLevel: number;
+  books: string[];
+  learningSequence: string[];
+}
+
+// This is the fixed syllabus spine for authoring the chapter-level question bank.
+// Units are followed in class order; they are not scraped notes or exercise banks.
+export const NCERT_CLASSWISE_SCOPE: NcertClassScope[] = [
+  { subject: 'Polity', classLevel: 6, books: ['Social and Political Life I'], learningSequence: ['Diversity', 'Government', 'Rural and urban administration'] },
+  { subject: 'Polity', classLevel: 7, books: ['Social and Political Life II'], learningSequence: ['Democracy', 'State government', 'Markets and equality'] },
+  { subject: 'Polity', classLevel: 8, books: ['Social and Political Life III'], learningSequence: ['Constitution', 'Secularism', 'Parliament', 'Judiciary', 'Social justice'] },
+  { subject: 'Polity', classLevel: 9, books: ['Democratic Politics I'], learningSequence: ['Democracy', 'Constitutional design', 'Electoral politics', 'Institutions', 'Rights'] },
+  { subject: 'Polity', classLevel: 10, books: ['Democratic Politics II'], learningSequence: ['Power sharing', 'Federalism', 'Gender and caste', 'Political parties', 'Outcomes of democracy'] },
+  { subject: 'Polity', classLevel: 11, books: ['Indian Constitution at Work', 'Political Theory'], learningSequence: ['Constitution', 'Rights', 'Executive', 'Legislature', 'Judiciary', 'Federalism'] },
+  { subject: 'Polity', classLevel: 12, books: ['Contemporary World Politics', 'Politics in India Since Independence'], learningSequence: ['Cold War', 'Global institutions', 'Nation-building', 'Planned development', 'India’s external relations'] },
+  { subject: 'History', classLevel: 6, books: ['Our Pasts I'], learningSequence: ['Sources', 'Early societies', 'Harappan civilisation', 'Kingdoms and empires'] },
+  { subject: 'History', classLevel: 7, books: ['Our Pasts II'], learningSequence: ['Medieval kingdoms', 'Delhi Sultans', 'Mughals', 'Regional cultures'] },
+  { subject: 'History', classLevel: 8, books: ['Our Pasts III'], learningSequence: ['Company rule', 'Colonial economy', 'Revolt of 1857', 'National movement'] },
+  { subject: 'History', classLevel: 9, books: ['India and the Contemporary World I'], learningSequence: ['French Revolution', 'Socialism', 'Nazism', 'Pastoralists'] },
+  { subject: 'History', classLevel: 10, books: ['India and the Contemporary World II'], learningSequence: ['Nationalism', 'Industrialisation', 'Print culture', 'Global world'] },
+  { subject: 'History', classLevel: 11, books: ['Themes in World History'], learningSequence: ['Early societies', 'Empires', 'Nomadic cultures', 'Modern revolutions'] },
+  { subject: 'History', classLevel: 12, books: ['Themes in Indian History I–III'], learningSequence: ['Harappa', 'Political history', 'Social histories', 'Colonialism', 'Independence'] },
+  { subject: 'Geography', classLevel: 6, books: ['The Earth: Our Habitat'], learningSequence: ['Earth in the solar system', 'Maps', 'Domains', 'India'] },
+  { subject: 'Geography', classLevel: 7, books: ['Our Environment'], learningSequence: ['Environment', 'Earth interior', 'Air', 'Water', 'Natural vegetation'] },
+  { subject: 'Geography', classLevel: 8, books: ['Resources and Development'], learningSequence: ['Resources', 'Land and soil', 'Agriculture', 'Industry', 'Human resources'] },
+  { subject: 'Geography', classLevel: 9, books: ['Contemporary India I'], learningSequence: ['India’s location', 'Physiography', 'Drainage', 'Climate', 'Population'] },
+  { subject: 'Geography', classLevel: 10, books: ['Contemporary India II'], learningSequence: ['Resources', 'Forests', 'Water', 'Agriculture', 'Minerals', 'Manufacturing'] },
+  { subject: 'Geography', classLevel: 11, books: ['Fundamentals of Physical Geography', 'India: Physical Environment'], learningSequence: ['Geomorphology', 'Climate', 'Oceans', 'India’s physical setting'] },
+  { subject: 'Geography', classLevel: 12, books: ['Fundamentals of Human Geography', 'India: People and Economy'], learningSequence: ['Population', 'Human activities', 'Resources', 'Transport', 'Planning'] },
+  { subject: 'Economics', classLevel: 6, books: ['Social Science foundations'], learningSequence: ['Livelihoods', 'Rural and urban markets', 'Public services'] },
+  { subject: 'Economics', classLevel: 7, books: ['Social Science foundations'], learningSequence: ['Production', 'Markets', 'Equality and public facilities'] },
+  { subject: 'Economics', classLevel: 8, books: ['Social Science foundations'], learningSequence: ['Resources', 'Industry', 'Human resources', 'Markets'] },
+  { subject: 'Economics', classLevel: 9, books: ['Economics'], learningSequence: ['Village economy', 'Human resources', 'Poverty', 'Food security'] },
+  { subject: 'Economics', classLevel: 10, books: ['Understanding Economic Development'], learningSequence: ['Development', 'Sectors', 'Money and credit', 'Globalisation'] },
+  { subject: 'Economics', classLevel: 11, books: ['Statistics for Economics', 'Indian Economic Development', 'Introductory Microeconomics'], learningSequence: ['Statistics', 'Indian economy', 'Consumer and producer behaviour'] },
+  { subject: 'Economics', classLevel: 12, books: ['Introductory Macroeconomics', 'Indian Economic Development'], learningSequence: ['National income', 'Money and banking', 'Government budget', 'External sector'] },
+];
