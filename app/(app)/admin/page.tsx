@@ -315,6 +315,18 @@ export default function AdminPortalPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('app_user_role', 'user');
+                window.location.href = '/profile';
+              }
+            }}
+          >
+            🎓 Switch to Student Mode
+          </button>
           <button className="btn btn-secondary btn-sm" onClick={handleFlushCache}>
             🧹 Flush LLM Cache
           </button>

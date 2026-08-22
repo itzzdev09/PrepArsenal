@@ -7,7 +7,7 @@ import { signout } from '@/app/login/actions';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile, type UserProfile } from '@/lib/db';
 
-const navItems = [
+const baseNavItems = [
   { label: 'Dashboard', icon: '📊', href: '/dashboard' },
   { label: 'Analytics', icon: '📈', href: '/analytics' },
   { label: 'Practice Arena', icon: '⏱️', href: '/practice' },
@@ -18,14 +18,13 @@ const navItems = [
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
   { label: 'NCERT Sprint', icon: '📚', href: '/ncert-sprint' },
-  { label: 'My Profile', icon: '👤', href: '/profile' },
-  { label: 'Admin Portal', icon: '⚙️', href: '/admin' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
   const [userName, setUserName] = useState('Dev Verma');
   const [userEmail, setUserEmail] = useState('aspirant@preparsenal.ai');
   const [userLevel, setUserLevel] = useState(2);
@@ -38,7 +37,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
     if (typeof window !== 'undefined') {
       const savedName = localStorage.getItem('user_full_name');
+      const savedRole = localStorage.getItem('app_user_role') as 'user' | 'admin' | null;
       if (savedName) setUserName(savedName);
+      if (savedRole === 'admin' || savedRole === 'user') setUserRole(savedRole);
     }
 
     async function checkUser() {
@@ -51,6 +52,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             if (p.full_name) setUserName(p.full_name);
             if (p.current_level) setUserLevel(p.current_level);
             if (p.xp) setUserXp(p.xp);
+            if (p.role === 'admin' || user.email?.includes('admin')) {
+              setUserRole('admin');
+              localStorage.setItem('app_user_role', 'admin');
+            }
           }
         }
       } catch (err) {
@@ -59,6 +64,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
     checkUser();
   }, [supabase]);
+
+  const toggleRole = () => {
+    const nextRole = userRole === 'admin' ? 'user' : 'admin';
+    setUserRole(nextRole);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app_user_role', nextRole);
+    }
+  };
+
+  // Role-specific navigation items
+  const activeNavItems = [
+    ...baseNavItems,
+    ...(userRole === 'admin' 
+      ? [{ label: 'Admin Portal', icon: '⚙️', href: '/admin' }]
+      : [{ label: 'My Profile', icon: '👤', href: '/profile' }]
+    ),
+  ];
 
   return (
     <div className="app-shell" suppressHydrationWarning>
@@ -129,6 +151,22 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           gap: 0.75rem;
         }
 
+        .role-switch-badge {
+          padding: 0.3rem 0.65rem;
+          border-radius: 0.5rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          cursor: pointer;
+          border: 1px solid var(--border-subtle);
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          transition: all 150ms;
+        }
+        .role-switch-badge:hover {
+          border-color: var(--accent-blue);
+          color: var(--text-primary);
+        }
+
         .top-profile-pill {
           display: flex;
           align-items: center;
@@ -159,6 +197,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           font-size: 0.82rem;
           color: white;
         }
+        .pill-avatar.admin {
+          background: linear-gradient(135deg, #ef4444, #8b5cf6);
+        }
 
         .pill-name {
           font-size: 0.85rem;
@@ -172,6 +213,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           padding: 0.1rem 0.4rem;
           border-radius: 0.25rem;
           font-weight: 800;
+        }
+        .pill-badge.admin {
+          background: rgba(239, 68, 68, 0.15);
+          color: #f87171;
         }
 
         .quick-nav-btn {
@@ -224,6 +269,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           font-size: 0.95rem;
           color: white;
           flex-shrink: 0;
+        }
+        .sp-avatar.admin {
+          background: linear-gradient(135deg, #ef4444, #8b5cf6);
         }
 
         .sp-info {
@@ -292,25 +340,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        {/* Dedicated Sidebar User Profile Widget */}
+        {/* Dynamic Sidebar Profile Card matching Role */}
         <Link
-          href="/profile"
+          href={userRole === 'admin' ? '/admin' : '/profile'}
           className="sidebar-profile-card"
           onClick={() => setSidebarOpen(false)}
         >
-          <div className="sp-avatar">
-            {userName ? userName.charAt(0).toUpperCase() : '👤'}
+          <div className={`sp-avatar ${userRole === 'admin' ? 'admin' : ''}`}>
+            {userRole === 'admin' ? '🛡️' : (userName ? userName.charAt(0).toUpperCase() : '👤')}
           </div>
           <div className="sp-info">
-            <div className="sp-name">{userName}</div>
-            <div className="sp-sub">Level {userLevel} • {userXp} XP 🎖️</div>
+            <div className="sp-name">
+              {userRole === 'admin' ? 'Administrator' : userName}
+            </div>
+            <div className="sp-sub">
+              {userRole === 'admin' ? 'System & Question Control' : `Level ${userLevel} • ${userXp} XP 🎖️`}
+            </div>
           </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--accent-blue)' }}>⚙️</span>
+          <span style={{ fontSize: '0.75rem', color: userRole === 'admin' ? 'var(--error)' : 'var(--accent-blue)' }}>
+            ⚙️
+          </span>
         </Link>
 
         <nav className="sidebar-nav">
           <span className="sidebar-section-label">Navigation</span>
-          {navItems.map(item => (
+          {activeNavItems.map(item => (
             <Link
               key={item.href}
               href={item.href}
@@ -347,24 +401,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="header-right">
-            <Link href="/admin" className="quick-nav-btn" title="Admin Portal">
-              <span>⚙️</span>
-              <span>Admin</span>
-            </Link>
+            {/* Role Switcher Button for Instant Testing */}
+            <button
+              className="role-switch-badge"
+              onClick={toggleRole}
+              title="Click to switch between Student and Admin views"
+            >
+              {userRole === 'admin' ? '🛡️ Admin Mode (Click for Student)' : '🎓 Student Mode (Click for Admin)'}
+            </button>
 
             <Link href="/tutor" className="quick-nav-btn" title="AI Tutor">
               <span>🤖</span>
               <span>AI Tutor</span>
             </Link>
 
-            {/* Top Right Profile Button */}
-            <Link href="/profile" className="top-profile-pill" title="My Account Profile">
-              <div className="pill-avatar">
-                {userName ? userName.charAt(0).toUpperCase() : '👤'}
-              </div>
-              <span className="pill-name">{userName}</span>
-              <span className="pill-badge">Lvl {userLevel}</span>
-            </Link>
+            {/* Role-Specific Header Pill */}
+            {userRole === 'admin' ? (
+              <Link href="/admin" className="top-profile-pill" title="Admin Portal">
+                <div className="pill-avatar admin">🛡️</div>
+                <span className="pill-name">Admin Portal</span>
+                <span className="pill-badge admin">ADMIN</span>
+              </Link>
+            ) : (
+              <Link href="/profile" className="top-profile-pill" title="My Account Profile">
+                <div className="pill-avatar">
+                  {userName ? userName.charAt(0).toUpperCase() : '👤'}
+                </div>
+                <span className="pill-name">{userName}</span>
+                <span className="pill-badge">Lvl {userLevel}</span>
+              </Link>
+            )}
           </div>
         </header>
 
