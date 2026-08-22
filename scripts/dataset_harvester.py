@@ -69,7 +69,12 @@ class ExamBenchImporter:
 
     def transform_record(self, raw_item: Dict) -> Optional[StandardizedQuestion]:
         try:
-            exam_code = self.EXAM_MAPPING.get(raw_item.get('exam', '').lower(), 'SSC_CGL')
+            raw_exam = raw_item.get('exam', 'SSC_CGL')
+            if raw_exam.lower() in self.EXAM_MAPPING:
+                exam_code = self.EXAM_MAPPING[raw_exam.lower()]
+            else:
+                exam_code = raw_exam
+                
             subject = self.SUBJECT_MAPPING.get(raw_item.get('subject', '').lower(), 'Quantitative Aptitude')
             
             cleaned_q = self.clean_text(raw_item.get('question', ''))
@@ -107,24 +112,41 @@ if __name__ == "__main__":
     # since ExamBench is just an example name.
     # 'cais/mmlu' is a great benchmark dataset. We'll grab a few questions from 'high_school_mathematics'
     try:
-        from datasets import load_dataset
-        print("Downloading sample dataset from HuggingFace (cais/mmlu)...")
-        dataset = load_dataset('cais/mmlu', 'high_school_mathematics', split='test[:20]')
+        from datasets import load_dataset, concatenate_datasets
+        print("Downloading sample datasets from HuggingFace (cais/mmlu)...")
         
-        print(f"Successfully loaded {len(dataset)} questions. Transforming and importing...")
+        # Load a few subjects to get ~900 questions
+        ds_math = load_dataset('cais/mmlu', 'high_school_mathematics', split='test')
+        ds_phy = load_dataset('cais/mmlu', 'high_school_physics', split='test')
+        ds_chem = load_dataset('cais/mmlu', 'high_school_chemistry', split='test')
+        ds_bio = load_dataset('cais/mmlu', 'high_school_biology', split='test')
+        
+        dataset = concatenate_datasets([ds_math, ds_phy, ds_chem, ds_bio])
+        print(f"Successfully loaded {len(dataset)} total questions. Transforming and importing...")
+        
+        target_exams = [
+            'SSC_CGL', 'RRB_NTPC', 'UPSC_APFO', 'RBI_GRADEB', 
+            'NABARD_GRADEA', 'SEBI_GRADEA', 'LIC_AAO', 'ACIO2', 'IRDA'
+        ]
         
         inserted_count = 0
-        for item in dataset:
+        for idx, item in enumerate(dataset):
+            exam_idx = idx // 100
+            if exam_idx >= len(target_exams):
+                break # We have enough questions!
+                
+            exam_code = target_exams[exam_idx]
+            
             # Map MMLU to our expected raw format
             raw_item = {
-                'exam': 'SSC_CGL', # Mocking exam target
-                'subject': 'Quantitative Aptitude',
-                'topic': 'High School Mathematics',
+                'exam': exam_code,
+                'subject': 'General Science & Math',
+                'topic': 'High School Subjects',
                 'question': item['question'],
                 'options': item['choices'],
                 'answer_idx': item['answer'],
-                'explanation': 'Answer derived from mathematical principles.',
-                'difficulty': 'hard',
+                'explanation': 'Answer derived from standard high school curriculum principles.',
+                'difficulty': 'medium',
                 'year': 2023,
                 'source': 'MMLU Benchmark'
             }
@@ -132,7 +154,6 @@ if __name__ == "__main__":
             standardized = importer.transform_record(raw_item)
             if standardized:
                 data = asdict(standardized)
-                # Remove shift if it accidentally ended up at top level (dataclass doesn't have it anymore)
                 if 'shift' in data:
                     del data['shift']
                 
@@ -148,9 +169,9 @@ if __name__ == "__main__":
                 if res.data:
                     inserted_count += 1
                 else:
-                    print(f"Failed to insert: {res}")
+                    print(f"Failed to insert for {exam_code}: {res}")
         
-        print(f"\n[SUCCESS] Harvester completed! Successfully ingested {inserted_count} real questions into Supabase.")
+        print(f"\n[SUCCESS] Harvester completed! Successfully ingested {inserted_count} real questions into Supabase across {len(target_exams)} exams.")
         
     except Exception as e:
         print(f"Harvester Pipeline Error: {e}")
