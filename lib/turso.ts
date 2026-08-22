@@ -1,29 +1,36 @@
 // PrepArsenal — Turso (libSQL/SQLite at Edge) Client
 // High-performance edge database for static read-heavy exam data (9GB storage scaling)
 
-import { createClient, type Client } from '@libsql/client';
-import { SAMPLE_QUESTIONS, type Question } from './data';
+import { createClient, type Client } from '@libsql/client/web';
+import { questions as seedQuestions, exams as seedExams, topics as seedTopics, type Question } from './data';
 
 let tursoClient: Client | null = null;
 
-export function getTursoClient(): Client {
+export function getTursoClient(): Client | null {
   if (tursoClient) return tursoClient;
 
-  const url = process.env.TURSO_DATABASE_URL || 'file:preparsenal-local.db';
-  const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
+  const url = process.env.NEXT_PUBLIC_TURSO_DATABASE_URL || 
+              process.env.TURSO_DATABASE_URL || 
+              process.env.TURSO_URL;
+
+  const authToken = process.env.NEXT_PUBLIC_TURSO_AUTH_TOKEN || 
+                    process.env.TURSO_AUTH_TOKEN || 
+                    process.env.TURSO_TOKEN;
+
+  if (!url) {
+    // If no Turso credentials configured, return null to use graceful fallback
+    return null;
+  }
 
   try {
     tursoClient = createClient({
       url,
-      authToken,
+      authToken: authToken || undefined,
     });
     return tursoClient;
   } catch (err) {
     console.warn('Failed to initialize remote Turso client, using local in-memory fallback', err);
-    tursoClient = createClient({
-      url: ':memory:',
-    });
-    return tursoClient;
+    return null;
   }
 }
 
@@ -32,6 +39,7 @@ export function getTursoClient(): Client {
  */
 export async function initTursoSchema(): Promise<void> {
   const client = getTursoClient();
+  if (!client) return;
 
   await client.batch([
     `CREATE TABLE IF NOT EXISTS exams (
@@ -71,18 +79,15 @@ export async function initTursoSchema(): Promise<void> {
  * Fetch all available exams from Turso Edge DB
  */
 export async function getTursoExams(): Promise<Array<{ id: string; code: string; name: string; icon: string }>> {
+  const client = getTursoClient();
+  if (!client) {
+    return seedExams.map(e => ({ id: e.code, code: e.code, name: e.name, icon: e.icon }));
+  }
+
   try {
-    const client = getTursoClient();
     const result = await client.execute('SELECT * FROM exams ORDER BY name ASC');
     if (result.rows.length === 0) {
-      return [
-        { id: '1', code: 'SSC_CGL', name: 'SSC CGL', icon: '🏛️' },
-        { id: '2', code: 'RBI_GRADE_B', name: 'RBI Grade B', icon: '🏦' },
-        { id: '3', code: 'RRB_NTPC', name: 'RRB NTPC', icon: '🚆' },
-        { id: '4', code: 'ACIO_II', name: 'IB ACIO-II', icon: '🕵️' },
-        { id: '5', code: 'NABARD', name: 'NABARD Grade A', icon: '🌾' },
-        { id: '6', code: 'UPSC_APFC', name: 'UPSC APFC', icon: '⚖️' },
-      ];
+      return seedExams.map(e => ({ id: e.code, code: e.code, name: e.name, icon: e.icon }));
     }
     return result.rows.map(row => ({
       id: String(row.id),
@@ -92,14 +97,7 @@ export async function getTursoExams(): Promise<Array<{ id: string; code: string;
     }));
   } catch (error) {
     console.warn('Turso getTursoExams fallback:', error);
-    return [
-      { id: '1', code: 'SSC_CGL', name: 'SSC CGL', icon: '🏛️' },
-      { id: '2', code: 'RBI_GRADE_B', name: 'RBI Grade B', icon: '🏦' },
-      { id: '3', code: 'RRB_NTPC', name: 'RRB NTPC', icon: '🚆' },
-      { id: '4', code: 'ACIO_II', name: 'IB ACIO-II', icon: '🕵️' },
-      { id: '5', code: 'NABARD', name: 'NABARD Grade A', icon: '🌾' },
-      { id: '6', code: 'UPSC_APFC', name: 'UPSC APFC', icon: '⚖️' },
-    ];
+    return seedExams.map(e => ({ id: e.code, code: e.code, name: e.name, icon: e.icon }));
   }
 }
 
@@ -107,8 +105,16 @@ export async function getTursoExams(): Promise<Array<{ id: string; code: string;
  * Fetch topics from Turso
  */
 export async function getTursoTopics(subject?: string): Promise<Array<{ id: string; subject: string; name: string }>> {
+  const client = getTursoClient();
+  if (!client) {
+    return seedTopics.filter(t => !subject || t.subject.toLowerCase() === subject.toLowerCase()).map(t => ({
+      id: t.id,
+      subject: t.subject,
+      name: t.name,
+    }));
+  }
+
   try {
-    const client = getTursoClient();
     let query = 'SELECT * FROM topics';
     const args: string[] = [];
 
@@ -119,14 +125,26 @@ export async function getTursoTopics(subject?: string): Promise<Array<{ id: stri
     query += ' ORDER BY name ASC';
 
     const result = await client.execute({ sql: query, args });
+    if (result.rows.length === 0) {
+      return seedTopics.filter(t => !subject || t.subject.toLowerCase() === subject.toLowerCase()).map(t => ({
+        id: t.id,
+        subject: t.subject,
+        name: t.name,
+      }));
+    }
+
     return result.rows.map(row => ({
       id: String(row.id),
       subject: String(row.subject),
       name: String(row.name),
     }));
   } catch (error) {
-    console.warn('Turso getTursoTopics error:', error);
-    return [];
+    console.warn('Turso getTursoTopics fallback:', error);
+    return seedTopics.filter(t => !subject || t.subject.toLowerCase() === subject.toLowerCase()).map(t => ({
+      id: t.id,
+      subject: t.subject,
+      name: t.name,
+    }));
   }
 }
 
@@ -139,8 +157,16 @@ export async function getTursoQuestions(filters: {
   topic?: string;
   limit?: number;
 } = {}): Promise<Question[]> {
+  const client = getTursoClient();
+  if (!client) {
+    let filtered = [...seedQuestions];
+    if (filters.examCode) filtered = filtered.filter(q => q.examCode === filters.examCode);
+    if (filters.subject) filtered = filtered.filter(q => q.subject === filters.subject);
+    if (filters.topic) filtered = filtered.filter(q => q.topic === filters.topic);
+    return filtered.slice(0, filters.limit || 500);
+  }
+
   try {
-    const client = getTursoClient();
     let query = 'SELECT * FROM questions WHERE 1=1';
     const args: Array<string | number> = [];
 
@@ -163,14 +189,13 @@ export async function getTursoQuestions(filters: {
     const result = await client.execute({ sql: query, args });
 
     if (result.rows.length === 0) {
-      // Return sample questions if table empty
-      return SAMPLE_QUESTIONS;
+      return seedQuestions;
     }
 
     return result.rows.map(row => {
       let parsedOptions: string[] = [];
       try {
-        parsedOptions = typeof row.options === 'string' ? JSON.parse(row.options) : (row.options as string[]);
+        parsedOptions = typeof row.options === 'string' ? JSON.parse(row.options) : (row.options as unknown as string[]);
       } catch {
         parsedOptions = ['Option A', 'Option B', 'Option C', 'Option D'];
       }
@@ -190,18 +215,37 @@ export async function getTursoQuestions(filters: {
     });
   } catch (error) {
     console.warn('Turso getTursoQuestions fallback to local dataset:', error);
-    return SAMPLE_QUESTIONS;
+    return seedQuestions;
   }
 }
 
 /**
  * Ingest / seed questions into Turso
  */
-export async function seedTursoQuestions(questions: Question[]): Promise<number> {
+export async function seedTursoQuestions(questionsToSeed: Question[]): Promise<number> {
   const client = getTursoClient();
+  if (!client) {
+    throw new Error('Turso client not configured. Please check your TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in .env.local');
+  }
+
   await initTursoSchema();
 
-  const statements = questions.map(q => ({
+  // Also seed exams and topics
+  for (const ex of seedExams) {
+    await client.execute({
+      sql: 'INSERT OR REPLACE INTO exams (id, code, name, icon, description, total_questions) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [ex.code, ex.code, ex.name, ex.icon, ex.fullName, ex.totalQuestions],
+    });
+  }
+
+  for (const top of seedTopics) {
+    await client.execute({
+      sql: 'INSERT OR REPLACE INTO topics (id, subject, name, weightage) VALUES (?, ?, ?, ?)',
+      args: [top.id, top.subject, top.name, top.depth || 1],
+    });
+  }
+
+  const statements = questionsToSeed.map(q => ({
     sql: `INSERT OR REPLACE INTO questions (
       id, exam_code, subject, topic, year, difficulty, question_text, options, correct_option, explanation
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
