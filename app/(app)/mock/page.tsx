@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { exams } from '@/lib/data';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { createClient } from '@/utils/supabase/client';
+import { getExamQuestionCounts } from '@/lib/db';
 
 export default function MockTestConfigPage() {
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState<string>('Any');
+  const [counts, setCounts] = useState<Record<string, number>>({});
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const supabase = createClient();
+      const dbCounts = await getExamQuestionCounts(supabase);
+      setCounts(dbCounts);
+    };
+    fetchCounts();
+  }, []);
 
   const handleStart = () => {
     if (selectedExam) {
-      // In a real app we might create a session ID in DB first.
-      router.push(`/mock/${selectedExam}`);
+      let url = `/mock/${selectedExam}`;
+      if (selectedTier !== 'Any') {
+        url += `?tier=${selectedTier}`;
+      }
+      router.push(url);
     }
   };
 
@@ -79,11 +95,36 @@ export default function MockTestConfigPage() {
           flex-direction: column;
           gap: 0.25rem;
         }
+        .ec-db-count {
+          margin-top: 0.5rem;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--success);
+          background: rgba(16, 185, 129, 0.1);
+          padding: 0.2rem 0.5rem;
+          border-radius: 0.5rem;
+          display: inline-block;
+        }
         
         .start-action {
           text-align: center;
           padding-top: 2rem;
           border-top: 1px solid var(--border-subtle);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1.5rem;
+        }
+
+        .tier-select {
+          padding: 0.75rem 1rem;
+          border-radius: 0.5rem;
+          border: 1px solid var(--border-default);
+          background: var(--bg-input);
+          color: var(--text-primary);
+          font-size: 1rem;
+          min-width: 200px;
+          outline: none;
         }
         
         .start-btn {
@@ -125,12 +166,31 @@ export default function MockTestConfigPage() {
               <span>{exam.totalQuestions} Questions</span>
               <span>{exam.totalTime} Minutes</span>
               <span>-{exam.negativeMarking} Negative Marking</span>
+              <div className="ec-db-count">
+                DB Pool: {counts[exam.code] || 0} real questions
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="start-action">
+        {selectedExam && (
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-secondary)' }}>
+              Select Exam Phase:
+            </label>
+            <select 
+              className="tier-select" 
+              value={selectedTier} 
+              onChange={e => setSelectedTier(e.target.value)}
+            >
+              <option value="Any">Any Phase</option>
+              <option value="Tier 1">Tier 1 / Prelims</option>
+              <option value="Tier 2">Tier 2 / Mains</option>
+            </select>
+          </div>
+        )}
         <button 
           className="btn btn-primary start-btn" 
           disabled={!selectedExam}

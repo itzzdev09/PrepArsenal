@@ -9,6 +9,8 @@ export interface UserProfile {
   last_study_date: string | null;
   total_study_minutes: number;
   created_at: string;
+  xp?: number;
+  current_level?: number;
 }
 
 export async function getUserProfile(supabase: SupabaseClient, userId: string): Promise<UserProfile | null> {
@@ -19,7 +21,13 @@ export async function getUserProfile(supabase: SupabaseClient, userId: string): 
     .single();
 
   if (error || !data) return null;
-  return data as UserProfile;
+  
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  return {
+    ...data,
+    xp: examDates.xp || 0,
+    current_level: examDates.current_level || 1
+  } as UserProfile;
 }
 
 export async function createUserProfile(
@@ -165,6 +173,32 @@ export async function savePracticeSession(
     return false;
   }
   
+  // Award XP and Level up
+  const profileData = await supabase.from('profiles').select('exam_dates').eq('id', userId).single();
+  const examDates = (profileData.data?.exam_dates as Record<string, any>) || {};
+  
+  let currentXp = examDates.xp || 0;
+  let currentLevel = examDates.current_level || 1;
+  
+  const correctCount = sessionData.questionIds.filter(qid => sessionData.answers[qid] === sessionData.correctOptions[qid]).length;
+  const wrongCount = sessionData.questionIds.length - correctCount;
+  
+  // 10 XP per correct, 2 XP per wrong (effort points)
+  const xpGained = (correctCount * 10) + (wrongCount * 2);
+  currentXp += xpGained;
+  
+  // Simple leveling formula: Level N requires (N * 100) XP. 
+  // For example, Level 1 -> 2 needs 100 XP, 2 -> 3 needs 200 XP.
+  while (currentXp >= currentLevel * 100) {
+    currentXp -= currentLevel * 100;
+    currentLevel += 1;
+  }
+  
+  examDates.xp = currentXp;
+  examDates.current_level = currentLevel;
+  
+  await supabase.from('profiles').update({ exam_dates: examDates }).eq('id', userId);
+  
   return true;
 }
 
@@ -225,13 +259,19 @@ export async function getTopics(supabase: SupabaseClient) {
 
 export async function getQuestions(
   supabase: SupabaseClient, 
-  filters?: { examCode?: string; subject?: string; topic?: string; limit?: number }
+  filters?: { examCode?: string; subject?: string; topic?: string; tier?: string; limit?: number }
 ) {
   let query = supabase.from('questions').select('*');
   
   if (filters?.examCode) query = query.eq('exam_code', filters.examCode);
   if (filters?.subject) query = query.eq('subject', filters.subject);
   if (filters?.topic) query = query.eq('topic_id', filters.topic);
+  
+  // We expect 'tier' to be stored in the metadata JSONB column of the question.
+  // We can filter by JSONB containment.
+  if (filters?.tier) {
+    query = query.contains('metadata', { tier: filters.tier });
+  }
   
   // Note: For real random selection, you'd use a postgres function or just fetch and shuffle.
   // We'll fetch up to 100 and shuffle on the client.
@@ -256,7 +296,20 @@ export async function getQuestions(
     correctOption: q.correct_option,
     explanation: q.explanation,
     difficulty: q.difficulty,
+    metadata: q.metadata,
   }));
+}
+
+export async function getExamQuestionCounts(supabase: SupabaseClient): Promise<Record<string, number>> {
+  // Using an aggregate query or fetching everything if small enough
+  const { data, error } = await supabase.from('questions').select('exam_code');
+  if (error || !data) return {};
+  
+  const counts: Record<string, number> = {};
+  data.forEach(q => {
+    counts[q.exam_code] = (counts[q.exam_code] || 0) + 1;
+  });
+  return counts;
 }
 
 // ===== PHASE 5: TRENDS & STUDY PLANNER =====

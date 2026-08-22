@@ -14,6 +14,7 @@ export interface Question {
   correctOption: number; // 0-indexed
   explanation: string;
   difficulty: 'easy' | 'medium' | 'hard';
+  metadata?: any;
 }
 
 export interface Exam {
