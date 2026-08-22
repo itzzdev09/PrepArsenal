@@ -11,7 +11,9 @@ Features:
 
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
+from collections import defaultdict
 import numpy as np
+from db_client import get_db_client
 
 @dataclass
 class TopicTrendResult:
@@ -114,11 +116,74 @@ class PrepArsenalMLEngine:
         return 'stable'
 
 if __name__ == "__main__":
+    print("Initializing PrepArsenal ML Trend Engine...")
+    db = get_db_client()
     engine = PrepArsenalMLEngine()
-    sample_data = {2019: 3, 2020: 4, 2021: 4, 2022: 5, 2023: 6}
-    avg, w_avg, momentum, score = engine.compute_prediction_score(sample_data)
-    print(f"Prediction Analysis:")
-    print(f"- Average: {avg:.2f}")
-    print(f"- Weighted Average: {w_avg:.2f}")
-    print(f"- Momentum: {momentum}")
-    print(f"- Prediction Confidence: {score}%")
+    
+    try:
+        print("Fetching questions from database...")
+        # In a real app we'd paginate, but for now we just fetch all
+        res = db.table('questions').select('exam_code, topic_id, year, difficulty').execute()
+        questions = res.data
+        
+        if not questions:
+            print("No questions found in database. Run dataset_harvester.py first.")
+            exit(0)
+            
+        print(f"Analyzing {len(questions)} questions...")
+        
+        # Group by (exam_code, topic_id)
+        topic_data = defaultdict(lambda: {
+            'yearly_counts': defaultdict(int),
+            'difficulties': []
+        })
+        
+        for q in questions:
+            # Handle topics that might just be text instead of UUIDs in our current implementation
+            # Since topic_id is TEXT REFERENCES public.topics(id), we should really create the topic first,
+            # but for our simple scraper we used 'High School Mathematics' directly. 
+            # Note: This might violate FK constraint if 'High School Mathematics' is not in topics table!
+            key = (q['exam_code'], q.get('topic_id', 'General'))
+            topic_data[key]['yearly_counts'][q['year']] += 1
+            if q.get('difficulty'):
+                topic_data[key]['difficulties'].append({'year': q['year'], 'difficulty': q['difficulty']})
+                
+        # To avoid FK constraint errors, let's make sure the topics exist in the DB!
+        inserted_topics = set()
+        
+        results = []
+        for (exam_code, topic_id), data in topic_data.items():
+            # 1. Ensure topic exists
+            if topic_id not in inserted_topics:
+                db.table('topics').upsert({
+                    'id': topic_id,
+                    'name': topic_id,
+                    'subject': 'General' # Fallback
+                }).execute()
+                inserted_topics.add(topic_id)
+                
+            # 2. Compute trends
+            yearly_counts = dict(data['yearly_counts'])
+            avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts)
+            diff_trend = engine.analyze_difficulty_trend(data['difficulties'])
+            
+            trend_record = {
+                'exam_code': exam_code,
+                'topic_id': topic_id,
+                'yearly_frequencies': yearly_counts,
+                'prediction_score': score,
+                'difficulty_trend': diff_trend,
+                'avg_questions_per_year': round(avg, 2),
+                'recency_weight_score': round(w_avg, 2)
+            }
+            results.append(trend_record)
+            
+        print(f"Computed trends for {len(results)} distinct topics. Updating database...")
+        
+        # Upsert trends
+        db.table('trend_analytics').upsert(results, on_conflict='exam_code, topic_id').execute()
+        
+        print("\n[SUCCESS] ML Trend Engine run completed successfully!")
+        
+    except Exception as e:
+        print(f"ML Engine Error: {e}")

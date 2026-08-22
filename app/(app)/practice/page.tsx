@@ -1,24 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  exams,
-  questions,
-  getQuestionsByExam,
-  getAllSubjects,
-  getTopicsForSubject,
-  type Question,
-} from '@/lib/data';
-import { savePracticeSession, updateStreak, getUserProfile } from '@/lib/store';
+import type { Question } from '@/lib/data';
+import { savePracticeSession, updateStreak, getExams, getTopics, getQuestions } from '@/lib/db';
+import { createClient } from '@/utils/supabase/client';
 
 type Phase = 'select' | 'solving' | 'review';
 
 export default function PracticePage() {
   // Selection state
-  const [selectedExam, setSelectedExam] = useState<string>('');
+  const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [selectedTopic, setSelectedTopic] = useState<string>('');
   const [questionCount, setQuestionCount] = useState(10);
+  
+  // Auth state
+  const [userId, setUserId] = useState<string | null>(null);
+  const supabase = createClient();
 
   // Quiz state
   const [phase, setPhase] = useState<Phase>('select');
@@ -29,6 +27,32 @@ export default function PracticePage() {
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // DB Data
+  const [dbExams, setDbExams] = useState<any[]>([]);
+  const [dbTopics, setDbTopics] = useState<any[]>([]);
+  const [dbQuestions, setDbQuestions] = useState<Question[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id);
+    });
+    
+    // Fetch real data from Supabase
+    async function fetchPrepData() {
+      const [exms, tops, qs] = await Promise.all([
+        getExams(supabase),
+        getTopics(supabase),
+        getQuestions(supabase)
+      ]);
+      setDbExams(exms);
+      setDbTopics(tops);
+      setDbQuestions(qs as any[]);
+      setIsLoading(false);
+    }
+    fetchPrepData();
+  }, [supabase]);
 
   // Timer
   useEffect(() => {
@@ -49,10 +73,10 @@ export default function PracticePage() {
   };
 
   const startQuiz = () => {
-    let filtered = [...questions];
+    let filtered = [...dbQuestions];
 
-    if (selectedExam) {
-      filtered = filtered.filter(q => q.examCode === selectedExam);
+    if (selectedExams.length > 0) {
+      filtered = filtered.filter(q => selectedExams.includes(q.examCode));
     }
     if (selectedSubject) {
       filtered = filtered.filter(q => q.subject === selectedSubject);
@@ -95,7 +119,7 @@ export default function PracticePage() {
     }
   };
 
-  const finishQuiz = () => {
+  const finishQuiz = async () => {
     setIsTimerRunning(false);
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -103,22 +127,23 @@ export default function PracticePage() {
       return acc + (answers[q.id] === q.correctOption ? 1 : 0);
     }, 0);
 
-    savePracticeSession({
-      id: crypto.randomUUID(),
-      examCode: selectedExam || 'MIXED',
-      subject: selectedSubject || 'Mixed',
-      topic: selectedTopic || undefined,
-      questionIds: activeQuestions.map(q => q.id),
-      answers,
-      startedAt: new Date(Date.now() - timer * 1000).toISOString(),
-      completedAt: new Date().toISOString(),
-      timeTaken: timer,
-      score,
-      totalQuestions: activeQuestions.length,
-    });
+    setPhase('review'); // Optimistic UI update
 
-    updateStreak();
-    setPhase('review');
+    if (userId) {
+      const correctOptions = activeQuestions.reduce((acc, q) => {
+        acc[q.id] = q.correctOption;
+        return acc;
+      }, {} as Record<string, number>);
+
+      await savePracticeSession(supabase, userId, {
+        questionIds: activeQuestions.map(q => q.id),
+        answers,
+        correctOptions,
+        timeTaken: timer,
+      });
+
+      await updateStreak(supabase, userId);
+    }
   };
 
   const resetQuiz = () => {
@@ -132,15 +157,27 @@ export default function PracticePage() {
   };
 
   // Get available subjects/topics based on selection
-  const availableSubjects = selectedExam
-    ? [...new Set(questions.filter(q => q.examCode === selectedExam).map(q => q.subject))]
-    : getAllSubjects();
+  const availableSubjects = selectedExams.length > 0
+    ? [...new Set(dbQuestions.filter(q => selectedExams.includes(q.examCode)).map(q => q.subject))]
+    : [...new Set(dbQuestions.map(q => q.subject))];
 
   const availableTopics = selectedSubject
-    ? [...new Set(questions
-        .filter(q => (selectedExam ? q.examCode === selectedExam : true) && q.subject === selectedSubject)
+    ? [...new Set(dbQuestions
+        .filter(q => (selectedExams.length > 0 ? selectedExams.includes(q.examCode) : true) && q.subject === selectedSubject)
         .map(q => q.topic))]
     : [];
+
+  // ===== LOADING PHASE =====
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+          <h2 style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>Loading Real Questions...</h2>
+        </div>
+      </div>
+    );
+  }
 
   // ===== SELECTION PHASE =====
   if (phase === 'select') {
@@ -233,21 +270,24 @@ export default function PracticePage() {
         </div>
 
         <div className="select-body">
-          {/* Exam Selection */}
           <div className="filter-section">
             <label className="filter-label">Select Exam (optional — leave empty for mixed)</label>
             <div className="filter-grid">
-              {exams.map(exam => (
+              {dbExams.map(exam => (
                 <button
-                  key={exam.code}
-                  className={`filter-chip ${selectedExam === exam.code ? 'active' : ''}`}
+                  key={exam.code || exam.id}
+                  className={`filter-chip ${selectedExams.includes(exam.code) ? 'active' : ''}`}
                   onClick={() => {
-                    setSelectedExam(prev => prev === exam.code ? '' : exam.code);
+                    setSelectedExams(prev => 
+                      prev.includes(exam.code) 
+                        ? prev.filter(c => c !== exam.code)
+                        : [...prev, exam.code]
+                    );
                     setSelectedSubject('');
                     setSelectedTopic('');
                   }}
                 >
-                  {exam.icon} {exam.name}
+                  {exam.icon || '📝'} {exam.name || exam.code}
                 </button>
               ))}
             </div>
@@ -304,7 +344,9 @@ export default function PracticePage() {
           <div className="start-section">
             <div className="summary-text">
               <strong>{questionCount}</strong> questions
-              {selectedExam && <> • <strong>{exams.find(e => e.code === selectedExam)?.name}</strong></>}
+              {selectedExams.length > 0 && (
+                <> • <strong>{selectedExams.map(code => dbExams.find(e => e.code === code)?.name || code).join(', ')}</strong></>
+              )}
               {selectedSubject && <> • <strong>{selectedSubject}</strong></>}
               {selectedTopic && <> • <strong>{selectedTopic}</strong></>}
             </div>
@@ -469,9 +511,8 @@ export default function PracticePage() {
         </div>
 
         <div className="quiz-body">
-          {/* Meta */}
           <div className="q-meta">
-            {q.examCode && <span className="badge badge-blue">{exams.find(e => e.code === q.examCode)?.name}</span>}
+            {q.examCode && <span className="badge badge-blue">{dbExams.find(e => e.code === q.examCode)?.name || q.examCode}</span>}
             <span className="badge badge-amber">{q.year}</span>
             <span className={`badge ${q.difficulty === 'easy' ? 'badge-green' : q.difficulty === 'hard' ? 'badge-red' : 'badge-amber'}`}>
               {q.difficulty}

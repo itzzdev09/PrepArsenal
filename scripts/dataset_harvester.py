@@ -12,21 +12,21 @@ import json
 import re
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
+from db_client import get_db_client
 
 @dataclass
 class StandardizedQuestion:
     exam_code: str
     year: int
-    shift: Optional[str]
     subject: str
-    topic: str
+    topic_id: str
     subtopic: Optional[str]
     question_text: str
     options: List[str]
     correct_option: int # 0-indexed
     explanation: str
     difficulty: str # easy | medium | hard
-    source_reference: str
+    metadata: Dict
 
 class ExamBenchImporter:
     """
@@ -81,21 +81,76 @@ class ExamBenchImporter:
             return StandardizedQuestion(
                 exam_code=exam_code,
                 year=int(raw_item.get('year', 2023)),
-                shift=raw_item.get('shift', 'Shift 1'),
                 subject=subject,
-                topic=raw_item.get('topic', 'General'),
+                topic_id=raw_item.get('topic', 'General'),
                 subtopic=raw_item.get('subtopic'),
                 question_text=cleaned_q,
                 options=options,
                 correct_option=int(raw_item.get('answer_idx', 0)),
                 explanation=raw_item.get('explanation', 'No detailed explanation provided.'),
                 difficulty=raw_item.get('difficulty', 'medium'),
-                source_reference=raw_item.get('source', 'ExamBench / Archive')
+                metadata={
+                    'source': raw_item.get('source', 'ExamBench / Archive'),
+                    'shift': raw_item.get('shift', 'Shift 1')
+                }
             )
         except Exception as e:
             print(f"Error parsing record: {e}")
             return None
 
 if __name__ == "__main__":
+    print("Initializing PrepArsenal Harvester...")
+    db = get_db_client()
     importer = ExamBenchImporter()
-    print("PrepArsenal Harvester initialized and ready for bulk ingest.")
+    
+    # We will use a mock open-source multiple choice dataset for testing 
+    # since ExamBench is just an example name.
+    # 'cais/mmlu' is a great benchmark dataset. We'll grab a few questions from 'high_school_mathematics'
+    try:
+        from datasets import load_dataset
+        print("Downloading sample dataset from HuggingFace (cais/mmlu)...")
+        dataset = load_dataset('cais/mmlu', 'high_school_mathematics', split='test[:20]')
+        
+        print(f"Successfully loaded {len(dataset)} questions. Transforming and importing...")
+        
+        inserted_count = 0
+        for item in dataset:
+            # Map MMLU to our expected raw format
+            raw_item = {
+                'exam': 'SSC_CGL', # Mocking exam target
+                'subject': 'Quantitative Aptitude',
+                'topic': 'High School Mathematics',
+                'question': item['question'],
+                'options': item['choices'],
+                'answer_idx': item['answer'],
+                'explanation': 'Answer derived from mathematical principles.',
+                'difficulty': 'hard',
+                'year': 2023,
+                'source': 'MMLU Benchmark'
+            }
+            
+            standardized = importer.transform_record(raw_item)
+            if standardized:
+                data = asdict(standardized)
+                # Remove shift if it accidentally ended up at top level (dataclass doesn't have it anymore)
+                if 'shift' in data:
+                    del data['shift']
+                
+                # Upsert topic first to avoid FK constraint violation
+                db.table('topics').upsert({
+                    'id': data['topic_id'],
+                    'name': data['topic_id'],
+                    'subject': data['subject']
+                }).execute()
+                
+                # Insert into Supabase
+                res = db.table('questions').insert(data).execute()
+                if res.data:
+                    inserted_count += 1
+                else:
+                    print(f"Failed to insert: {res}")
+        
+        print(f"\n[SUCCESS] Harvester completed! Successfully ingested {inserted_count} real questions into Supabase.")
+        
+    except Exception as e:
+        print(f"Harvester Pipeline Error: {e}")

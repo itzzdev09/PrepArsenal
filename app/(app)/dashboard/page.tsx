@@ -2,44 +2,95 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  exams,
-  questions,
-  getQuestionsByExam,
-  getTrendsByExam,
-  getTopicById,
-  trendData
-} from '@/lib/data';
+import { exams, getQuestionsByExam } from '@/lib/data';
 import {
   getUserProfile,
-  createDefaultProfile,
-  getPracticeSessions,
+  createUserProfile,
+  updateStreak,
   getOverallAccuracy,
   getTotalQuestionsAttempted,
+  getTrends,
+  getTopics,
+  getStudyPlan,
+  updateStudyPlan,
   type UserProfile,
-} from '@/lib/store';
+  type TrendAnalytics,
+  type StudyPlanItem,
+} from '@/lib/db';
+import { createClient } from '@/utils/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [userName, setUserName] = useState('');
+  
+  // Real DB Data
+  const [dbTrends, setDbTrends] = useState<TrendAnalytics[]>([]);
+  const [dbTopics, setDbTopics] = useState<any[]>([]);
+  const [studyPlan, setStudyPlan] = useState<StudyPlanItem[]>([]);
+  
+  // Stats
+  const [totalAttempted, setTotalAttempted] = useState(0);
+  const [accuracy, setAccuracy] = useState(0);
+  
+  const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
-    const existing = getUserProfile();
-    if (existing) {
-      setProfile(existing);
-    } else {
-      setShowOnboarding(true);
+    async function loadData() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      setUserId(user.id);
+      
+      const existingProfile = await getUserProfile(supabase, user.id);
+      
+      if (existingProfile) {
+        // Update streak on login
+        const newStreak = await updateStreak(supabase, user.id);
+        existingProfile.streak_count = newStreak;
+        setProfile(existingProfile);
+        
+        // Load stats & Phase 5 Data
+        const [attempted, acc, trends, topics, plan] = await Promise.all([
+          getTotalQuestionsAttempted(supabase, user.id),
+          getOverallAccuracy(supabase, user.id),
+          getTrends(supabase, existingProfile.target_exams),
+          getTopics(supabase),
+          getStudyPlan(supabase, user.id)
+        ]);
+        
+        setTotalAttempted(attempted);
+        setAccuracy(acc);
+        setDbTrends(trends);
+        setDbTopics(topics);
+        setStudyPlan(plan);
+      } else {
+        setShowOnboarding(true);
+      }
+      setLoading(false);
     }
-  }, []);
+    loadData();
+  }, [router, supabase]);
 
-  const handleOnboarding = () => {
-    if (!userName.trim()) return;
+  const handleOnboarding = async () => {
+    if (!userName.trim() || !userId) return;
+    setLoading(true);
+    
     const examList = selectedExams.length > 0 ? selectedExams : ['SSC_CGL'];
-    const newProfile = createDefaultProfile(userName.trim(), examList);
-    setProfile(newProfile);
-    setShowOnboarding(false);
+    const newProfile = await createUserProfile(supabase, userId, userName.trim(), examList);
+    
+    if (newProfile) {
+      setProfile(newProfile);
+      setShowOnboarding(false);
+    }
+    setLoading(false);
   };
 
   const toggleExamSelection = (code: string) => {
@@ -47,6 +98,52 @@ export default function DashboardPage() {
       prev.includes(code) ? prev.filter(e => e !== code) : [...prev, code]
     );
   };
+
+  const handleAddToPlanner = async (trend: TrendAnalytics, topicName: string) => {
+    if (!userId) return;
+    
+    // Check if already in plan
+    if (studyPlan.some(item => item.topicId === trend.topic_id)) {
+      alert(`${topicName} is already in your study plan!`);
+      return;
+    }
+    
+    // Find subject for the topic
+    const topicData = dbTopics.find(t => t.id === trend.topic_id);
+    
+    const newItem: StudyPlanItem = {
+      id: crypto.randomUUID(),
+      topicId: trend.topic_id,
+      topicName: topicName,
+      subject: topicData?.subject || 'General',
+      status: 'todo',
+      addedAt: new Date().toISOString()
+    };
+    
+    const newPlan = [...studyPlan, newItem];
+    setStudyPlan(newPlan);
+    await updateStudyPlan(supabase, userId, newPlan);
+    alert(`Added ${topicName} to Study Planner!`);
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+        <div className="spinner"></div>
+        <style jsx>{`
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-left-color: var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin { 100% { transform: rotate(360deg); } }
+        `}</style>
+      </div>
+    );
+  }
 
   if (showOnboarding) {
     return (
@@ -56,7 +153,7 @@ export default function DashboardPage() {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            min-height: 80vh;
             padding: 2rem;
           }
           .onboarding-card {
@@ -150,7 +247,7 @@ export default function DashboardPage() {
 
             <button
               className="btn btn-primary btn-lg"
-              style={{ width: '100%' }}
+              style={{ width: '100%', justifyContent: 'center' }}
               onClick={handleOnboarding}
               disabled={!userName.trim()}
             >
@@ -164,22 +261,13 @@ export default function DashboardPage() {
 
   if (!profile) return null;
 
-  const sessions = getPracticeSessions();
-  const totalAttempted = getTotalQuestionsAttempted();
-  const accuracy = getOverallAccuracy();
-  const targetExamData = profile.targetExams.map(code => exams.find(e => e.code === code)).filter(Boolean);
+  const targetExamData = profile.target_exams.map(code => exams.find(e => e.code === code)).filter(Boolean);
 
-  // Get top trending topics across target exams
-  const topTrends = profile.targetExams
-    .flatMap(code => getTrendsByExam(code))
-    .sort((a, b) => b.predictionScore - a.predictionScore)
-    .slice(0, 8);
-
-  // Unique topics
+  // Unique topics from real trends
   const seenTopics = new Set<string>();
-  const uniqueTopTrends = topTrends.filter(t => {
-    if (seenTopics.has(t.topicId)) return false;
-    seenTopics.add(t.topicId);
+  const uniqueTopTrends = dbTrends.filter(t => {
+    if (seenTopics.has(t.topic_id)) return false;
+    seenTopics.add(t.topic_id);
     return true;
   }).slice(0, 6);
 
@@ -211,7 +299,7 @@ export default function DashboardPage() {
         }
         .stats-row {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 1rem;
           margin-bottom: 2rem;
         }
@@ -341,11 +429,11 @@ export default function DashboardPage() {
 
       <div className="dash-header">
         <h1 className="dash-greeting">
-          Welcome back, <span className="name">{profile.name}</span> 👋
+          Welcome back, <span className="name">{profile.full_name}</span> 👋
         </h1>
         <p className="dash-sub">
-          {profile.targetExams.length} target exam{profile.targetExams.length !== 1 ? 's' : ''} •{' '}
-          Day {Math.max(1, Math.floor((Date.now() - new Date(profile.joinedAt).getTime()) / 86400000))} of your prep journey
+          {profile.target_exams.length} target exam{profile.target_exams.length !== 1 ? 's' : ''} •{' '}
+          Day {Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000))} of your prep journey
         </p>
       </div>
 
@@ -354,7 +442,7 @@ export default function DashboardPage() {
         <div className="stats-row">
           <div className="stat-box">
             <div className="s-icon">🔥</div>
-            <div className="s-val">{profile.streak}</div>
+            <div className="s-val">{profile.streak_count}</div>
             <div className="s-label">Day Streak</div>
           </div>
           <div className="stat-box">
@@ -366,11 +454,6 @@ export default function DashboardPage() {
             <div className="s-icon">🎯</div>
             <div className="s-val">{accuracy}%</div>
             <div className="s-label">Overall Accuracy</div>
-          </div>
-          <div className="stat-box">
-            <div className="s-icon">📚</div>
-            <div className="s-val">{sessions.length}</div>
-            <div className="s-label">Practice Sessions</div>
           </div>
         </div>
 
@@ -418,10 +501,6 @@ export default function DashboardPage() {
                     <span>{examQuestions.length}</span>
                   </div>
                   <div className="tec-stat">
-                    <span>Topics Tracked</span>
-                    <span>{examTrends.length}</span>
-                  </div>
-                  <div className="tec-stat">
                     <span>Pattern</span>
                     <span>{exam.totalQuestions}Q / {exam.totalTime}m</span>
                   </div>
@@ -435,21 +514,43 @@ export default function DashboardPage() {
         <div className="dash-section">
           <h2 className="dash-section-title">📈 High Priority Topics</h2>
           <div className="trend-pills">
-            {uniqueTopTrends.map(trend => {
-              const topic = getTopicById(trend.topicId);
-              if (!topic) return null;
-              return (
-                <div key={`${trend.topicId}-${trend.examCode}`} className="trend-pill">
-                  <span className={`tp-score ${trend.predictionScore >= 90 ? 'high' : 'med'}`}>
-                    {trend.predictionScore}%
-                  </span>
-                  <span>{topic.name}</span>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                    {trend.difficultyTrend === 'harder' ? '📈' : trend.difficultyTrend === 'easier' ? '📉' : '➡️'}
-                  </span>
-                </div>
-              );
-            })}
+            {uniqueTopTrends.length > 0 ? (
+              uniqueTopTrends.map(trend => {
+                const topic = dbTopics.find(t => t.id === trend.topic_id);
+                if (!topic) return null;
+                const isInPlan = studyPlan.some(p => p.topicId === trend.topic_id);
+                return (
+                  <div key={`${trend.topic_id}-${trend.exam_code}`} className="trend-pill" style={{ display: 'flex', justifyContent: 'space-between', width: '100%', maxWidth: '400px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span className={`tp-score ${trend.prediction_score >= 80 ? 'high' : 'med'}`}>
+                        {trend.prediction_score.toFixed(1)}%
+                      </span>
+                      <span>{topic.name}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                        {trend.difficulty_trend === 'harder' ? '📈' : trend.difficulty_trend === 'easier' ? '📉' : '➡️'}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => handleAddToPlanner(trend, topic.name)}
+                      disabled={isInPlan}
+                      style={{ 
+                        background: isInPlan ? 'var(--bg-input)' : 'var(--accent-blue)', 
+                        color: 'white', 
+                        border: 'none', 
+                        padding: '0.2rem 0.5rem', 
+                        borderRadius: '0.5rem', 
+                        cursor: isInPlan ? 'default' : 'pointer',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      {isInPlan ? 'In Plan' : '+ Planner'}
+                    </button>
+                  </div>
+                );
+              })
+            ) : (
+              <p style={{ color: 'var(--text-secondary)' }}>No trends available yet. Run the ML Engine.</p>
+            )}
           </div>
         </div>
       </div>

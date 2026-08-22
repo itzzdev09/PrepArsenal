@@ -1,20 +1,30 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { chat, buildQuestionContext } from '@/lib/llm';
-import { saveChatMessage, getChatHistory, clearChatHistory, type ChatEntry } from '@/lib/store';
+import { chat } from '@/lib/llm';
+import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
+import { createClient } from '@/utils/supabase/client';
 
 export default function TutorPage() {
   const [messages, setMessages] = useState<ChatEntry[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [provider, setProvider] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const supabase = createClient();
 
   useEffect(() => {
-    setMessages(getChatHistory());
-  }, []);
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id);
+        getChatHistory(supabase, data.user.id).then(history => {
+          setMessages(history);
+        });
+      }
+    });
+  }, [supabase]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,10 +34,14 @@ export default function TutorPage() {
     const text = input.trim();
     if (!text || isLoading) return;
 
-    // Add user message
     const userMsg: ChatEntry = { role: 'user', content: text, timestamp: new Date().toISOString() };
-    setMessages(prev => [...prev, userMsg]);
-    saveChatMessage(userMsg);
+    const newMessagesAfterUser = [...messages, userMsg];
+    setMessages(newMessagesAfterUser);
+    
+    if (userId) {
+      saveChatHistory(supabase, userId, newMessagesAfterUser);
+    }
+    
     setInput('');
     setIsLoading(true);
 
@@ -49,8 +63,13 @@ export default function TutorPage() {
         content: response.content,
         timestamp: new Date().toISOString(),
       };
-      setMessages(prev => [...prev, assistantMsg]);
-      saveChatMessage(assistantMsg);
+      
+      const newMessagesAfterAssistant = [...newMessagesAfterUser, assistantMsg];
+      setMessages(newMessagesAfterAssistant);
+      
+      if (userId) {
+        saveChatHistory(supabase, userId, newMessagesAfterAssistant);
+      }
     } catch (error) {
       const errorMsg: ChatEntry = {
         role: 'assistant',
@@ -80,8 +99,10 @@ export default function TutorPage() {
 
   const handleClear = () => {
     if (confirm('Clear all chat history?')) {
-      clearChatHistory();
       setMessages([]);
+      if (userId) {
+        saveChatHistory(supabase, userId, []);
+      }
     }
   };
 

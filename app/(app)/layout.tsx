@@ -3,17 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signout } from '@/app/login/actions';
 
 const navItems = [
   { label: 'Dashboard', icon: '📊', href: '/dashboard' },
   { label: 'Practice Arena', icon: '⏱️', href: '/practice' },
+  { label: 'Smart Planner', icon: '📅', href: '/planner' },
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
 ];
 
 const comingSoonItems = [
   { label: 'Smart Notes', icon: '📝', href: '#' },
-  { label: 'Study Planner', icon: '📅', href: '#' },
   { label: 'Formula Vault', icon: '⚡', href: '#' },
 ];
 
@@ -139,10 +140,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div className="sidebar-footer">
-          <Link href="/" className="sidebar-footer-link">
-            <span>←</span>
-            <span>Back to Home</span>
-          </Link>
+          <form>
+            <button
+              formAction={signout}
+              className="sidebar-footer-link"
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', width: '100%', textAlign: 'left' }}
+            >
+              <span>🚪</span>
+              <span>Sign Out</span>
+            </button>
+          </form>
         </div>
       </aside>
 
