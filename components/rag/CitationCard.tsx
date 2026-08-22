@@ -129,7 +129,7 @@ export default function CitationCard({ citations }: CitationCardProps) {
 
       <div className="citation-header">
         <div className="citation-title">
-          <span>📚 Verified Textbook Citations (RAG)</span>
+          <span>📚 Verified Textbook Citations</span>
           <span className="citation-count">{citations.length} Sources Found</span>
         </div>
       </div>

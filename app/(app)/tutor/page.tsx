@@ -380,7 +380,7 @@ export default function TutorPage() {
           <div className="tutor-title">
             <span>🤖 AI Tutor</span>
             <div className="tech-badges">
-              <span className="badge-rag">📚 RAG Citations</span>
+              <span className="badge-rag">📚 Verified Sources</span>
               <span className="badge-cache">⚡ Semantic Cache</span>
             </div>
           </div>
@@ -403,7 +403,7 @@ export default function TutorPage() {
           {messages.length === 0 ? (
             <div className="welcome-screen">
               <div className="welcome-icon">🧠</div>
-              <h2 className="welcome-title">AI Tutor with Live RAG & Semantic Cache</h2>
+              <h2 className="welcome-title">AI Tutor & Knowledge Base</h2>
               <p className="welcome-sub">
                 Ask any exam question or concept doubt. Answers are cross-verified with official NCERT textbooks, standard references (Laxmikanth, Spectrum), and historical PYQs.
               </p>

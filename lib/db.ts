@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getTursoExams, getTursoTopics, getTursoQuestions } from './turso';
 
 export interface UserProfile {
   id: string;
@@ -264,13 +265,27 @@ export async function saveChatHistory(supabase: SupabaseClient, userId: string, 
   }
 }
 
-// Data Fetching for Practice Mode
+// Data Fetching for Practice Mode (Edge Turso with Supabase & local fallback)
 export async function getExams(supabase: SupabaseClient) {
+  try {
+    const tursoExams = await getTursoExams();
+    if (tursoExams && tursoExams.length > 0) return tursoExams;
+  } catch {
+    // Fallback to Supabase
+  }
+
   const { data } = await supabase.from('exams').select('*');
   return data || [];
 }
 
 export async function getTopics(supabase: SupabaseClient) {
+  try {
+    const tursoTopics = await getTursoTopics();
+    if (tursoTopics && tursoTopics.length > 0) return tursoTopics;
+  } catch {
+    // Fallback to Supabase
+  }
+
   const { data } = await supabase.from('topics').select('*');
   return data || [];
 }
@@ -279,28 +294,35 @@ export async function getQuestions(
   supabase: SupabaseClient, 
   filters?: { examCode?: string; subject?: string; topic?: string; tier?: string; limit?: number }
 ) {
+  try {
+    const tursoQuestions = await getTursoQuestions({
+      examCode: filters?.examCode,
+      subject: filters?.subject,
+      topic: filters?.topic,
+      limit: filters?.limit || 100,
+    });
+    if (tursoQuestions && tursoQuestions.length > 0) return tursoQuestions;
+  } catch {
+    // Fallback to Supabase
+  }
+
   let query = supabase.from('questions').select('*');
   
   if (filters?.examCode) query = query.eq('exam_code', filters.examCode);
   if (filters?.subject) query = query.eq('subject', filters.subject);
   if (filters?.topic) query = query.eq('topic_id', filters.topic);
   
-  // We expect 'tier' to be stored in the metadata JSONB column of the question.
-  // We can filter by JSONB containment.
   if (filters?.tier) {
     query = query.contains('metadata', { tier: filters.tier });
   }
   
-  // Note: For real random selection, you'd use a postgres function or just fetch and shuffle.
-  // We'll fetch up to 100 and shuffle on the client.
   const { data, error } = await query.limit(100);
   
   if (error || !data) {
-    console.error('Error fetching questions:', error);
+    console.error('Error fetching questions from Supabase fallback:', error);
     return [];
   }
   
-  // Map snake_case from DB to camelCase for UI
   return data.map(q => ({
     id: q.id,
     examCode: q.exam_code,
