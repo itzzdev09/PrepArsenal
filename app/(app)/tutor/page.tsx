@@ -4,6 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { chat } from '@/lib/llm';
 import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 export default function TutorPage() {
   const [messages, setMessages] = useState<ChatEntry[]>([]);
@@ -98,11 +102,9 @@ export default function TutorPage() {
   };
 
   const handleClear = () => {
-    if (confirm('Clear all chat history?')) {
-      setMessages([]);
-      if (userId) {
-        saveChatHistory(supabase, userId, []);
-      }
+    setMessages([]);
+    if (userId) {
+      saveChatHistory(supabase, userId, []);
     }
   };
 
@@ -114,29 +116,6 @@ export default function TutorPage() {
     '🧠 Tips for solving Seating Arrangement in less time',
     '📝 Common idioms asked in SSC CGL English',
   ];
-
-  const formatMessage = (content: string) => {
-    // Basic markdown-ish rendering
-    return content
-      .split('\n')
-      .map((line, i) => {
-        // Bold
-        line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        // Inline code
-        line = line.replace(/`([^`]+)`/g, '<code>$1</code>');
-        // Headings
-        if (line.startsWith('### ')) return `<h4 style="margin:0.5rem 0;font-size:0.95rem">${line.slice(4)}</h4>`;
-        if (line.startsWith('## ')) return `<h3 style="margin:0.75rem 0;font-size:1rem">${line.slice(3)}</h3>`;
-        if (line.startsWith('# ')) return `<h2 style="margin:0.75rem 0;font-size:1.1rem">${line.slice(2)}</h2>`;
-        // List items
-        if (line.startsWith('- ') || line.startsWith('* ')) return `<div style="padding-left:1rem;margin:0.15rem 0">• ${line.slice(2)}</div>`;
-        if (/^\d+\.\s/.test(line)) return `<div style="padding-left:1rem;margin:0.15rem 0">${line}</div>`;
-        // Empty line
-        if (!line.trim()) return '<br/>';
-        return `<div>${line}</div>`;
-      })
-      .join('');
-  };
 
   return (
     <div>
@@ -323,6 +302,43 @@ export default function TutorPage() {
         }
         .clear-btn:hover { color: var(--error); }
 
+        /* Markdown Overrides */
+        .markdown-body {
+          color: var(--text-primary);
+        }
+        .markdown-body p { margin-bottom: 0.75rem; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+          margin-top: 1.5rem;
+          margin-bottom: 0.75rem;
+          font-weight: 700;
+        }
+        .markdown-body h1:first-child, .markdown-body h2:first-child, .markdown-body h3:first-child, .markdown-body h4:first-child {
+          margin-top: 0;
+        }
+        .markdown-body ul, .markdown-body ol {
+          padding-left: 1.5rem;
+          margin-bottom: 1rem;
+        }
+        .markdown-body li { margin-bottom: 0.25rem; }
+        .markdown-body pre {
+          background: var(--bg-primary);
+          padding: 1rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin: 1rem 0;
+          border: 1px solid var(--border-subtle);
+        }
+        .markdown-body code {
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(255,255,255,0.05);
+          padding: 0.2rem 0.4rem;
+          border-radius: 0.25rem;
+          font-size: 0.85em;
+        }
+        .markdown-body pre code { background: none; padding: 0; }
+        .markdown-body strong { font-weight: 700; color: var(--text-primary); }
+
         @media (max-width: 768px) {
           .msg-bubble { max-width: 90%; }
           .quick-prompts { grid-template-columns: 1fr; }
@@ -373,7 +389,14 @@ export default function TutorPage() {
               {messages.map((msg, i) => (
                 <div key={i} className={`msg-bubble ${msg.role}`}>
                   {msg.role === 'assistant' ? (
-                    <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.content) }} />
+                    <div className="markdown-body">
+                      <ReactMarkdown 
+                        remarkPlugins={[remarkMath]} 
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {msg.content}
+                      </ReactMarkdown>
+                    </div>
                   ) : (
                     msg.content
                   )}

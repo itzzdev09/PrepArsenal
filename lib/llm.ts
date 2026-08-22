@@ -46,7 +46,7 @@ async function callGemini(messages: ChatMessage[]): Promise<LLMResponse> {
     }));
 
   const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -93,7 +93,7 @@ async function callGroq(messages: ChatMessage[]): Promise<LLMResponse> {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
+      model: 'llama3-70b-8192',
       messages: formattedMessages,
       temperature: 0.7,
       max_tokens: 2048

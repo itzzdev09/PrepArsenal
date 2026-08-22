@@ -13,6 +13,7 @@ import {
   getTopics,
   getStudyPlan,
   updateStudyPlan,
+  updateTargetExams,
   type UserProfile,
   type TrendAnalytics,
   type StudyPlanItem,
@@ -27,6 +28,9 @@ export default function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [userName, setUserName] = useState('');
+  
+  const [isEditingExams, setIsEditingExams] = useState(false);
+  const [editSelectedExams, setEditSelectedExams] = useState<string[]>([]);
   
   // Real DB Data
   const [dbTrends, setDbTrends] = useState<TrendAnalytics[]>([]);
@@ -97,6 +101,29 @@ export default function DashboardPage() {
     setSelectedExams(prev =>
       prev.includes(code) ? prev.filter(e => e !== code) : [...prev, code]
     );
+  };
+
+  const handleEditExams = () => {
+    if (profile) {
+      setEditSelectedExams(profile.target_exams);
+      setIsEditingExams(true);
+    }
+  };
+
+  const handleSaveExams = async () => {
+    if (!userId || editSelectedExams.length === 0) {
+      alert('Please select at least one exam.');
+      return;
+    }
+    setLoading(true);
+    const success = await updateTargetExams(supabase, userId, editSelectedExams);
+    if (success && profile) {
+      setProfile({ ...profile, target_exams: editSelectedExams });
+      setIsEditingExams(false);
+    } else {
+      alert('Failed to update exams');
+    }
+    setLoading(false);
   };
 
   const handleAddToPlanner = async (trend: TrendAnalytics, topicName: string) => {
@@ -425,6 +452,37 @@ export default function DashboardPage() {
           .quick-actions { grid-template-columns: 1fr; }
           .dash-body { padding: 1rem; }
         }
+        
+        .exam-select-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          gap: 0.5rem;
+          margin-bottom: 1.5rem;
+        }
+        .exam-select-item {
+          padding: 0.75rem;
+          background: var(--bg-input);
+          border: 2px solid var(--border-subtle);
+          border-radius: 0.75rem;
+          cursor: pointer;
+          transition: all 200ms;
+          text-align: center;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        .exam-select-item:hover {
+          border-color: var(--border-default);
+        }
+        .exam-select-item.selected {
+          border-color: var(--accent-blue);
+          background: rgba(59, 130, 246, 0.1);
+          color: var(--accent-blue);
+        }
+        .exam-select-icon {
+          font-size: 1.5rem;
+          display: block;
+          margin-bottom: 0.25rem;
+        }
       `}</style>
 
       <div className="dash-header">
@@ -481,32 +539,69 @@ export default function DashboardPage() {
 
         {/* Target Exams */}
         <div className="dash-section">
-          <h2 className="dash-section-title">🎯 Your Target Exams</h2>
-          <div className="target-exams-grid">
-            {targetExamData.map(exam => {
-              if (!exam) return null;
-              const examQuestions = getQuestionsByExam(exam.code);
-              return (
-                <Link href={`/practice?exam=${exam.code}`} key={exam.code} className="target-exam-card" style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="tec-header">
-                    <span className="tec-icon">{exam.icon}</span>
-                    <div>
-                      <div className="tec-name">{exam.name}</div>
-                      <div className="tec-category">{exam.category}</div>
-                    </div>
-                  </div>
-                  <div className="tec-stat">
-                    <span>Questions Available</span>
-                    <span>{examQuestions.length}</span>
-                  </div>
-                  <div className="tec-stat">
-                    <span>Pattern</span>
-                    <span>{exam.totalQuestions}Q / {exam.totalTime}m</span>
-                  </div>
-                </Link>
-              );
-            })}
+          <div className="dash-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>🎯 Your Target Exams</span>
+            {!isEditingExams && (
+              <button 
+                className="btn" 
+                style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
+                onClick={handleEditExams}
+              >
+                Edit
+              </button>
+            )}
           </div>
+          
+          {isEditingExams ? (
+            <div style={{ background: 'var(--bg-card)', padding: '1.5rem', borderRadius: '1rem', border: '1px solid var(--border-subtle)' }}>
+              <div className="exam-select-grid">
+                {exams.map(exam => (
+                  <div
+                    key={exam.code}
+                    className={`exam-select-item ${editSelectedExams.includes(exam.code) ? 'selected' : ''}`}
+                    onClick={() => {
+                      setEditSelectedExams(prev =>
+                        prev.includes(exam.code) ? prev.filter(e => e !== exam.code) : [...prev, exam.code]
+                      );
+                    }}
+                  >
+                    <span className="exam-select-icon">{exam.icon}</span>
+                    {exam.name}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button className="btn" onClick={() => setIsEditingExams(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleSaveExams}>Save Changes</button>
+              </div>
+            </div>
+          ) : (
+            <div className="target-exams-grid">
+              {targetExamData.map(exam => {
+                if (!exam) return null;
+                const examQuestions = getQuestionsByExam(exam.code);
+                return (
+                  <Link href={`/practice?exam=${exam.code}`} key={exam.code} className="target-exam-card" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="tec-header">
+                      <span className="tec-icon">{exam.icon}</span>
+                      <div>
+                        <div className="tec-name">{exam.name}</div>
+                        <div className="tec-category">{exam.category}</div>
+                      </div>
+                    </div>
+                    <div className="tec-stat">
+                      <span>Questions Available</span>
+                      <span>{examQuestions.length}</span>
+                    </div>
+                    <div className="tec-stat">
+                      <span>Pattern</span>
+                      <span>{exam.totalQuestions}Q / {exam.totalTime}m</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Top Trends */}

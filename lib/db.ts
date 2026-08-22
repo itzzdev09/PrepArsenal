@@ -49,6 +49,23 @@ export async function createUserProfile(
   return data as UserProfile;
 }
 
+export async function updateTargetExams(
+  supabase: SupabaseClient, 
+  userId: string, 
+  targetExams: string[]
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ target_exams: targetExams })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error updating target exams:', error);
+    return false;
+  }
+  return true;
+}
+
 export async function updateStreak(supabase: SupabaseClient, userId: string): Promise<number> {
   const profile = await getUserProfile(supabase, userId);
   if (!profile) return 0;
