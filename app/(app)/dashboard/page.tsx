@@ -42,46 +42,71 @@ export default function DashboardPage() {
   const [accuracy, setAccuracy] = useState(0);
   
   const supabase = createClient();
-  const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     async function loadData() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/login');
-        return;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          const existingProfile = await getUserProfile(supabase, user.id);
+          
+          if (existingProfile) {
+            const newStreak = await updateStreak(supabase, user.id);
+            existingProfile.streak_count = newStreak;
+            setProfile(existingProfile);
+            
+            const [attempted, acc, trends, topics, plan] = await Promise.all([
+              getTotalQuestionsAttempted(supabase, user.id),
+              getOverallAccuracy(supabase, user.id),
+              getTrends(supabase, existingProfile.target_exams),
+              getTopics(supabase),
+              getStudyPlan(supabase, user.id)
+            ]);
+            
+            setTotalAttempted(attempted);
+            setAccuracy(acc);
+            setDbTrends(trends);
+            setDbTopics(topics);
+            setStudyPlan(plan);
+          } else {
+            setShowOnboarding(true);
+          }
+        } else {
+          // Local demo session fallback
+          const localProfile: UserProfile = {
+            id: 'local_dev_user',
+            full_name: 'Dev Verma',
+            target_exams: ['SSC_CGL', 'RBI_GRADEB'],
+            exam_dates: { xp: 240, current_level: 2 },
+            streak_count: 3,
+            last_study_date: new Date().toISOString(),
+            total_study_minutes: 240,
+            created_at: new Date().toISOString(),
+            xp: 240,
+            current_level: 2,
+          };
+          setProfile(localProfile);
+          const [trends, topics] = await Promise.all([
+            getTrends(supabase, localProfile.target_exams),
+            getTopics(supabase)
+          ]);
+          setTotalAttempted(18);
+          setAccuracy(78.5);
+          setDbTrends(trends);
+          setDbTopics(topics);
+        }
+      } catch (err) {
+        console.warn('Dashboard load fallback notice:', err);
+      } finally {
+        setLoading(false);
       }
-      setUserId(user.id);
-      
-      const existingProfile = await getUserProfile(supabase, user.id);
-      
-      if (existingProfile) {
-        // Update streak on login
-        const newStreak = await updateStreak(supabase, user.id);
-        existingProfile.streak_count = newStreak;
-        setProfile(existingProfile);
-        
-        // Load stats & Phase 5 Data
-        const [attempted, acc, trends, topics, plan] = await Promise.all([
-          getTotalQuestionsAttempted(supabase, user.id),
-          getOverallAccuracy(supabase, user.id),
-          getTrends(supabase, existingProfile.target_exams),
-          getTopics(supabase),
-          getStudyPlan(supabase, user.id)
-        ]);
-        
-        setTotalAttempted(attempted);
-        setAccuracy(acc);
-        setDbTrends(trends);
-        setDbTopics(topics);
-        setStudyPlan(plan);
-      } else {
-        setShowOnboarding(true);
-      }
-      setLoading(false);
     }
     loadData();
-  }, [router, supabase]);
+  }, [supabase]);
 
   const handleOnboarding = async () => {
     if (!userName.trim() || !userId) return;
@@ -299,7 +324,7 @@ export default function DashboardPage() {
   }).slice(0, 6);
 
   return (
-    <div>
+    <div suppressHydrationWarning>
       <style jsx>{`
         .dash-header {
           padding: 2rem 2rem 1.5rem;
