@@ -12,8 +12,14 @@ Features:
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 from collections import defaultdict
+from datetime import datetime
 import numpy as np
 from db_client import get_db_client
+
+# A priority needs evidence from at least three separate exam years.  This is
+# deliberately measured at paper level, rather than requiring the *same* topic
+# to occur in every year: a topic absent from a paper is meaningful zero data.
+MIN_PYQ_YEARS = 3
 
 @dataclass
 class TopicTrendResult:
@@ -35,9 +41,9 @@ class PrepArsenalMLEngine:
         weight(t) = exp(-lambda * (current_year - t))
         """
         self.decay_rate = decay_rate
-        self.current_year = 2024
+        self.current_year = datetime.now().year
 
-    def compute_prediction_score(self, yearly_counts: Dict[int, int]) -> Tuple[float, float, str]:
+    def compute_prediction_score(self, yearly_counts: Dict[int, int]) -> Tuple[float, float, str, float]:
         """
         Computes predictive confidence score using exponential weighted moving average (EWMA)
         and momentum slope.
@@ -123,47 +129,76 @@ if __name__ == "__main__":
     try:
         print("Fetching questions from database...")
         # In a real app we'd paginate, but for now we just fetch all
-        res = db.table('questions').select('exam_code, topic_id, year, difficulty').execute()
-        questions = res.data
+        res = db.table('questions').select('exam_code, topic_id, year, difficulty, metadata').execute()
+        questions = res.data or []
         
         if not questions:
             print("No questions found in database. Run dataset_harvester.py first.")
             exit(0)
             
-        print(f"Analyzing {len(questions)} questions...")
+        verified_pyqs = [
+            question for question in questions
+            if (question.get('metadata') or {}).get('source_type') == 'pyq'
+            and (question.get('metadata') or {}).get('is_verified_pyq') is True
+        ]
+
+        print(f"Found {len(questions)} total questions and {len(verified_pyqs)} verified PYQs.")
+
+        # Clear obsolete predictions so benchmark/demo data can never appear as a PYQ trend.
+        db.table('trend_analytics').delete().not_.is_('id', 'null').execute()
+
+        if not verified_pyqs:
+            print("No verified PYQs found. Trends were cleared; import verified PYQs before running predictions.")
+            exit(0)
+
+        print(f"Analyzing {len(verified_pyqs)} verified PYQs...")
+        topic_rows = db.table('topics').select('id, name, subject').execute().data or []
+        topic_catalog = {topic['id']: topic for topic in topic_rows}
         
+        # Determine the eligible paper history for every exam first.  A topic
+        # can then be scored over the full history, including years in which it
+        # did not occur, instead of inflating a one-off question into a trend.
+        exam_years = defaultdict(set)
+        for q in verified_pyqs:
+            exam_years[q['exam_code']].add(q['year'])
+
+        eligible_exam_years = {
+            exam_code: sorted(years)
+            for exam_code, years in exam_years.items()
+            if len(years) >= MIN_PYQ_YEARS
+        }
+        skipped_exams = sorted(set(exam_years) - set(eligible_exam_years))
+        if skipped_exams:
+            print(
+                'Waiting for three distinct source-attributed PYQ years for: '
+                + ', '.join(skipped_exams)
+            )
+
         # Group by (exam_code, topic_id)
         topic_data = defaultdict(lambda: {
             'yearly_counts': defaultdict(int),
             'difficulties': []
         })
         
-        for q in questions:
-            # Handle topics that might just be text instead of UUIDs in our current implementation
-            # Since topic_id is TEXT REFERENCES public.topics(id), we should really create the topic first,
-            # but for our simple scraper we used 'High School Mathematics' directly. 
-            # Note: This might violate FK constraint if 'High School Mathematics' is not in topics table!
-            key = (q['exam_code'], q.get('topic_id', 'General'))
+        for q in verified_pyqs:
+            topic_id = q.get('topic_id')
+            if not topic_id or topic_id not in topic_catalog:
+                print(f"Skipping verified PYQ with an unknown topic: {topic_id}")
+                continue
+            if q['exam_code'] not in eligible_exam_years:
+                continue
+            key = (q['exam_code'], topic_id)
             topic_data[key]['yearly_counts'][q['year']] += 1
             if q.get('difficulty'):
                 topic_data[key]['difficulties'].append({'year': q['year'], 'difficulty': q['difficulty']})
                 
-        # To avoid FK constraint errors, let's make sure the topics exist in the DB!
-        inserted_topics = set()
-        
         results = []
         for (exam_code, topic_id), data in topic_data.items():
-            # 1. Ensure topic exists
-            if topic_id not in inserted_topics:
-                db.table('topics').upsert({
-                    'id': topic_id,
-                    'name': topic_id,
-                    'subject': 'General' # Fallback
-                }).execute()
-                inserted_topics.add(topic_id)
-                
-            # 2. Compute trends
-            yearly_counts = dict(data['yearly_counts'])
+            yearly_counts = {
+                year: data['yearly_counts'].get(year, 0)
+                for year in eligible_exam_years[exam_code]
+            }
+
             avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts)
             diff_trend = engine.analyze_difficulty_trend(data['difficulties'])
             
@@ -178,10 +213,11 @@ if __name__ == "__main__":
             }
             results.append(trend_record)
             
-        print(f"Computed trends for {len(results)} distinct topics. Updating database...")
+        print(f"Computed trends for {len(results)} verified PYQ topics. Updating database...")
         
         # Upsert trends
-        db.table('trend_analytics').upsert(results, on_conflict='exam_code, topic_id').execute()
+        if results:
+            db.table('trend_analytics').upsert(results, on_conflict='exam_code, topic_id').execute()
         
         print("\n[SUCCESS] ML Trend Engine run completed successfully!")
         

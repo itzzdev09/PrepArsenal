@@ -318,6 +318,31 @@ export async function getQuestions(
   }));
 }
 
+export interface QuestionTextMatch {
+  question_text: string;
+  exam_code: string;
+  year: number;
+}
+
+export async function getQuestionMatchesByText(
+  supabase: SupabaseClient,
+  questionTexts: string[]
+): Promise<QuestionTextMatch[]> {
+  if (questionTexts.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('questions')
+    .select('question_text, exam_code, year')
+    .in('question_text', questionTexts);
+
+  if (error || !data) {
+    console.error('Error fetching matching PYQs:', error);
+    return [];
+  }
+
+  return data as QuestionTextMatch[];
+}
+
 export async function getExamQuestionCounts(supabase: SupabaseClient): Promise<Record<string, number>> {
   // Using an aggregate query or fetching everything if small enough
   const { data, error } = await supabase.from('questions').select('exam_code');

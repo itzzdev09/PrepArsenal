@@ -12,7 +12,6 @@ import json
 import re
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
-from db_client import get_db_client
 
 @dataclass
 class StandardizedQuestion:
@@ -35,7 +34,7 @@ class ExamBenchImporter:
     EXAM_MAPPING = {
         'ssc_cgl': 'SSC_CGL',
         'rrb_ntpc': 'RRB_NTPC',
-        'upsc': 'UPSC_APFO',
+        'upsc': 'UPSC_APFC',
         'banking': 'RBI_GRADEB',
         'rbi': 'RBI_GRADEB',
         'nabard': 'NABARD_GRADEA',
@@ -56,6 +55,25 @@ class ExamBenchImporter:
         'finance': 'Finance & Economics',
     }
 
+    MMLU_TOPIC_MAPPING = {
+        'high_school_mathematics': ('Quantitative Aptitude', 'qa_algebra'),
+        'high_school_physics': ('General Awareness', 'ga_science'),
+        'high_school_chemistry': ('General Awareness', 'ga_science'),
+        'high_school_biology': ('General Awareness', 'ga_science'),
+    }
+
+    @classmethod
+    def map_mmlu_subject(cls, subject: str) -> tuple[str, str]:
+        """Map a MMLU config to a stable PrepArsenal subject and topic id."""
+        normalized = subject.strip().lower()
+        if normalized in cls.MMLU_TOPIC_MAPPING:
+            return cls.MMLU_TOPIC_MAPPING[normalized]
+        if 'math' in normalized:
+            return 'Quantitative Aptitude', 'qa_algebra'
+        if any(word in normalized for word in ('physics', 'chemistry', 'biology', 'science')):
+            return 'General Awareness', 'ga_science'
+        return 'General Awareness', 'ga_static'
+
     @staticmethod
     def clean_text(raw_text: str) -> str:
         """Cleans excessive whitespace and normalizes LaTeX formula delimiters."""
@@ -75,7 +93,11 @@ class ExamBenchImporter:
             else:
                 exam_code = raw_exam
                 
-            subject = self.SUBJECT_MAPPING.get(raw_item.get('subject', '').lower(), 'Quantitative Aptitude')
+            raw_subject = raw_item.get('subject', '').strip()
+            subject = self.SUBJECT_MAPPING.get(
+                raw_subject.lower(),
+                raw_subject if raw_subject in set(self.SUBJECT_MAPPING.values()) else 'Quantitative Aptitude'
+            )
             
             cleaned_q = self.clean_text(raw_item.get('question', ''))
             options = [self.clean_text(opt) for opt in raw_item.get('options', [])]
@@ -96,6 +118,7 @@ class ExamBenchImporter:
                 difficulty=raw_item.get('difficulty', 'medium'),
                 metadata={
                     'source': raw_item.get('source', 'ExamBench / Archive'),
+                    'source_type': raw_item.get('source_type', 'unverified'),
                     'shift': raw_item.get('shift', 'Shift 1')
                 }
             )
@@ -105,6 +128,7 @@ class ExamBenchImporter:
 
 if __name__ == "__main__":
     print("Initializing PrepArsenal Harvester...")
+    from db_client import get_db_client
     db = get_db_client()
     importer = ExamBenchImporter()
     
@@ -122,13 +146,24 @@ if __name__ == "__main__":
         ds_bio = load_dataset('cais/mmlu', 'high_school_biology', split='test')
         
         dataset = concatenate_datasets([ds_math, ds_phy, ds_chem, ds_bio])
+        dataset_subjects = (
+            ['high_school_mathematics'] * len(ds_math)
+            + ['high_school_physics'] * len(ds_phy)
+            + ['high_school_chemistry'] * len(ds_chem)
+            + ['high_school_biology'] * len(ds_bio)
+        )
         print(f"Successfully loaded {len(dataset)} total questions. Transforming and importing...")
         
         target_exams = [
-            'SSC_CGL', 'RRB_NTPC', 'UPSC_APFO', 'RBI_GRADEB', 
+            'SSC_CGL', 'RRB_NTPC', 'UPSC_APFC', 'RBI_GRADEB', 
             'NABARD_GRADEA', 'SEBI_GRADEA', 'LIC_AAO', 'ACIO2', 'IRDA'
         ]
         
+        print('Refreshing the questions table; user progress and analytics are stored separately.')
+        delete_result = db.table('questions').delete().not_.is_('id', 'null').execute()
+        if delete_result.data is None:
+            raise RuntimeError(f'Unable to clear questions table: {delete_result}')
+
         inserted_count = 0
         for idx, item in enumerate(dataset):
             exam_idx = idx // 100
@@ -137,18 +172,22 @@ if __name__ == "__main__":
                 
             exam_code = target_exams[exam_idx]
             
-            # Map MMLU to our expected raw format
+            mmlu_subject = dataset_subjects[idx]
+            subject, topic_id = importer.map_mmlu_subject(mmlu_subject)
+
+            # Map MMLU to our expected raw format using the source config.
             raw_item = {
                 'exam': exam_code,
-                'subject': 'General Science & Math',
-                'topic': 'High School Subjects',
+                'subject': subject,
+                'topic': topic_id,
                 'question': item['question'],
                 'options': item['choices'],
                 'answer_idx': item['answer'],
                 'explanation': 'Answer derived from standard high school curriculum principles.',
                 'difficulty': 'medium',
                 'year': 2023,
-                'source': 'MMLU Benchmark'
+                'source': 'MMLU Benchmark',
+                'source_type': 'benchmark',
             }
             
             standardized = importer.transform_record(raw_item)

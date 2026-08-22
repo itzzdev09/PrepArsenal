@@ -1,7 +1,7 @@
 # PrepArsenal — Architecture & Roadmap
 
 ## Overview
-PrepArsenal is an AI-powered Govt Exam Prep Platform targeting high-stakes Indian competitive exams (SSC CGL, ACIO-II, RRB NTPC, RBI Grade B, NABARD, SEBI, LIC AAO, UPSC APFO). It leverages machine learning to predict exam trends based on historical PYQs (Previous Year Questions) and provides an AI tutor for personalized guidance.
+PrepArsenal is an AI-powered Govt Exam Prep Platform targeting high-stakes Indian competitive exams (SSC CGL, ACIO-II, RRB NTPC, RBI Grade B, NABARD, SEBI, LIC AAO, UPSC APFC). It leverages machine learning to predict exam trends based on historical PYQs (Previous Year Questions) and provides an AI tutor for personalized guidance.
 
 ## Current Tech Stack (v1)
 - **Frontend & Routing:** Next.js 15 (App Router)

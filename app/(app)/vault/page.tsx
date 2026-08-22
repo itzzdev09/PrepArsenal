@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { getFavoriteFormulas, updateFavoriteFormulas } from '@/lib/db';
 import { useRouter } from 'next/navigation';
+import { FORMULA_DB as EXPANDED_FORMULA_DB } from '@/lib/formulas';
 
-interface Formula {
+interface LegacyFormula {
   id: string;
   name: string;
   category: 'Arithmetic' | 'Geometry' | 'Algebra' | 'Reasoning';
@@ -13,7 +14,7 @@ interface Formula {
   variables: Record<string, string>;
 }
 
-const FORMULA_DB: Formula[] = [
+const LEGACY_FORMULA_DB: LegacyFormula[] = [
   {
     id: 'f1',
     name: 'Compound Interest',
@@ -126,9 +127,12 @@ export default function FormulaVaultPage() {
     await updateFavoriteFormulas(supabase, userId, newFavs);
   };
 
-  const filteredFormulas = FORMULA_DB.filter(f => {
+  const filteredFormulas = EXPANDED_FORMULA_DB.filter(f => {
     if (categoryFilter !== 'All' && f.category !== categoryFilter) return false;
-    if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search) {
+      const haystack = `${f.name} ${f.content} ${Object.values(f.variables).join(' ')}`.toLowerCase();
+      if (!haystack.includes(search.toLowerCase())) return false;
+    }
     return true;
   });
 
@@ -141,7 +145,7 @@ export default function FormulaVaultPage() {
     return 0;
   });
 
-  const categories = ['All', 'Arithmetic', 'Geometry', 'Algebra', 'Reasoning'];
+  const categories = ['All', 'Arithmetic', 'Geometry', 'Algebra', 'Reasoning', 'Shortcuts'];
 
   if (loading) {
     return (

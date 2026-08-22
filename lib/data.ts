@@ -25,6 +25,7 @@ export interface Exam {
   subjects: string[];
   totalQuestions: number;
   totalTime: number; // minutes
+  marksPerCorrect: number; 
   negativeMark: number; // e.g., 0.25
   icon: string;
   color: string;
@@ -48,6 +49,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
     totalQuestions: 100,
     totalTime: 60,
+    marksPerCorrect: 2,
     negativeMark: 0.5,
     icon: '🏛️',
     color: '#3b82f6'
@@ -60,6 +62,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
     totalQuestions: 100,
     totalTime: 60,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '🕵️',
     color: '#8b5cf6'
@@ -72,6 +75,7 @@ export const exams: Exam[] = [
     subjects: ['Mathematics', 'Reasoning', 'General Awareness', 'General Science'],
     totalQuestions: 100,
     totalTime: 90,
+    marksPerCorrect: 1,
     negativeMark: 0.33,
     icon: '🚂',
     color: '#ef4444'
@@ -84,6 +88,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Finance & Economics'],
     totalQuestions: 200,
     totalTime: 120,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '🏦',
     color: '#10b981'
@@ -96,6 +101,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Agriculture & Rural Dev'],
     totalQuestions: 200,
     totalTime: 120,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '🌾',
     color: '#22c55e'
@@ -108,6 +114,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Securities Markets'],
     totalQuestions: 200,
     totalTime: 120,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '📈',
     color: '#f59e0b'
@@ -120,19 +127,21 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Insurance'],
     totalQuestions: 160,
     totalTime: 120,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '🛡️',
     color: '#06b6d4'
   },
   {
-    code: 'UPSC_APFO',
-    name: 'UPSC APFO',
+    code: 'UPSC_APFC',
+    name: 'UPSC APFC',
     fullName: 'Assistant Provident Fund Commissioner',
     category: 'UPSC',
     subjects: ['General Studies', 'Accounts', 'Quantitative Aptitude', 'English'],
     totalQuestions: 120,
     totalTime: 120,
-    negativeMark: 0.33,
+    marksPerCorrect: 2.5,
+    negativeMark: 0.83,
     icon: '📋',
     color: '#ec4899'
   },
@@ -144,6 +153,7 @@ export const exams: Exam[] = [
     subjects: ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness'],
     totalQuestions: 100,
     totalTime: 60,
+    marksPerCorrect: 1,
     negativeMark: 0.25,
     icon: '📑',
     color: '#a855f7'
@@ -664,7 +674,7 @@ export const questions: Question[] = [
     difficulty: 'easy'
   },
   {
-    id: 'q047', examCode: 'UPSC_APFO', year: 2022,
+    id: 'q047', examCode: 'UPSC_APFC', year: 2022,
     subject: 'General Awareness', topic: 'Indian Polity',
     questionText: 'The Comptroller and Auditor General of India (CAG) is appointed under which Article?',
     options: ['Article 148', 'Article 155', 'Article 165', 'Article 280'],

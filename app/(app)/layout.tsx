@@ -15,6 +15,7 @@ const navItems = [
   { label: 'Formula Vault', icon: '⚡', href: '/vault' },
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
+  { label: 'NCERT Sprint', icon: '📚', href: '/ncert-sprint' },
 ];
 
 const comingSoonItems: any[] = [];

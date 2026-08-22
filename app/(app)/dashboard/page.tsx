@@ -290,7 +290,7 @@ export default function DashboardPage() {
 
   const targetExamData = profile.target_exams.map(code => exams.find(e => e.code === code)).filter(Boolean);
 
-  // Unique topics from real trends
+  // These records are produced only from verified PYQ sources by the ML engine.
   const seenTopics = new Set<string>();
   const uniqueTopTrends = dbTrends.filter(t => {
     if (seenTopics.has(t.topic_id)) return false;
@@ -607,6 +607,9 @@ export default function DashboardPage() {
         {/* Top Trends */}
         <div className="dash-section">
           <h2 className="dash-section-title">📈 High Priority Topics</h2>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '-0.75rem', marginBottom: '1rem', fontSize: '0.9rem' }}>
+            Ranked from verified PYQ frequency, recency, and difficulty trends.
+          </p>
           <div className="trend-pills">
             {uniqueTopTrends.length > 0 ? (
               uniqueTopTrends.map(trend => {
@@ -643,7 +646,7 @@ export default function DashboardPage() {
                 );
               })
             ) : (
-              <p style={{ color: 'var(--text-secondary)' }}>No trends available yet. Run the ML Engine.</p>
+              <p style={{ color: 'var(--text-secondary)' }}>No verified PYQ trends are available yet. Import tagged PYQs from at least three exam years, then run the ML engine.</p>
             )}
           </div>
         </div>

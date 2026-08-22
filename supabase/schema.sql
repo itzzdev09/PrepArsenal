@@ -1,7 +1,7 @@
 -- =========================================================
 -- PrepArsenal: Supabase PostgreSQL Schema with pgvector
 -- Target Exams: SSC CGL, ACIO-II, RRB NTPC, RBI Grade B,
--- NABARD Grade A, SEBI Grade A, LIC AAO, UPSC APFO, IRDAI
+-- NABARD Grade A, SEBI Grade A, LIC AAO, UPSC APFC, IRDAI
 -- =========================================================
 
 -- Enable required extensions

@@ -96,8 +96,9 @@ export default function MockTestRunnerPage({ params }: { params: Promise<{ examI
       });
       
       const totalAttempted = correct + wrong;
-      const negMark = exam?.negativeMarking || 0;
-      const finalScore = correct - (wrong * negMark);
+      const marksCorrect = exam?.marksPerCorrect || 1;
+      const negMark = exam?.negativeMark || 0;
+      const finalScore = (correct * marksCorrect) - (wrong * negMark);
       
       setScore(finalScore || 0);
       setAccuracy(totalAttempted > 0 ? (correct / totalAttempted) * 100 : 0);
