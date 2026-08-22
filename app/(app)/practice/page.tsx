@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Question } from '@/lib/data';
 import { savePracticeSession, updateStreak, getExams, getTopics, getQuestions } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
@@ -29,6 +30,7 @@ export default function PracticePage() {
   // Auth state
   const [userId, setUserId] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
 
   // Quiz state
   const [phase, setPhase] = useState<Phase>('select');
@@ -50,6 +52,47 @@ export default function PracticePage() {
   const [dbTopics, setDbTopics] = useState<any[]>([]);
   const [dbQuestions, setDbQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Keyboard navigation for desktop speed practice (A/B/C/D, 1/2/3/4, Enter/Space/Right)
+  useEffect(() => {
+    if (phase !== 'solving') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl && ['input', 'textarea', 'select'].includes(activeEl.tagName.toLowerCase())) return;
+
+      const key = e.key.toUpperCase();
+      if (['A', '1'].includes(key)) {
+        e.preventDefault();
+        selectAnswer(0);
+      } else if (['B', '2'].includes(key)) {
+        e.preventDefault();
+        selectAnswer(1);
+      } else if (['C', '3'].includes(key)) {
+        e.preventDefault();
+        selectAnswer(2);
+      } else if (['D', '4'].includes(key)) {
+        e.preventDefault();
+        selectAnswer(3);
+      } else if (['ENTER', ' ', 'ARROWRIGHT'].includes(key)) {
+        if (showExplanation) {
+          e.preventDefault();
+          nextQuestion();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [phase, showExplanation, currentIdx, activeQuestions, answers]);
+
+  const askAiTutorAboutQuestion = (q: Question) => {
+    const prompt = `Please break down this ${q.subject} question step-by-step with shortcuts and exam tips:\n\n**Question:** ${q.questionText}\n\n**Options:**\n${q.options.map((o, i) => `${String.fromCharCode(65 + i)}) ${o}`).join('\n')}\n\n**Correct Answer:** ${String.fromCharCode(65 + q.correctOption)}) ${q.options[q.correctOption]}\n\n**Explanation:** ${q.explanation}`;
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('tutor_initial_prompt', prompt);
+      router.push('/tutor');
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -682,8 +725,32 @@ export default function PracticePage() {
               <div className="explanation-text">
                 💡 {q.explanation}
               </div>
+              <button
+                type="button"
+                className="btn btn-sm"
+                style={{
+                  marginTop: '0.85rem',
+                  background: 'rgba(59, 130, 246, 0.12)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  color: 'var(--accent-blue)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.45rem',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer'
+                }}
+                onClick={() => askAiTutorAboutQuestion(q)}
+              >
+                <span>🤖</span>
+                <span>Ask AI Tutor for Step-by-Step Breakdown →</span>
+              </button>
             </div>
           )}
+
+          <div style={{ marginBottom: '1rem', fontSize: '0.72rem', color: 'var(--text-tertiary)', textAlign: 'center' }}>
+            ⌨️ <strong>Shortcuts:</strong> Press <code>[A/B/C/D]</code> or <code>[1/2/3/4]</code> to select • <code>[Enter]</code> or <code>[→]</code> for next
+          </div>
 
           <div className="quiz-actions">
             <button className="quit-btn" onClick={resetQuiz}>← Quit</button>
@@ -892,6 +959,27 @@ export default function PracticePage() {
                   )}
                   <strong>✓ {String.fromCharCode(65 + q.correctOption)}) {q.options[q.correctOption]}</strong>
                 </div>
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  style={{
+                    marginTop: '0.6rem',
+                    background: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    color: 'var(--accent-blue)',
+                    fontSize: '0.72rem',
+                    padding: '0.25rem 0.6rem',
+                    borderRadius: '0.4rem',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => askAiTutorAboutQuestion(q)}
+                >
+                  <span>🤖</span>
+                  <span>Review with AI Tutor →</span>
+                </button>
               </div>
             );
           })}

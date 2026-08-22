@@ -40,6 +40,15 @@ export default function TutorPage() {
       }
     });
     setCacheStats(getSemanticCacheMetrics());
+
+    // Check for prefilled question context from practice arena
+    if (typeof window !== 'undefined') {
+      const initialPrompt = sessionStorage.getItem('tutor_initial_prompt');
+      if (initialPrompt) {
+        setInput(initialPrompt);
+        sessionStorage.removeItem('tutor_initial_prompt');
+      }
+    }
   }, [supabase]);
 
   useEffect(() => {
