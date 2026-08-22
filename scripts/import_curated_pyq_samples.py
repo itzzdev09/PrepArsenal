@@ -23,8 +23,24 @@ TOPICS = {
     'ga_polity': ('Indian Polity', 'General Awareness'),
     'ga_static': ('Static GK', 'General Awareness'),
     'ga_economy': ('Economy', 'General Awareness'),
+    'ga_science': ('General Science', 'General Awareness'),
     'fe_banking': ('Banking Awareness', 'Finance & Economics'),
     'fe_securities': ('Securities & Regulations', 'Finance & Economics'),
+    'qa_trigonometry': ('Trigonometry', 'Quantitative Aptitude'),
+    'qa_mensuration': ('Mensuration', 'Quantitative Aptitude'),
+    'qa_algebra': ('Algebra', 'Quantitative Aptitude'),
+    'qa_geometry': ('Geometry', 'Quantitative Aptitude'),
+    'qa_di': ('Data Interpretation', 'Quantitative Aptitude'),
+    'qa_interest': ('Simple & Compound Interest', 'Quantitative Aptitude'),
+    'qa_time_work': ('Time & Work', 'Quantitative Aptitude'),
+    'lr_math_operators': ('Mathematical Operators', 'Reasoning'),
+    'lr_syllogism': ('Syllogism', 'Reasoning'),
+    'lr_blood_relation': ('Blood Relations', 'Reasoning'),
+    'lr_coding': ('Coding-Decoding', 'Reasoning'),
+    'lr_series': ('Letter/Alpha-Numeric Series', 'Reasoning'),
+    'lr_venn_diagram': ('Venn Diagram', 'Reasoning'),
+    'lr_word_sequence': ('Logical Word Sequence', 'Reasoning'),
+    'lr_number_series': ('Number Series', 'Reasoning'),
 }
 
 
@@ -161,6 +177,84 @@ SAMPLES.extend(
         'SSC CGL Tier I 2021, 13 April 2022 Shift 2, General Awareness (Prepp)',
     )
     for topic_id, text, options, correct in SSC_CGL_2021_GENERAL_AWARENESS
+)
+
+# SSC CGL 2020 Tier I Prelims: Quantitative Aptitude section, compiled paper.
+# Exact shift/date is not stated on the source page; question text, options and
+# answers were transcribed directly from the source.
+SSC_CGL_2020_QUANT = [
+    ('qa_profit_loss', 'Radha purchased a computer table for Rs.10000 and a centre table for Rs.5000. She sold the computer table with 8% profit. With what profit percent should she sell the centre table to gain 10% on the whole transaction?', ['14%', '18%', '12%', '10%'], 0),
+    ('qa_trigonometry', 'cot³θ/cosec²θ + tan³θ/sec²θ + 2sinθcosθ = ?', ['sin²θcosθ', 'sinθcosθ', 'cosecθsec²θ', 'cosecθsecθ'], 3),
+    ('qa_mensuration', 'A cone-shaped wheat heap has base diameter 8.4 m and height 1.75 m. What canvas area is needed to cover it? (π=22/7)', ['115.50', '60.06', '60.60', '115.05'], 1),
+    ('qa_percentage', 'In an election, Arshad got 35% of votes. For every 35 votes Chamanlal got, Deepak got 14 votes. The winner got 4950 more votes than the lowest candidate. Find total votes polled.', ['33000', '38000', '13378', '99000'], 0),
+    ('qa_tsd', 'A train leaves station A at 8 am and reaches station B at 12 noon. A car leaves B at 8:30 am and reaches A at 12 noon. At what time do they meet?', ['9:52 am', '9:38 am', '10:22 am', '10:08 am'], 3),
+    ('qa_algebra', 'If 4x⁴ - 37x² + 9 = 0, x>√(3/2), find 8x³ - 27/x³', ['-215', '215', '35', '-35'], 1),
+    ('qa_time_work', 'A and B can complete a work in 15 and 10 days respectively. They work together for 4 days, then B leaves. A and C together complete the remaining work in 3 days. In how many days can C alone do 40% of the work?', ['10 days', '9 days', '12 days', '8 days'], 1),
+    ('qa_profit_loss', 'Three shopkeepers mark an identical article at Rs.4820, offering successive discounts of 20%&20%, 25%&15%, and 30%&10% respectively. Which shopkeeper gives maximum discount and how much?', ['C, Rs.1783.40', 'C, Rs.1760.50', 'A, Rs.1735.20', 'B, Rs.1800.50'], 0),
+    ('qa_algebra', 'If a - 12/a = 1 (a>0), find a² + 16/a²', ['15', '19', '11', '17'], 3),
+    ('qa_geometry', 'AB is a diameter of a circle. C and D lie on opposite sides of AB such that ∠ACD = 25°. E is on minor arc BD. Find ∠BED.', ['105°', '115°', '125°', '130°'], 1),
+    ('qa_geometry', 'In a triangle, one angle is 74°. Find the angle between the bisectors of the other two interior angles.', ['53°', '16°', '127°', '106°'], 2),
+    ('qa_algebra', 'If (16√2x³+81√3y³)÷(2√2x+3√3y)=Ax²+By²+Cxy, find 2A-3B-2√6C', ['7', '37', '25', '79'], 0),
+    ('qa_trigonometry', 'If 2sin(3x-15)°=1, where 0°<(3x-15)°<90°, find cos²(2x+15)°+cot²(x+15)°', ['1', '-7/2', '7/2', '5/2'], 2),
+    ('qa_di', 'A pie chart shows 300 students distributed across sections A-F. If section E has a boys-to-girls ratio of 3:4, find the ratio of boys in section E to girls in section C.', ['18:23', '23:24', '23:18', '24:23'], 0),
+    ('qa_di', "A bar graph shows science enrollments for institutes A and B (2014-2018). Find the ratio of B's enrollments (2015+2017) to A's enrollments (2014+2016).", ['111:91', '137:92', '92:137', '91:111'], 1),
+    ('qa_geometry', 'In triangle ABC, D lies on AB; E, F lie on BC. DF∥AC and DE∥AF. BE=4 cm, CF=3 cm. Find the length of EF.', ['2 cm', '5 cm', '3 cm', '1.5 cm'], 0),
+    ('qa_di', "A table shows December 2020 income sources for four employees. By what percent is Varun's bonus less than the combined bonus of Amit and Nitin?", ['45%', '48%', '42%', '38%'], 3),
+    ('qa_number', 'A piggy bank contains Rs.1, Rs.2, Rs.5, and Rs.10 coins in the ratio 10:5:2:1. If there are 72 coins in total, find the total amount of money.', ['160', '72', '90', '100'], 0),
+    ('qa_average', 'Find the ratio of the average of the first eight prime numbers to the average of the first ten even natural numbers.', ['1:7', '7:8', '8:13', '9:17'], 1),
+    ('qa_number', 'The nine-digit number 7p5964q28 is divisible by 88. Find p²-q for the largest possible value of q.', ['9', '81', '5', '72'], 3),
+    ('qa_di', 'A table shows trees planted in four cities from 2016-2020. In which year was the maximum number of trees planted?', ['2016', '2020', '2017', '2018'], 2),
+    ('qa_interest', 'A sum becomes Rs.14880 after 3 years and Rs.16800 after 5 years under simple interest. Find the SI on the same sum at 10% p.a. for 4 years.', ['4860', '4800', '5100', '5400'], 1),
+    ('qa_number', '3(5/6) + [3(2/3) + {15/4(5(4/5) ÷ 14(1/2))}] = ?', ['9', '7', '8', '6'], 0),
+    ('qa_trigonometry', 'In triangle ABC: AB=20 cm, BC=21 cm, AC=29 cm. Find cotC + cosecC - 2tanA.', ['3/5', '9/20', '2/5', '7/22'], 2),
+    ('qa_geometry', 'From an external point A, tangents AB and AC are drawn to a circle, touching it at B and C. P lies on AB, Q lies on AC, and PQ touches the circle at R. If AB=11 cm, AP=7 cm, AQ=9 cm, find the length of PQ.', ['5 cm', '6 cm', '7 cm', '8 cm'], 1),
+]
+
+SAMPLES.extend(
+    question(
+        'SSC_CGL', 2020, 'Quantitative Aptitude', topic_id, text, options, correct,
+        'https://www.geeksforgeeks.org/ssc-cgl-prelims-quantitative-aptitude-question-paper-2020/',
+        'SSC CGL Tier I 2020 Prelims, Quantitative Aptitude (GeeksforGeeks compiled paper)',
+    )
+    for topic_id, text, options, correct in SSC_CGL_2020_QUANT
+)
+
+# SSC CGL 2018 Tier I: Reasoning Ability section, with printed answer keys.
+SSC_CGL_2018_REASONING = [
+    ('lr_classification', 'Select the set in which the numbers are related in the same way as are the numbers of the following set. (8, 12, 24)', ['12, 20, 40', '9, 18, 27', '6, 9, 18', '6, 10, 18'], 2),
+    ('lr_math_operators', "If '+' denotes '-', '-' denotes '×', '×' denotes '÷', '÷' denotes '+', what will be the value for 60 × 10 ÷ 40 + 6 - 5 = ?", ['16', '3', '200', '144'], 0),
+    ('lr_syllogism', 'Statement I: No crow is bird. Statement II: All birds are animals. Conclusion I: Some animals are crows. Conclusion II: Some animals are birds. Conclusion III: No animal is a crow. Which of the conclusions follow(s)?', ['If only conclusion I follows', 'Conclusion II and either I and III follow', 'Both conclusion I and III follow', 'None of the conclusions follows'], 1),
+    ('lr_blood_relation', "D is the son of C and brother of E, who is the niece of F. C is sister of B and aunt of A. B's father has two children, a son and a daughter. If A is son of F, how is F related to C?", ['Cousin', 'Mother', 'Sister', 'Sister-in-law'], 3),
+    ('lr_blood_relation', "In a family of eight persons, there are two couples, each having two children. C and D are cousin brothers. The father of E is married to G, who is the aunt of F. F's mother H, is married to B, the brother of A. C is the nephew of H. How is A related to D?", ['Nephew', 'Father', 'Uncle', 'Brother'], 2),
+    ('lr_coding', 'In a certain code language, TEACHING is coded as SDBDGHOH. What will be the code for BOOKWORM?', ['ANVLPNSN', 'ANPLVNSN', 'ANPLVNNS', 'APNLVNSN'], 1),
+    ('lr_series', 'Which letter will replace the question mark (?) in the given series: A B E J Q ?', ['X', 'C', 'S', 'Z'], 3),
+    ('lr_analogy', "'Lawyer' is related to 'Justice', in the same way as 'Arbitrator' is related to '________'", ['Judgement', 'Cancellation', 'Settlement', 'Injustice'], 2),
+    ('lr_coding', 'If DIG is coded as 25, CUT is coded as 49, then how will KICK be coded?', ['55', '39', '31', '41'], 1),
+    ('lr_syllogism', 'Statement I: All utensils are spoons. Statement II: All bowls are spoons. Conclusion I: No utensil is a bowl. Conclusion II: Some utensils are bowl. Conclusion III: No spoon is a utensil. Which of the conclusions follow(s)?', ['Either conclusion I or II follows', 'Both conclusion I and III follow', 'No conclusion follows', 'Only conclusion II follows'], 0),
+    ('lr_series', 'Select the option that will come next in the given series: BOP DPN FQL HRJ ?', ['ISH', 'JSH', 'ITI', 'JSI'], 1),
+    ('lr_analogy', 'Select the word pair related the same way as Mnemonic: Memory', ['Audience: Speech', 'Sedative: Sleep', 'Drama: Acting', 'Audition: Music'], 1),
+    ('lr_blood_relation', 'A + B means A is mother of B; A - B means A is father of B; A × B means A is sister of B; A ÷ B means A is daughter of B. If P + R × T - Q ÷ S + U, then how is S related to T?', ['Sister', 'Mother', 'Sister-in-law', 'Wife'], 3),
+    ('lr_syllogism', 'Statement I: Some quadrilaterals are squares. Statement II: All squares are rhombus. Conclusion I: No quadrilateral is a rhombus. Conclusion II: All rhombus are Square. Conclusion III: Some quadrilaterals are a rhombus. Which of the conclusions follow(s)?', ['Only conclusion I follows', 'Only conclusion II follows', 'Only conclusion III follows', 'None follow'], 2),
+    ('lr_venn_diagram', 'Choose the Venn diagram that best illustrates the relationship between the following classes: Women, Entrepreneurs, Engineers', ['Diagram 1', 'Diagram 2', 'Diagram 3', 'Diagram 4'], 3),
+    ('lr_word_sequence', 'Arrange the following words in a logical and meaningful order: A. Cloud B. Rainbow C. Devastation D. Rain E. Low pressure F. Flood', ['A,B,C,D,E,F', 'F,A,D,B,E,C', 'E,A,D,B,F,C', 'E,C,D,A,F,B'], 2),
+    ('lr_number_series', 'Find the missing number: 12 7 95 / 14 8 132 / 16 9 ?', ['185', '154', '175', '164'], 2),
+    ('lr_blood_relation', 'Saksham introduced Nidhi to his friend, "She is the daughter of the only son of my father\'s wife." How is Saksham related to Nidhi?', ['Cousin', 'Father', 'Brother', 'Son'], 1),
+    ('lr_math_operators', 'Which two signs should be interchanged in the given equation to make the equation correct? 8 × 2 + 5 - 16 ÷ 4 = 14', ['× and ÷', '÷ and +', '+ and -', '× and +'], 3),
+    ('lr_coding', "In a certain code language 'NEEDLE' is written as 'MFDEKF'. What will be the code for 'HAMMER'?", ['GBLNDS', 'GLBDSA', 'GBLMNK', 'GKMLBS'], 0),
+    ('lr_analogy', 'Select the option related to the third term the same way the second is related to the first: LAMP : PALM :: MALE : _______', ['ELAM', 'EAML', 'MEAL', 'LAME'], 1),
+    ('lr_syllogism', 'Statement I: Some teachers are philosophers. Statement II: Some philosophers are writers. Conclusion I: Some writers are teachers. Conclusion II: No writer is a teacher. Which of the conclusions follow(s)?', ['Only conclusion I follows', 'Only conclusion II follows', 'Either conclusion I or II follows', 'Neither conclusion I nor II follows'], 2),
+    ('lr_classification', 'Three of the following four-letter clusters are alike in a certain way and one is different. Pick the odd one out.', ['EFST', 'GHTV', 'CDQR', 'ABOP'], 1),
+    ('lr_number_series', 'Find the missing number: 17 22 37 / 23 28 43 / 16 ? 36', ['32', '21', '12', '31'], 1),
+    ('lr_analogy', "'Cheerful' is related to 'Sad', in the same way, 'Generous' is related to '______'", ['Selfish', 'Kind', 'Gloomy', 'Intelligent'], 0),
+]
+
+SAMPLES.extend(
+    question(
+        'SSC_CGL', 2018, 'Reasoning', topic_id, text, options, correct,
+        'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf',
+        "SSC CGL Tier I 2018, Reasoning Ability (BYJU'S)",
+    )
+    for topic_id, text, options, correct in SSC_CGL_2018_REASONING
 )
 
 

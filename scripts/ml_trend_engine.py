@@ -25,6 +25,7 @@ MIN_TOPIC_OCCURRENCE_YEARS = 2
 # estimate paper frequency. Wait for a meaningful extraction before labelling
 # anything "high priority" to students.
 MIN_VERIFIED_PYQS_PER_EXAM = 50
+MIN_VERIFIED_PYQS_PER_YEAR = 15
 
 @dataclass
 class TopicTrendResult:
@@ -133,9 +134,16 @@ if __name__ == "__main__":
     
     try:
         print("Fetching questions from database...")
-        # In a real app we'd paginate, but for now we just fetch all
-        res = db.table('questions').select('exam_code, topic_id, year, difficulty, metadata').execute()
-        questions = res.data or []
+        questions = []
+        page_size = 1000
+        offset = 0
+        while True:
+            page = db.table('questions').select('exam_code, topic_id, year, difficulty, metadata') \
+                .range(offset, offset + page_size - 1).execute().data or []
+            questions.extend(page)
+            if len(page) < page_size:
+                break
+            offset += page_size
         
         if not questions:
             print("No questions found in database. Run dataset_harvester.py first.")
@@ -171,19 +179,27 @@ if __name__ == "__main__":
         for q in verified_pyqs:
             verified_counts_by_exam[q['exam_code']] += 1
 
-        eligible_exam_years = {
-            exam_code: sorted(years)
-            for exam_code, years in exam_years.items()
-            if (
-                len(years) >= MIN_PYQ_YEARS
-                and verified_counts_by_exam[exam_code] >= MIN_VERIFIED_PYQS_PER_EXAM
+        verified_counts_by_exam_year = defaultdict(lambda: defaultdict(int))
+        for q in verified_pyqs:
+            verified_counts_by_exam_year[q['exam_code']][q['year']] += 1
+
+        eligible_exam_years = {}
+        for exam_code, years in exam_years.items():
+            years_with_usable_coverage = sorted(
+                year for year in years
+                if verified_counts_by_exam_year[exam_code][year] >= MIN_VERIFIED_PYQS_PER_YEAR
             )
-        }
+            if (
+                len(years_with_usable_coverage) >= MIN_PYQ_YEARS
+                and verified_counts_by_exam[exam_code] >= MIN_VERIFIED_PYQS_PER_EXAM
+            ):
+                eligible_exam_years[exam_code] = years_with_usable_coverage
         skipped_exams = sorted(set(exam_years) - set(eligible_exam_years))
         if skipped_exams:
             print(
-                f'Waiting for {MIN_PYQ_YEARS} distinct source-attributed PYQ years and '
-                f'{MIN_VERIFIED_PYQS_PER_EXAM} extracted questions for: '
+                f'Waiting for {MIN_PYQ_YEARS} source-attributed PYQ years with at least '
+                f'{MIN_VERIFIED_PYQS_PER_YEAR} questions each, and '
+                f'{MIN_VERIFIED_PYQS_PER_EXAM} total extracted questions for: '
                 + ', '.join(skipped_exams)
             )
 
