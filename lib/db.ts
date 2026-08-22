@@ -130,6 +130,24 @@ export async function getTotalQuestionsAttempted(supabase: SupabaseClient, userI
   return count || 0;
 }
 
+export async function getUserAnalytics(supabase: SupabaseClient, userId: string) {
+  // Fetch profile for XP/Level
+  const profile = await getUserProfile(supabase, userId);
+  
+  // Fetch up to 500 recent reviews for charts
+  const { data: reviews } = await supabase
+    .from('user_question_reviews')
+    .select('is_correct, last_reviewed_at, questions(subject)')
+    .eq('user_id', userId)
+    .order('last_reviewed_at', { ascending: false })
+    .limit(500);
+    
+  return {
+    profile,
+    reviews: reviews || []
+  };
+}
+
 // Practice Session / FSRS
 export async function savePracticeSession(
   supabase: SupabaseClient,

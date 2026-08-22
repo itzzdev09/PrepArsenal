@@ -165,7 +165,7 @@ export default function MockTestConfigPage() {
             <div className="ec-meta">
               <span>{exam.totalQuestions} Questions</span>
               <span>{exam.totalTime} Minutes</span>
-              <span>-{exam.negativeMarking} Negative Marking</span>
+              <span>-{exam.negativeMark} Negative Marking</span>
               <div className="ec-db-count">
                 DB Pool: {counts[exam.code] || 0} real questions
               </div>

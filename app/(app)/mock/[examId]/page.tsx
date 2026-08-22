@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { getQuestions, type Question } from '@/lib/db';
+import { getQuestions } from '@/lib/db';
 import { exams } from '@/lib/data';
 
 export default function MockTestRunnerPage({ params }: { params: Promise<{ examId: string }> }) {
   const resolvedParams = use(params);
   const examCode = resolvedParams.examId;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tierFilter = searchParams.get('tier');
   
   const [loading, setLoading] = useState(true);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -36,8 +38,11 @@ export default function MockTestRunnerPage({ params }: { params: Promise<{ examI
 
     async function loadQuestions() {
       const supabase = createClient();
-      // Fetch questions for this exam. Since we might not have 100 in db, get whatever is available up to 100
-      const fetched = await getQuestions(supabase, { examCode: ex!.code, limit: ex!.totalQuestions });
+      
+      const filters: any = { examCode: ex!.code, limit: ex!.totalQuestions };
+      if (tierFilter) filters.tier = tierFilter;
+      
+      const fetched = await getQuestions(supabase, filters);
       
       // If db is totally empty for this exam, we have a problem
       if (fetched.length === 0) {
@@ -247,6 +252,7 @@ export default function MockTestRunnerPage({ params }: { params: Promise<{ examI
           color: var(--text-tertiary);
         }
         .q-meta span { background: var(--bg-input); padding: 0.2rem 0.6rem; border-radius: 1rem; border: 1px solid var(--border-subtle); }
+        .q-tag { background: rgba(59, 130, 246, 0.1) !important; color: var(--accent-blue); border-color: rgba(59, 130, 246, 0.2) !important; font-weight: 600; }
         
         .q-text {
           font-size: 1.25rem;
@@ -359,6 +365,9 @@ export default function MockTestRunnerPage({ params }: { params: Promise<{ examI
           <div className="q-meta">
             <span>Question {currentIdx + 1} of {questions.length}</span>
             <span>{currentQ.subject}</span>
+            <span className="q-tag">
+              🎯 {exam.code} • {currentQ.year || 'PYQ'} {currentQ.metadata?.tier ? `• ${currentQ.metadata.tier}` : ''}
+            </span>
           </div>
           
           <div className="q-text">{currentQ.questionText}</div>

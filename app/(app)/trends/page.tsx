@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { exams } from '@/lib/data';
 import { getTrends, getTopics, type TrendAnalytics } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';

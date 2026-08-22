@@ -7,6 +7,7 @@ import { signout } from '@/app/login/actions';
 
 const navItems = [
   { label: 'Dashboard', icon: '📊', href: '/dashboard' },
+  { label: 'Analytics', icon: '📈', href: '/analytics' },
   { label: 'Practice Arena', icon: '⏱️', href: '/practice' },
   { label: 'Mock Tests', icon: '🎯', href: '/mock' },
   { label: 'Smart Planner', icon: '📅', href: '/planner' },
