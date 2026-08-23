@@ -40,6 +40,7 @@ export default function DashboardPage() {
   // Stats
   const [totalAttempted, setTotalAttempted] = useState(0);
   const [accuracy, setAccuracy] = useState(0);
+  const [prepDay, setPrepDay] = useState(1);
   
   const supabase = createClient();
   const [mounted, setMounted] = useState(false);
@@ -58,6 +59,11 @@ export default function DashboardPage() {
             const newStreak = await updateStreak(supabase, user.id);
             existingProfile.streak_count = newStreak;
             setProfile(existingProfile);
+
+            if (existingProfile.created_at) {
+              const diffMs = Date.now() - new Date(existingProfile.created_at).getTime();
+              setPrepDay(Math.max(1, Math.floor(diffMs / 86400000)));
+            }
             
             const [attempted, acc, trends, topics, plan] = await Promise.all([
               getTotalQuestionsAttempted(supabase, user.id),
@@ -83,9 +89,9 @@ export default function DashboardPage() {
             target_exams: ['SSC_CGL', 'RBI_GRADEB'],
             exam_dates: { xp: 240, current_level: 2 },
             streak_count: 3,
-            last_study_date: new Date().toISOString(),
+            last_study_date: '2025-01-01T00:00:00.000Z',
             total_study_minutes: 240,
-            created_at: new Date().toISOString(),
+            created_at: '2025-01-01T00:00:00.000Z',
             xp: 240,
             current_level: 2,
           };
@@ -514,9 +520,9 @@ export default function DashboardPage() {
         <h1 className="dash-greeting">
           Welcome back, <span className="name">{profile.full_name}</span> 👋
         </h1>
-        <p className="dash-sub" suppressHydrationWarning>
+        <p className="dash-sub">
           {profile.target_exams.length} target exam{profile.target_exams.length !== 1 ? 's' : ''} •{' '}
-          Day {Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / 86400000))} of your prep journey
+          Day {prepDay} of your prep journey
         </p>
       </div>
 

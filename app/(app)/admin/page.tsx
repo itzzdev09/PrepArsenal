@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import { 
   getAllUserProfiles, 
   getQuestions, 
   saveAdminQuestion, 
   deleteAdminQuestion,
+  getUserProfile,
   type UserProfile 
 } from '@/lib/db';
 import { getTursoDatabaseMetrics } from '@/lib/turso';
@@ -15,6 +17,8 @@ import { exams, questions as seedQuestions, type Question } from '@/lib/data';
 
 export default function AdminPortalPage() {
   const [mounted, setMounted] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [usersList, setUsersList] = useState<UserProfile[]>([]);
   const [questionsList, setQuestionsList] = useState<Question[]>(seedQuestions);
   const [searchQuestionQuery, setSearchQuestionQuery] = useState('');
@@ -53,6 +57,23 @@ export default function AdminPortalPage() {
 
     async function initAdmin() {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          setIsAdmin(false);
+          setAuthChecking(false);
+          return;
+        }
+
+        const profile = await getUserProfile(supabase, user.id);
+        if (!profile || profile.role !== 'admin') {
+          setIsAdmin(false);
+          setAuthChecking(false);
+          return;
+        }
+
+        setIsAdmin(true);
+        setAuthChecking(false);
+
         const [tMetrics, qs, us] = await Promise.all([
           getTursoDatabaseMetrics(),
           getQuestions(supabase, { limit: 100 }),
@@ -64,7 +85,8 @@ export default function AdminPortalPage() {
         if (us && us.length > 0) setUsersList(us);
         setCacheMetrics(getSemanticCacheMetrics());
       } catch (err) {
-        console.warn('Admin portal initial load notice:', err);
+        console.warn('Admin portal load notice:', err);
+        setAuthChecking(false);
       }
     }
 
@@ -129,6 +151,43 @@ export default function AdminPortalPage() {
     const matchesSubject = selectedSubjectFilter === 'All' || q.subject === selectedSubjectFilter;
     return matchesSearch && matchesSubject;
   });
+
+  if (authChecking) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: '1rem' }}>
+        <div style={{ width: '36px', height: '36px', border: '3px solid var(--border-subtle)', borderTopColor: 'var(--accent-blue)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Verifying administrative credentials...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', textAlign: 'center', padding: '2rem' }}>
+        <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🛡️🚫</div>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+          403 — Administrator Access Required
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', maxWidth: '500px', lineHeight: 1.6, marginBottom: '1.75rem', fontSize: '0.95rem' }}>
+          Access to the PrepArsenal Administrator Portal is strictly restricted to verified administrators. Your account does not have authorization to manage system resources or question databases.
+        </p>
+        <Link 
+          href="/dashboard" 
+          style={{ 
+            padding: '0.75rem 1.75rem', 
+            background: 'var(--accent-blue)', 
+            color: 'white', 
+            borderRadius: '0.5rem', 
+            fontWeight: 700, 
+            textDecoration: 'none',
+            fontSize: '0.95rem'
+          }}
+        >
+          Return to Dashboard
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-container" suppressHydrationWarning>
@@ -315,18 +374,6 @@ export default function AdminPortalPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem('app_user_role', 'user');
-                window.location.href = '/profile';
-              }
-            }}
-          >
-            🎓 Switch to Student Mode
-          </button>
           <button className="btn btn-secondary btn-sm" onClick={handleFlushCache}>
             🧹 Flush LLM Cache
           </button>

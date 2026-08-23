@@ -483,26 +483,12 @@ export default function ProfilePage() {
 
             <div className="stat-item">
               <span style={{ color: 'var(--text-secondary)' }}>📅 Joined PrepArsenal</span>
-              <span className="stat-val" style={{ fontSize: '0.78rem' }} suppressHydrationWarning>
-                {mounted && profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'Active Member'}
+              <span className="stat-val" style={{ fontSize: '0.78rem' }}>
+                {profile?.created_at ? profile.created_at.substring(0, 10) : 'Active Member'}
               </span>
             </div>
 
-            <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)' }}>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ width: '100%', fontSize: '0.78rem' }}
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    localStorage.setItem('app_user_role', 'admin');
-                    window.location.href = '/admin';
-                  }
-                }}
-              >
-                🛡️ Switch to Admin Mode →
-              </button>
-            </div>
+
           </div>
         </div>
       </div>

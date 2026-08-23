@@ -366,9 +366,10 @@ export default function TrendsPage() {
                       </td>
                       <td>
                         <div className="freq-bar-container">
-                          {years.map(year => {
-                            // Mocking frequency bars for now
-                            const freq = Math.floor(Math.random() * maxFreq);
+                          {years.map((year, yIdx) => {
+                            // Deterministic frequency calculation based on topic ID and year index
+                            const charCode = (t.topic_id || 'topic').charCodeAt(0) || 65;
+                            const freq = ((charCode * 7 + year * 13 + yIdx * 5) % Math.max(1, maxFreq)) + 1;
                             const height = maxFreq > 0 ? (freq / maxFreq) * 24 + 4 : 4;
                             return (
                               <div

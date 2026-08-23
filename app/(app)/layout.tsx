@@ -23,38 +23,28 @@ const baseNavItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [userRole, setUserRole] = useState<'user' | 'admin'>('user');
-  const [userName, setUserName] = useState('Dev Verma');
-  const [userEmail, setUserEmail] = useState('aspirant@preparsenal.ai');
-  const [userLevel, setUserLevel] = useState(2);
-  const [userXp, setUserXp] = useState(240);
+  const [userName, setUserName] = useState('');
+  const [userLevel, setUserLevel] = useState(1);
+  const [userXp, setUserXp] = useState(0);
 
   const supabase = createClient();
 
   useEffect(() => {
-    setMounted(true);
-
-    if (typeof window !== 'undefined') {
-      const savedName = localStorage.getItem('user_full_name');
-      const savedRole = localStorage.getItem('app_user_role') as 'user' | 'admin' | null;
-      if (savedName) setUserName(savedName);
-      if (savedRole === 'admin' || savedRole === 'user') setUserRole(savedRole);
-    }
-
     async function checkUser() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          if (user.email) setUserEmail(user.email);
           const p = await getUserProfile(supabase, user.id);
           if (p) {
             if (p.full_name) setUserName(p.full_name);
             if (p.current_level) setUserLevel(p.current_level);
             if (p.xp) setUserXp(p.xp);
-            if (p.role === 'admin' || user.email?.includes('admin')) {
+            // Strict role verification: only true admin profile gets admin permissions
+            if (p.role === 'admin') {
               setUserRole('admin');
-              localStorage.setItem('app_user_role', 'admin');
+            } else {
+              setUserRole('user');
             }
           }
         }
@@ -65,15 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     checkUser();
   }, [supabase]);
 
-  const toggleRole = () => {
-    const nextRole = userRole === 'admin' ? 'user' : 'admin';
-    setUserRole(nextRole);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('app_user_role', nextRole);
-    }
-  };
-
-  // Role-specific navigation items
+  // Role-specific navigation items - Admin portal only exists for verified admin account
   const activeNavItems = [
     ...baseNavItems,
     ...(userRole === 'admin' 
@@ -151,21 +133,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           gap: 0.75rem;
         }
 
-        .role-switch-badge {
-          padding: 0.3rem 0.65rem;
-          border-radius: 0.5rem;
-          font-size: 0.75rem;
-          font-weight: 700;
-          cursor: pointer;
-          border: 1px solid var(--border-subtle);
-          background: var(--bg-card);
-          color: var(--text-secondary);
-          transition: all 150ms;
-        }
-        .role-switch-badge:hover {
-          border-color: var(--accent-blue);
-          color: var(--text-primary);
-        }
+
 
         .top-profile-pill {
           display: flex;
@@ -340,30 +308,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Link>
         </div>
 
-        {/* Dynamic Sidebar Profile Card matching Role */}
-        <Link
-          href={mounted && userRole === 'admin' ? '/admin' : '/profile'}
-          className="sidebar-profile-card"
-          onClick={() => setSidebarOpen(false)}
-          suppressHydrationWarning
-        >
-          <div className={`sp-avatar ${mounted && userRole === 'admin' ? 'admin' : ''}`}>
-            {mounted && userRole === 'admin' ? '🛡️' : (userName ? userName.charAt(0).toUpperCase() : '👤')}
-          </div>
-          <div className="sp-info">
-            <div className="sp-name" suppressHydrationWarning>
-              {mounted && userRole === 'admin' ? 'Administrator' : userName}
+        {/* Sidebar Profile Card */}
+        {userRole === 'admin' ? (
+          <Link
+            href="/admin"
+            className="sidebar-profile-card"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="sp-avatar admin">🛡️</div>
+            <div className="sp-info">
+              <div className="sp-name">Administrator</div>
+              <div className="sp-sub">System & Question Control</div>
             </div>
-            <div className="sp-sub" suppressHydrationWarning>
-              {mounted && userRole === 'admin' ? 'System & Question Control' : `Level ${userLevel} • ${userXp} XP 🎖️`}
+            <span style={{ fontSize: '0.75rem', color: 'var(--error)' }}>⚙️</span>
+          </Link>
+        ) : (
+          <Link
+            href="/profile"
+            className="sidebar-profile-card"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <div className="sp-avatar">
+              {userName ? userName.charAt(0).toUpperCase() : '👤'}
             </div>
-          </div>
-          <span style={{ fontSize: '0.75rem', color: mounted && userRole === 'admin' ? 'var(--error)' : 'var(--accent-blue)' }}>
-            ⚙️
-          </span>
-        </Link>
+            <div className="sp-info">
+              <div className="sp-name">{userName || 'Student'}</div>
+              <div className="sp-sub">Level {userLevel} • {userXp} XP 🎖️</div>
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-blue)' }}>⚙️</span>
+          </Link>
+        )}
 
-        <nav className="sidebar-nav" suppressHydrationWarning>
+        <nav className="sidebar-nav">
           <span className="sidebar-section-label">Navigation</span>
           {activeNavItems.map(item => (
             <Link
@@ -371,10 +347,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               href={item.href}
               className={`nav-item ${pathname === item.href ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
-              suppressHydrationWarning
             >
               <span className="nav-icon">{item.icon}</span>
-              <span suppressHydrationWarning>{item.label}</span>
+              <span>{item.label}</span>
             </Link>
           ))}
         </nav>
@@ -394,44 +369,34 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Content with Top Global Header Bar */}
-      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'auto' }} suppressHydrationWarning>
-        <header className="top-global-header" suppressHydrationWarning>
+      <div className="main-content" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'auto' }}>
+        <header className="top-global-header">
           <div className="header-left">
             <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
               ⚔️ PrepArsenal Platform
             </span>
           </div>
 
-          <div className="header-right" suppressHydrationWarning>
-            {/* Role Switcher Button for Instant Testing */}
-            <button
-              className="role-switch-badge"
-              onClick={toggleRole}
-              title="Click to switch between Student and Admin views"
-              suppressHydrationWarning
-            >
-              {mounted && userRole === 'admin' ? '🛡️ Admin Mode (Click for Student)' : '🎓 Student Mode (Click for Admin)'}
-            </button>
-
+          <div className="header-right">
             <Link href="/tutor" className="quick-nav-btn" title="AI Tutor">
               <span>🤖</span>
               <span>AI Tutor</span>
             </Link>
 
             {/* Role-Specific Header Pill */}
-            {mounted && userRole === 'admin' ? (
-              <Link href="/admin" className="top-profile-pill" title="Admin Portal" suppressHydrationWarning>
+            {userRole === 'admin' ? (
+              <Link href="/admin" className="top-profile-pill" title="Admin Portal">
                 <div className="pill-avatar admin">🛡️</div>
-                <span className="pill-name" suppressHydrationWarning>Admin Portal</span>
+                <span className="pill-name">Admin Portal</span>
                 <span className="pill-badge admin">ADMIN</span>
               </Link>
             ) : (
-              <Link href="/profile" className="top-profile-pill" title="My Account Profile" suppressHydrationWarning>
+              <Link href="/profile" className="top-profile-pill" title="My Account Profile">
                 <div className="pill-avatar">
                   {userName ? userName.charAt(0).toUpperCase() : '👤'}
                 </div>
-                <span className="pill-name" suppressHydrationWarning>{userName}</span>
-                <span className="pill-badge" suppressHydrationWarning>Lvl {userLevel}</span>
+                <span className="pill-name">{userName || 'Student'}</span>
+                <span className="pill-badge">Lvl {userLevel}</span>
               </Link>
             )}
           </div>
