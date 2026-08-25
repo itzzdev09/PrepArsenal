@@ -11,8 +11,6 @@ services:
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-}
-        NEXT_PUBLIC_GEMINI_API_KEY: ${NEXT_PUBLIC_GEMINI_API_KEY:-}
-        NEXT_PUBLIC_GROQ_API_KEY: ${NEXT_PUBLIC_GROQ_API_KEY:-}
     image: preparsenal/web:latest
     container_name: preparsenal-web
     restart: unless-stopped
