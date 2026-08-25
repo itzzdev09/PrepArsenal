@@ -40,7 +40,7 @@ export async function getUserProfile(supabase: SupabaseClient, userId: string): 
     ...data,
     phone_number: examDates.phone_number || '',
     bio: examDates.bio || '',
-    role: examDates.role || 'user',
+    role: data.role || 'user',
     xp: examDates.xp || 0,
     current_level: examDates.current_level || 1
   } as UserProfile;
@@ -103,7 +103,7 @@ export async function getAllUserProfiles(supabase: SupabaseClient): Promise<User
         ...d,
         phone_number: ed.phone_number || '',
         bio: ed.bio || '',
-        role: ed.role || 'user',
+        role: d.role || 'user',
         xp: ed.xp || 0,
         current_level: ed.current_level || 1
       } as UserProfile;
@@ -660,11 +660,212 @@ export async function updateFavoriteFormulas(
   
   const examDates = (data.exam_dates as Record<string, any>) || {};
   examDates.favorite_formulas = formulaIds;
-  
+
   const { error } = await supabase
     .from('profiles')
     .update({ exam_dates: examDates })
     .eq('id', userId);
-    
+
   return !error;
+}
+
+// ===== NCERT BOOSTER: chapter-read progress & generated chapter tests =====
+
+export interface NcertChapterProgress {
+  readAt: string;
+  lastTestScore?: number;
+  testedAt?: string;
+}
+
+export interface NcertGeneratedQuestion {
+  id: string;
+  question_text: string;
+  options: string[];
+  correct_option: number;
+  explanation: string;
+}
+
+export async function getNcertProgress(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<Record<string, NcertChapterProgress>> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+
+  if (error || !data || !data.exam_dates) return {};
+
+  const examDates = data.exam_dates as Record<string, any>;
+  return (examDates.ncert_progress as Record<string, NcertChapterProgress>) || {};
+}
+
+export async function markChapterRead(
+  supabase: SupabaseClient,
+  userId: string,
+  chapterId: string
+): Promise<boolean> {
+  const { data, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+
+  if (fetchErr) return false;
+
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  const progress = (examDates.ncert_progress as Record<string, NcertChapterProgress>) || {};
+
+  if (!progress[chapterId]) {
+    progress[chapterId] = { readAt: new Date().toISOString() };
+  }
+  examDates.ncert_progress = progress;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ exam_dates: examDates })
+    .eq('id', userId);
+
+  return !error;
+}
+
+export async function recordChapterTestResult(
+  supabase: SupabaseClient,
+  userId: string,
+  chapterId: string,
+  scorePercent: number
+): Promise<boolean> {
+  const { data, error: fetchErr } = await supabase
+    .from('profiles')
+    .select('exam_dates')
+    .eq('id', userId)
+    .single();
+
+  if (fetchErr) return false;
+
+  const examDates = (data.exam_dates as Record<string, any>) || {};
+  const progress = (examDates.ncert_progress as Record<string, NcertChapterProgress>) || {};
+
+  progress[chapterId] = {
+    readAt: progress[chapterId]?.readAt || new Date().toISOString(),
+    lastTestScore: scorePercent,
+    testedAt: new Date().toISOString(),
+  };
+  examDates.ncert_progress = progress;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ exam_dates: examDates })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error recording chapter test result:', error);
+    return false;
+  }
+
+  await updateStreak(supabase, userId);
+  return true;
+}
+
+export async function getNcertChapterTest(
+  supabase: SupabaseClient,
+  chapterId: string
+): Promise<NcertGeneratedQuestion[]> {
+  const { data, error } = await supabase
+    .from('ncert_chapter_tests')
+    .select('id, question_text, options, correct_option, explanation')
+    .eq('chapter_id', chapterId);
+
+  if (error || !data) return [];
+  return data as NcertGeneratedQuestion[];
+}
+
+// ===== GK BOOSTER: daily current-affairs review queue =====
+
+export interface GkDailyItem {
+  id: string;
+  item_date: string;
+  category: string;
+  headline: string;
+  summary: string;
+  source_url: string | null;
+  question_text: string;
+  options: string[];
+  correct_option: number;
+  explanation: string;
+  status: 'pending_review' | 'approved' | 'rejected';
+  created_at: string;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+}
+
+export async function getPendingGkItems(supabase: SupabaseClient): Promise<GkDailyItem[]> {
+  const { data, error } = await supabase
+    .from('gk_daily_items')
+    .select('*')
+    .eq('status', 'pending_review')
+    .order('created_at', { ascending: false });
+
+  if (error || !data) return [];
+  return data as GkDailyItem[];
+}
+
+export async function getApprovedGkItems(
+  supabase: SupabaseClient,
+  limit = 30
+): Promise<GkDailyItem[]> {
+  const { data, error } = await supabase
+    .from('gk_daily_items')
+    .select('*')
+    .eq('status', 'approved')
+    .order('item_date', { ascending: false })
+    .limit(limit);
+
+  if (error || !data) return [];
+  return data as GkDailyItem[];
+}
+
+export async function approveGkItem(
+  supabase: SupabaseClient,
+  itemId: string,
+  reviewerId: string,
+  edits?: Partial<Pick<GkDailyItem, 'summary' | 'question_text' | 'options' | 'correct_option' | 'explanation'>>
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('gk_daily_items')
+    .update({
+      ...edits,
+      status: 'approved',
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewerId,
+    })
+    .eq('id', itemId);
+
+  if (error) {
+    console.error('Error approving GK item:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function rejectGkItem(
+  supabase: SupabaseClient,
+  itemId: string,
+  reviewerId: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('gk_daily_items')
+    .update({
+      status: 'rejected',
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: reviewerId,
+    })
+    .eq('id', itemId);
+
+  if (error) {
+    console.error('Error rejecting GK item:', error);
+    return false;
+  }
+  return true;
 }

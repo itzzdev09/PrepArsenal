@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { chat } from '@/lib/llm';
 import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 import type { RagSearchResult } from '@/lib/rag/rag-engine';
 import CitationCard from '@/components/rag/CitationCard';
 import { getSemanticCacheMetrics, type CacheStats } from '@/lib/cache/semantic-cache';
+import type { LLMResponse } from '@/lib/llm';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -198,7 +198,13 @@ export default function TutorPage() {
         content: m.content,
       }));
 
-      const response = await chat(history);
+      const chatRes = await fetch('/api/tutor/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      if (!chatRes.ok) throw new Error(`Chat request failed: ${chatRes.status}`);
+      const response: LLMResponse = await chatRes.json();
       setProvider(response.provider);
       setCacheStats(getSemanticCacheMetrics());
 
