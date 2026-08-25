@@ -79,6 +79,8 @@ secrets:
   supabaseServiceRoleKey: ""
   geminiApiKey: ""
   groqApiKey: ""
+  gkHarvesterEmail: ""
+  gkHarvesterPassword: ""
 
 redis:
   enabled: true
