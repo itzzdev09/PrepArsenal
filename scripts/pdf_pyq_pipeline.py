@@ -81,8 +81,9 @@ TOPICS = {
 # metadata.source_type on each imported question for provenance.
 PAPERS = {
     'SSC_CGL': [
-        {'url': 'https://ssc.nic.in/SSCFileServer/PortalManagement/UploadedFiles/Final_Answer_Key_CGLE2023_16122023.pdf', 'year': 2023, 'label': 'SSC CGL 2023 Final Answer Key (Official, ssc.nic.in)', 'source_type': 'official'},
-        {'url': 'https://ssc.nic.in/SSCFileServer/PortalManagement/UploadedFiles/FinalAnswerkey_CGLE2022_tier1_27022023.pdf', 'year': 2022, 'label': 'SSC CGL 2022 Tier-1 Final Answer Key (Official, ssc.nic.in)', 'source_type': 'official'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf', 'year': 2018, 'label': 'SSC CGL 2018 Reasoning Ability (BYJU\'S)', 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf', 'year': 2017, 'label': 'SSC CGL 2017 General Awareness (BYJU\'S)', 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': 'SSC CGL 2017 English (BYJU\'S)', 'source_type': 'third_party'},
     ],
     'ACIO2': [
         {'url': 'https://blogmedia.testbook.com/blog/wp-content/uploads/2017/10/IB-ACIO-Question-Papers-for-15th-October-2017.pdf', 'year': 2017, 'label': 'IB ACIO-II 2017 Tier-1 (Testbook)', 'source_type': 'third_party'},
