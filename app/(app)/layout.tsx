@@ -18,6 +18,7 @@ const baseNavItems = [
   { label: 'Trend Explorer', icon: '🧠', href: '/trends' },
   { label: 'AI Tutor', icon: '🤖', href: '/tutor' },
   { label: 'NCERT Sprint', icon: '📚', href: '/ncert-sprint' },
+  { label: 'GK Booster', icon: '📰', href: '/gk-booster' },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

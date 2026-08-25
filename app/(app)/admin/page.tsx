@@ -374,6 +374,9 @@ export default function AdminPortalPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <Link href="/admin/gk-review" className="btn btn-secondary btn-sm">
+            📰 GK Daily Review Queue
+          </Link>
           <button className="btn btn-secondary btn-sm" onClick={handleFlushCache}>
             🧹 Flush LLM Cache
           </button>
