@@ -36,7 +36,7 @@ FEEDS = [
 ]
 
 MAX_ITEMS_PER_RUN = 12
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent"
 
 
 def draft_summary_and_question(headline: str, description: str) -> Optional[dict]:
