@@ -20,7 +20,7 @@ export async function GET() {
     },
     services: {
       supabase: process.env.NEXT_PUBLIC_SUPABASE_URL ? "configured" : "unconfigured",
-      gemini: process.env.NEXT_PUBLIC_GEMINI_API_KEY ? "configured" : "unconfigured",
+      gemini: process.env.GEMINI_API_KEY ? "configured" : "unconfigured",
     },
   };
 
