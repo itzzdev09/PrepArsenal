@@ -849,6 +849,13 @@ export async function approveGkItem(
   return true;
 }
 
+export async function recordGkQuizResult(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<number> {
+  return updateStreak(supabase, userId);
+}
+
 export async function rejectGkItem(
   supabase: SupabaseClient,
   itemId: string,
