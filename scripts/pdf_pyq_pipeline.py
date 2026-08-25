@@ -165,7 +165,7 @@ def extract_text(pdf_path: Path) -> str:
     return re.sub(r'[ \t]+', ' ', text)
 
 
-def chunk_text(text: str, max_chars: int = 9000, overlap: int = 400) -> list[str]:
+def chunk_text(text: str, max_chars: int = 4500, overlap: int = 300) -> list[str]:
     chunks = []
     start = 0
     while start < len(text):
@@ -186,7 +186,7 @@ def call_gemini(prompt: str) -> str:
             'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
             'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 8192, 'responseMimeType': 'application/json'},
         },
-        timeout=90,
+        timeout=150,
     )
     resp.raise_for_status()
     data = resp.json()
@@ -216,13 +216,45 @@ def call_groq(prompt: str) -> str:
 
 
 def parse_json_array(raw: str) -> list[dict]:
+    """Lenient JSON-array parser. LLM output is sometimes truncated (hit the
+    output token cap) or slightly malformed — rather than losing the whole
+    chunk's questions, salvage every individually well-formed object."""
     cleaned = raw.strip()
     cleaned = re.sub(r'^```(?:json)?', '', cleaned).strip()
     cleaned = re.sub(r'```$', '', cleaned).strip()
     match = re.search(r'\[.*\]', cleaned, re.DOTALL)
     if match:
         cleaned = match.group(0)
-    return json.loads(cleaned)
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    last_complete = cleaned.rfind('},')
+    if last_complete != -1:
+        try:
+            return json.loads(cleaned[:last_complete + 1] + ']')
+        except json.JSONDecodeError:
+            pass
+
+    items = []
+    depth = 0
+    start = None
+    for i, ch in enumerate(cleaned):
+        if ch == '{':
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    items.append(json.loads(cleaned[start:i + 1]))
+                except json.JSONDecodeError:
+                    pass
+                start = None
+    return items
 
 
 def extract_questions_from_chunk(chunk: str, exam_code: str, year: int) -> list[dict]:
