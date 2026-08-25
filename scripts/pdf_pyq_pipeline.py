@@ -34,8 +34,8 @@ CACHE_DIR = Path(__file__).resolve().parent / 'pdf_cache'
 CACHE_DIR.mkdir(exist_ok=True)
 REPORT_PATH = Path(__file__).resolve().parent / 'pyq_import_report.json'
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY') or os.getenv('NEXT_PUBLIC_GEMINI_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY') or os.getenv('NEXT_PUBLIC_GROQ_API_KEY')
 
 IMPORT_BATCH = f"pdf_pyq_{time.strftime('%Y_%m_%d')}"
 
@@ -81,12 +81,11 @@ TOPICS = {
 # metadata.source_type on each imported question for provenance.
 PAPERS = {
     'SSC_CGL': [
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf', 'year': 2018, 'label': 'SSC CGL 2018 Reasoning Ability (BYJU\'S)', 'source_type': 'third_party'},
         {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf', 'year': 2017, 'label': 'SSC CGL 2017 General Awareness (BYJU\'S)', 'source_type': 'third_party'},
         {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': 'SSC CGL 2017 English (BYJU\'S)', 'source_type': 'third_party'},
     ],
     'ACIO2': [
-        {'url': 'https://blogmedia.testbook.com/blog/wp-content/uploads/2017/10/IB-ACIO-Question-Papers-for-15th-October-2017.pdf', 'year': 2017, 'label': 'IB ACIO-II 2017 Tier-1 (Testbook)', 'source_type': 'third_party'},
+        {'url': 'https://freedownloads.dishapublication.com/wp-content/uploads/2024/01/IB-ACIO-Solved-Paper-2021_interior.pdf', 'year': 2021, 'label': 'IB ACIO Grade-II Executive Tier I 2021 (Disha)', 'source_type': 'third_party'},
     ],
     'RRB_NTPC': [
         {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/sites/2/2020/12/15111519/RRB-NTPC-Previous-Year-Paper-07-Hindi.pdf', 'year': 2016, 'label': 'RRB NTPC 2016 CBT1 (Adda247)', 'source_type': 'third_party'},
@@ -182,7 +181,7 @@ def call_gemini(prompt: str) -> str:
     if not GEMINI_API_KEY:
         raise RuntimeError('GEMINI_API_KEY not configured')
     resp = requests.post(
-        f'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}',
+        f'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}',
         json={
             'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
             'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 8192, 'responseMimeType': 'application/json'},
@@ -201,7 +200,7 @@ def call_groq(prompt: str) -> str:
         'https://api.groq.com/openai/v1/chat/completions',
         headers={'Authorization': f'Bearer {GROQ_API_KEY}'},
         json={
-            'model': 'llama3-70b-8192',
+            'model': 'openai/gpt-oss-120b',
             'messages': [
                 {'role': 'system', 'content': 'You output only valid JSON arrays, no markdown fences, no commentary.'},
                 {'role': 'user', 'content': prompt},
@@ -295,7 +294,7 @@ def process_paper(exam_code: str, source: dict, dry_run: bool) -> list[dict]:
         print(f'  [fail] Could not read PDF text: {e}')
         return []
 
-    if len(text.strip()) < 200:
+    if len(text.strip()) < 500:
         print('  [warn] Almost no extractable text — likely a scanned/image PDF; OCR not configured, skipping.')
         return []
 
