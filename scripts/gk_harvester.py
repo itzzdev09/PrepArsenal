@@ -20,6 +20,7 @@ Run on a schedule via k8s/base/cronjob-gk-harvester.yaml.
 import os
 import json
 import re
+import time
 from datetime import date
 from typing import Optional
 
@@ -59,9 +60,15 @@ Respond with ONLY a JSON object, no markdown fences, no commentary, in this exac
             f"{GEMINI_URL}?key={api_key}",
             json={
                 "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 512},
+                "generationConfig": {
+                    "temperature": 0.4,
+                    "maxOutputTokens": 1024,
+                    # gemini-3.6-flash is a "thinking" model — without this it burns
+                    # the output budget on internal reasoning before any visible text.
+                    "thinkingConfig": {"thinkingBudget": 0},
+                },
             },
-            timeout=30,
+            timeout=60,
         )
         res.raise_for_status()
         text = res.json()["candidates"][0]["content"]["parts"][0]["text"]
@@ -120,6 +127,7 @@ def run():
             if not drafted:
                 skipped += 1
                 continue
+            time.sleep(4)  # stay well under the free-tier requests-per-minute limit
 
             db.table("gk_daily_items").insert({
                 "item_date": str(date.today()),

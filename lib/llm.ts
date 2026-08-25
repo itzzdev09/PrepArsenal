@@ -53,6 +53,9 @@ async function callGemini(messages: ChatMessage[], systemPrompt: string): Promis
         generationConfig: {
           temperature: 0.6,
           maxOutputTokens: 2048,
+          // gemini-3.6-flash is a "thinking" model — without this it burns the
+          // output budget on internal reasoning tokens before any visible text.
+          thinkingConfig: { thinkingBudget: 0 },
         }
       })
     }

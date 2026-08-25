@@ -177,20 +177,29 @@ def chunk_text(text: str, max_chars: int = 4500, overlap: int = 300) -> list[str
     return chunks
 
 
-def call_gemini(prompt: str) -> str:
+def call_gemini(prompt: str, retries: int = 3) -> str:
     if not GEMINI_API_KEY:
         raise RuntimeError('GEMINI_API_KEY not configured')
-    resp = requests.post(
-        f'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}',
-        json={
-            'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
-            'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 8192, 'responseMimeType': 'application/json'},
-        },
-        timeout=150,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return data['candidates'][0]['content']['parts'][0]['text']
+    last_error = None
+    for attempt in range(retries):
+        resp = requests.post(
+            f'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}',
+            json={
+                'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
+                'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 8192, 'responseMimeType': 'application/json'},
+            },
+            timeout=150,
+        )
+        if resp.status_code in (429, 502, 503):
+            wait = 20 * (attempt + 1)
+            print(f'    [gemini {resp.status_code}, backing off {wait}s]')
+            time.sleep(wait)
+            last_error = requests.HTTPError(f'{resp.status_code}: {resp.text[:200]}')
+            continue
+        resp.raise_for_status()
+        data = resp.json()
+        return data['candidates'][0]['content']['parts'][0]['text']
+    raise last_error or RuntimeError('Gemini call failed after retries')
 
 
 def call_groq(prompt: str) -> str:
@@ -341,7 +350,7 @@ def process_paper(exam_code: str, source: dict, dry_run: bool) -> list[dict]:
             if row:
                 all_rows[row['_dedupe_key']] = row
         print(f'  chunk {i + 1}/{len(chunks)}: {len(items)} raw items, {len(all_rows)} unique so far')
-        time.sleep(1.5)
+        time.sleep(4.5)
 
     rows = list(all_rows.values())
     for r in rows:
