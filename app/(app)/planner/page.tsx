@@ -165,6 +165,24 @@ export default function PlannerPage() {
           color: var(--text-secondary);
           font-size: 0.9rem;
         }
+        .empty-state :global(a) {
+          display: inline-flex !important;
+          align-items: center;
+          margin-top: .8rem !important;
+          padding: .5rem .75rem;
+          border: 2px solid #172033;
+          border-radius: 4px 8px 5px 7px;
+          box-shadow: 2px 2px 0 #172033;
+          background: #d9ecff;
+          color: #172033 !important;
+          font-family: var(--font-kalam), cursive;
+          font-weight: 700;
+          transition: transform 140ms ease, box-shadow 140ms ease;
+        }
+        .empty-state :global(a:hover) {
+          transform: translate(2px, 2px) rotate(-.35deg);
+          box-shadow: 0 0 0 #172033;
+        }
         
         @media (max-width: 900px) {
           .kanban-board { grid-template-columns: 1fr; }

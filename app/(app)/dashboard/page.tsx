@@ -214,26 +214,26 @@ export default function DashboardPage() {
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 80vh;
-            padding: 2rem;
+            min-height: calc(100dvh - 105px);
+            padding: 1.25rem;
           }
           .onboarding-card {
-            max-width: 600px;
+            max-width: 680px;
             width: 100%;
-            padding: 3rem;
+            padding: 1.6rem 2rem;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: 1.5rem;
             animation: fadeInUp 400ms ease forwards;
           }
           .onboarding-title {
-            font-size: 1.75rem;
+            font-size: 1.55rem;
             font-weight: 800;
             margin-bottom: 0.5rem;
           }
           .onboarding-sub {
             color: var(--text-secondary);
-            margin-bottom: 2rem;
+            margin-bottom: 1.1rem;
           }
           .field-label {
             font-size: 0.85rem;
@@ -245,15 +245,15 @@ export default function DashboardPage() {
           .exam-select-grid {
             display: flex;
             flex-wrap: wrap;
-            gap: .85rem .95rem;
-            margin-bottom: 2rem;
+            gap: .55rem .65rem;
+            margin-bottom: 1.15rem;
           }
           .exam-select-item {
             display: inline-flex;
             align-items: center;
             gap: .55rem;
-            min-height: 48px;
-            padding: .45rem 1rem;
+            min-height: 40px;
+            padding: .35rem .75rem;
             background: #fffdf5;
             border: 2px solid #172033;
             border-radius: 4px 9px 5px 8px;
@@ -262,7 +262,7 @@ export default function DashboardPage() {
             transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
             text-align: left;
             font-family: var(--font-kalam), "Segoe Print", cursive;
-            font-size: 1rem;
+            font-size: .92rem;
             font-weight: 700;
           }
           .exam-select-item:hover {
@@ -277,8 +277,8 @@ export default function DashboardPage() {
             box-shadow: 0 0 0 #172033;
           }
           .exam-select-icon {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             display: grid;
             place-items: center;
             overflow: hidden;
@@ -289,13 +289,17 @@ export default function DashboardPage() {
           }
           .exam-select-icon img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
           .exam-select-icon.no-logo::after { content: ''; width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; }
+          .onboarding-card :global(.input) { min-height: 44px; padding: .65rem .8rem; }
+          .onboarding-card :global(.btn) { min-height: 44px; padding: .65rem 1rem; }
           @media (max-width: 600px) {
-            .exam-select-grid { grid-template-columns: repeat(2, 1fr); }
+            .onboarding { align-items: flex-start; }
+            .onboarding-card { padding: 1.35rem; }
+            .exam-select-grid { gap: .45rem; }
           }
         `}</style>
         <div className="onboarding">
           <div className="onboarding-card">
-            <div style={{ marginBottom: '1rem' }}><Target size={38} /></div>
+            <div style={{ marginBottom: '.6rem' }}><Target size={31} /></div>
             <h1 className="onboarding-title">Welcome to PrepArsenal</h1>
             <p className="onboarding-sub">Let&apos;s set up your exam preparation profile.</p>
 
@@ -305,7 +309,7 @@ export default function DashboardPage() {
               placeholder="Enter your name"
               value={userName}
               onChange={e => setUserName(e.target.value)}
-              style={{ marginBottom: '1.5rem' }}
+              style={{ marginBottom: '1rem' }}
               onKeyDown={e => e.key === 'Enter' && handleOnboarding()}
             />
 
