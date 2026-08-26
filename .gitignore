@@ -43,3 +43,12 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# python
+__pycache__/
+*.pyc
+
+# local databases / caches
+*.db
+*.db-journal
+scripts/pdf_cache/

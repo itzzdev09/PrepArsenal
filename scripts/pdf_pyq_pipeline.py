@@ -1,88 +1,56 @@
 """PrepArsenal — PYQ PDF Pipeline
 
 Downloads previous-year-question PDF papers one at a time for every exam listed
-in lib/data.ts, extracts every question in each paper (no sampling), structures
-them with an LLM, and bulk-writes them into Turso only. Supabase is left alone —
-it stays reserved for auth/profile/site data per project convention.
+in lib/data.ts, extracts every question in each paper, and bulk-writes them to
+Turso (default) or Supabase.
+
+Extraction is fully deterministic — see scripts/pyq_parser.py. There are no
+Gemini, Groq or other LLM API calls anywhere in this pipeline: question stems,
+options, answer keys, explanations, subject and topic all come from regex
+structure and keyword rules. The same PDF therefore always yields the same rows,
+and ingestion costs nothing and cannot hallucinate a question that is not in the
+paper.
 
 Usage:
-    python scripts/pdf_pyq_pipeline.py                 # run all exams, all papers
-    python scripts/pdf_pyq_pipeline.py --exam SSC_CGL   # just one exam
-    python scripts/pdf_pyq_pipeline.py --dry-run        # extract + print, skip Turso writes
+    python scripts/pdf_pyq_pipeline.py                      # all exams, all papers
+    python scripts/pdf_pyq_pipeline.py --exam SSC_CGL       # just one exam
+    python scripts/pdf_pyq_pipeline.py --dry-run            # parse + report, no writes
+    python scripts/pdf_pyq_pipeline.py --target supabase    # write to Supabase instead
+    python scripts/pdf_pyq_pipeline.py --require-answers    # skip questions with no answer key
 """
 
 import argparse
 import hashlib
 import json
 import re
-import sys
 import time
 from pathlib import Path
 
-import fitz  # PyMuPDF
+import pymupdf
 import requests
-from dotenv import load_dotenv
-import os
+
+from pyq_parser import TOPICS, parse_paper
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-load_dotenv(REPO_ROOT / '.env.local')
-load_dotenv(Path(__file__).resolve().parent / '.env', override=False)
-
-from turso_writer import TursoWriter  # noqa: E402
-
 CACHE_DIR = Path(__file__).resolve().parent / 'pdf_cache'
 CACHE_DIR.mkdir(exist_ok=True)
 REPORT_PATH = Path(__file__).resolve().parent / 'pyq_import_report.json'
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY') or os.getenv('NEXT_PUBLIC_GEMINI_API_KEY')
-GROQ_API_KEY = os.getenv('GROQ_API_KEY') or os.getenv('NEXT_PUBLIC_GROQ_API_KEY')
-
 IMPORT_BATCH = f"pdf_pyq_{time.strftime('%Y_%m_%d')}"
 
-SUBJECTS = ['Quantitative Aptitude', 'Reasoning', 'English', 'General Awareness', 'Finance & Economics']
-
-TOPICS = {
-    'qa_number': ('Number System', 'Quantitative Aptitude'),
-    'qa_percentage': ('Percentage', 'Quantitative Aptitude'),
-    'qa_profit_loss': ('Profit & Loss', 'Quantitative Aptitude'),
-    'qa_tsd': ('Time, Speed & Distance', 'Quantitative Aptitude'),
-    'qa_average': ('Average', 'Quantitative Aptitude'),
-    'qa_trigonometry': ('Trigonometry', 'Quantitative Aptitude'),
-    'qa_mensuration': ('Mensuration', 'Quantitative Aptitude'),
-    'qa_algebra': ('Algebra', 'Quantitative Aptitude'),
-    'qa_geometry': ('Geometry', 'Quantitative Aptitude'),
-    'qa_di': ('Data Interpretation', 'Quantitative Aptitude'),
-    'qa_interest': ('Simple & Compound Interest', 'Quantitative Aptitude'),
-    'qa_time_work': ('Time & Work', 'Quantitative Aptitude'),
-    'lr_analogy': ('Analogy', 'Reasoning'),
-    'lr_classification': ('Classification', 'Reasoning'),
-    'lr_ranking': ('Ranking & Order', 'Reasoning'),
-    'lr_math_operators': ('Mathematical Operators', 'Reasoning'),
-    'lr_syllogism': ('Syllogism', 'Reasoning'),
-    'lr_blood_relation': ('Blood Relations', 'Reasoning'),
-    'lr_coding': ('Coding-Decoding', 'Reasoning'),
-    'lr_series': ('Letter/Alpha-Numeric Series', 'Reasoning'),
-    'lr_venn_diagram': ('Venn Diagram', 'Reasoning'),
-    'lr_word_sequence': ('Logical Word Sequence', 'Reasoning'),
-    'lr_number_series': ('Number Series', 'Reasoning'),
-    'en_error': ('Error Spotting', 'English'),
-    'en_idiom': ('Idioms & Phrases', 'English'),
-    'en_vocab': ('Vocabulary', 'English'),
-    'ga_polity': ('Indian Polity', 'General Awareness'),
-    'ga_static': ('Static GK', 'General Awareness'),
-    'ga_economy': ('Economy', 'General Awareness'),
-    'ga_science': ('General Science', 'General Awareness'),
-    'fe_banking': ('Banking Awareness', 'Finance & Economics'),
-    'fe_securities': ('Securities & Regulations', 'Finance & Economics'),
-}
-
-# One or more source PDFs per exam, tried one at a time ("paper by paper").
-# Mix of official (ssc.nic.in) and reputable third-party aggregators — see
-# metadata.source_type on each imported question for provenance.
+# One or more source PDFs per exam, processed paper by paper. Mix of official
+# (ssc.nic.in) and reputable third-party aggregators — provenance is recorded on
+# every imported question via source_url / source_label / source_type.
 PAPERS = {
     'SSC_CGL': [
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf', 'year': 2017, 'label': 'SSC CGL 2017 General Awareness (BYJU\'S)', 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': 'SSC CGL 2017 English (BYJU\'S)', 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf', 'year': 2017, 'label': "SSC CGL 2017 General Awareness (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 English (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/Quantitative-Aptitude-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 Quantitative Aptitude (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/Reasoning-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 Reasoning (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf', 'year': 2018, 'label': "SSC CGL 2018 Reasoning Ability (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-General-Awareness.pdf', 'year': 2018, 'label': "SSC CGL 2018 General Awareness (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Quantitative-Aptitude.pdf', 'year': 2018, 'label': "SSC CGL 2018 Quantitative Aptitude (BYJU'S)", 'source_type': 'third_party'},
+        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-English-Comprehension.pdf', 'year': 2018, 'label': "SSC CGL 2018 English Comprehension (BYJU'S)", 'source_type': 'third_party'},
     ],
     'ACIO2': [
         {'url': 'https://freedownloads.dishapublication.com/wp-content/uploads/2024/01/IB-ACIO-Solved-Paper-2021_interior.pdf', 'year': 2021, 'label': 'IB ACIO Grade-II Executive Tier I 2021 (Disha)', 'source_type': 'third_party'},
@@ -101,6 +69,7 @@ PAPERS = {
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2025-PYQs-Book.pdf', 'year': 2025, 'label': 'NABARD Grade A 2025 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2024-PYQs-Book.pdf', 'year': 2024, 'label': 'NABARD Grade A 2024 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2023-PYQs-Book.pdf', 'year': 2023, 'label': 'NABARD Grade A 2023 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://www.bankersadda.com/wp-content/uploads/multisite/2022/07/13163733/Formatted-NABARD-Grade-A-Previous-Year-Question-Paper-2021-English-Language-.pdf', 'year': 2021, 'label': 'NABARD Grade A 2021 English (BankersAdda)', 'source_type': 'third_party'},
     ],
     'SEBI_GRADEA': [
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-1-Previous-Year-Papers-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 PYQ Book (Edutap)', 'source_type': 'third_party'},
@@ -108,46 +77,35 @@ PAPERS = {
     ],
     'LIC_AAO': [
         {'url': 'https://www.bankersadda.com/wp-content/uploads/multisite/2023/02/21182142/LIC-AAO-Mains-Previous-Year-Paper-of-Reasoning-2019.pdf', 'year': 2019, 'label': 'LIC AAO Mains 2019 Reasoning (BankersAdda)', 'source_type': 'third_party'},
+        {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/01/02153424/LIC-AAO-Prelims-Previous-Year-Paper-2019.pdf', 'year': 2019, 'label': 'LIC AAO Prelims 2019 (Adda247)', 'source_type': 'third_party'},
         {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/02/17182755/LIC-AAO-Prelims-Memory-Based-Paper-2023-Based-on-17-February.pdf', 'year': 2023, 'label': 'LIC AAO Prelims 2023 Memory-Based (Adda247)', 'source_type': 'memory_based'},
     ],
     'UPSC_APFC': [
         {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2023-PYQ-Book.pdf', 'year': 2023, 'label': 'UPSC EPFO APFC 2023 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2015-PYQ-Book.pdf', 'year': 2015, 'label': 'UPSC EPFO APFC 2015 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://freedownloads.dishapublication.com/wp-content/uploads/2025/03/UPSC-EPFO-APFC-Previous-Year-Question-Paper-processedlightpdf.com-output-output-output-output-1.pdf', 'year': 2015, 'label': 'UPSC EPFO APFC topic-wise solved paper (Disha)', 'source_type': 'third_party'},
     ],
     'IRDA': [
         {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/04/17171403/Insurance-Questions-for-IRDA-Assistant-Manager-Exam-2023.pdf', 'year': 2023, 'label': 'IRDA Assistant Manager Insurance PYQ 2023 (Adda247)', 'source_type': 'third_party'},
+        {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/04/11184351/IRDA-Assistant-Manager-Memory-Based-Paper-English.pdf', 'year': 2023, 'label': 'IRDA Assistant Manager English memory-based (Adda247)', 'source_type': 'memory_based'},
     ],
 }
 
-EXTRACTION_PROMPT = """You are transcribing an Indian government competitive exam ({exam_code}, {year}) previous-year question paper into structured data.
-
-Below is raw text extracted from one chunk of the paper's PDF. It may contain OCR noise, headers, footers, or page numbers — ignore those.
-
-Extract EVERY multiple-choice question found in this text. Do not skip any, do not summarize, do not invent questions that aren't there. If a question's answer key is present elsewhere in the text (e.g. a separate answer-key section), match it to its question by number. If you cannot determine the correct option for a question with confidence, still include the question but set "correct_option" to -1.
-
-For each question, classify it into exactly one of these subjects: {subjects}
-And exactly one of these topic ids: {topic_ids}
-(pick the closest match; if nothing fits well, use "ga_static" for General Awareness or the most generic topic id for its subject)
-
-Respond with ONLY a JSON array (no markdown fences, no commentary), in this exact shape:
-[{{"question_text": string, "options": [string, ...], "correct_option": integer (0-indexed, -1 if unknown), "subject": string, "topic_id": string, "difficulty": "easy"|"medium"|"hard", "explanation": string}}]
-
-Text chunk:
----
-{chunk}
----"""
-
 
 def download_pdf(url: str) -> Path | None:
-    cache_key = hashlib.md5(url.encode()).hexdigest()
-    dest = CACHE_DIR / f'{cache_key}.pdf'
+    dest = CACHE_DIR / f'{hashlib.md5(url.encode()).hexdigest()}.pdf'
     if dest.exists() and dest.stat().st_size > 0:
         return dest
     try:
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+        # Several aggregator CDNs reject requests without a full browser UA string.
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                          '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/pdf,*/*',
+        }
         resp = requests.get(url, headers=headers, timeout=45)
         resp.raise_for_status()
-        if resp.headers.get('Content-Type', '').lower().find('pdf') == -1 and not resp.content[:4] == b'%PDF':
+        if 'pdf' not in resp.headers.get('Content-Type', '').lower() and resp.content[:4] != b'%PDF':
             print(f'  [skip] Not a PDF response: {url}')
             return None
         dest.write_bytes(resp.content)
@@ -158,172 +116,40 @@ def download_pdf(url: str) -> Path | None:
 
 
 def extract_text(pdf_path: Path) -> str:
-    doc = fitz.open(pdf_path)
-    pages = [page.get_text() for page in doc]
-    doc.close()
-    text = '\n'.join(pages)
-    return re.sub(r'[ \t]+', ' ', text)
-
-
-def chunk_text(text: str, max_chars: int = 4500, overlap: int = 300) -> list[str]:
-    chunks = []
-    start = 0
-    while start < len(text):
-        end = min(start + max_chars, len(text))
-        chunks.append(text[start:end])
-        if end == len(text):
-            break
-        start = end - overlap
-    return chunks
-
-
-def call_gemini(prompt: str, retries: int = 3) -> str:
-    if not GEMINI_API_KEY:
-        raise RuntimeError('GEMINI_API_KEY not configured')
-    last_error = None
-    for attempt in range(retries):
-        resp = requests.post(
-            f'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={GEMINI_API_KEY}',
-            json={
-                'contents': [{'role': 'user', 'parts': [{'text': prompt}]}],
-                'generationConfig': {'temperature': 0.2, 'maxOutputTokens': 8192, 'responseMimeType': 'application/json'},
-            },
-            timeout=150,
-        )
-        if resp.status_code in (429, 502, 503):
-            wait = 20 * (attempt + 1)
-            print(f'    [gemini {resp.status_code}, backing off {wait}s]')
-            time.sleep(wait)
-            last_error = requests.HTTPError(f'{resp.status_code}: {resp.text[:200]}')
-            continue
-        resp.raise_for_status()
-        data = resp.json()
-        return data['candidates'][0]['content']['parts'][0]['text']
-    raise last_error or RuntimeError('Gemini call failed after retries')
-
-
-def call_groq(prompt: str) -> str:
-    if not GROQ_API_KEY:
-        raise RuntimeError('GROQ_API_KEY not configured')
-    resp = requests.post(
-        'https://api.groq.com/openai/v1/chat/completions',
-        headers={'Authorization': f'Bearer {GROQ_API_KEY}'},
-        json={
-            'model': 'openai/gpt-oss-120b',
-            'messages': [
-                {'role': 'system', 'content': 'You output only valid JSON arrays, no markdown fences, no commentary.'},
-                {'role': 'user', 'content': prompt},
-            ],
-            'temperature': 0.2,
-            'max_tokens': 8192,
-        },
-        timeout=90,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return data['choices'][0]['message']['content']
-
-
-def parse_json_array(raw: str) -> list[dict]:
-    """Lenient JSON-array parser. LLM output is sometimes truncated (hit the
-    output token cap) or slightly malformed — rather than losing the whole
-    chunk's questions, salvage every individually well-formed object."""
-    cleaned = raw.strip()
-    cleaned = re.sub(r'^```(?:json)?', '', cleaned).strip()
-    cleaned = re.sub(r'```$', '', cleaned).strip()
-    match = re.search(r'\[.*\]', cleaned, re.DOTALL)
-    if match:
-        cleaned = match.group(0)
-
+    doc = pymupdf.open(pdf_path)
     try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        pass
-
-    last_complete = cleaned.rfind('},')
-    if last_complete != -1:
-        try:
-            return json.loads(cleaned[:last_complete + 1] + ']')
-        except json.JSONDecodeError:
-            pass
-
-    items = []
-    depth = 0
-    start = None
-    for i, ch in enumerate(cleaned):
-        if ch == '{':
-            if depth == 0:
-                start = i
-            depth += 1
-        elif ch == '}':
-            depth -= 1
-            if depth == 0 and start is not None:
-                try:
-                    items.append(json.loads(cleaned[start:i + 1]))
-                except json.JSONDecodeError:
-                    pass
-                start = None
-    return items
+        return '\n'.join(page.get_text() for page in doc)
+    finally:
+        doc.close()
 
 
-def extract_questions_from_chunk(chunk: str, exam_code: str, year: int) -> list[dict]:
-    prompt = EXTRACTION_PROMPT.format(
-        exam_code=exam_code,
-        year=year,
-        subjects=', '.join(SUBJECTS),
-        topic_ids=', '.join(TOPICS.keys()),
-        chunk=chunk,
-    )
-    for attempt, call in enumerate([call_gemini, call_groq]):
-        try:
-            raw = call(prompt)
-            items = parse_json_array(raw)
-            if isinstance(items, list):
-                return items
-        except Exception as e:
-            print(f'    [llm attempt {attempt + 1} failed] {e}')
-            time.sleep(2)
-    return []
-
-
-def normalize_question(item: dict, exam_code: str, year: int, source: dict) -> dict | None:
-    text = str(item.get('question_text', '')).strip()
-    options = item.get('options') or []
-    options = [str(o).strip() for o in options if str(o).strip()]
-    correct = item.get('correct_option', -1)
-    if not text or len(options) < 2 or not isinstance(correct, int):
-        return None
-
-    subject = item.get('subject') if item.get('subject') in SUBJECTS else SUBJECTS[0]
-    topic_id = item.get('topic_id') if item.get('topic_id') in TOPICS else next(
-        (tid for tid, (_, subj) in TOPICS.items() if subj == subject), 'ga_static'
-    )
-    difficulty = item.get('difficulty') if item.get('difficulty') in ('easy', 'medium', 'hard') else 'medium'
-
-    dedupe_key = re.sub(r'\s+', ' ', text.lower())
-    qid = f"{exam_code}_{year}_{hashlib.md5(dedupe_key.encode()).hexdigest()[:12]}"
-
+def to_row(parsed, exam_code: str, year: int, source: dict) -> dict:
+    dedupe_key = re.sub(r'\s+', ' ', parsed.question_text.lower())
+    qid = f'{exam_code}_{year}_{hashlib.md5(dedupe_key.encode()).hexdigest()[:12]}'
     return {
         'id': qid,
         'exam_code': exam_code,
-        'subject': subject,
-        'topic': topic_id,
+        'subject': parsed.subject,
+        'topic': parsed.topic_id,
         'year': year,
-        'difficulty': difficulty,
-        'question_text': text,
-        'options': json.dumps(options),
-        'correct_option': max(correct, 0),
-        'explanation': str(item.get('explanation', ''))[:2000],
+        'difficulty': parsed.difficulty,
+        'question_text': parsed.question_text,
+        'options': json.dumps(parsed.options),
+        'correct_option': max(parsed.correct_option, 0),
+        'explanation': parsed.explanation,
         'source_url': source['url'],
         'source_label': source['label'],
         'source_type': source['source_type'],
-        'is_verified_pyq': correct >= 0 and source['source_type'] != 'memory_based',
+        # Only a question whose answer we actually read from the paper counts as
+        # a verified PYQ; those feed the ML trend engine.
+        'is_verified_pyq': parsed.correct_option >= 0 and source['source_type'] != 'memory_based',
         'import_batch': IMPORT_BATCH,
         '_dedupe_key': dedupe_key,
+        '_has_answer': parsed.correct_option >= 0,
     }
 
 
-def process_paper(exam_code: str, source: dict, dry_run: bool) -> list[dict]:
+def process_paper(exam_code: str, source: dict, require_answers: bool) -> list[dict]:
     print(f"[{exam_code}] {source['label']}")
     pdf_path = download_pdf(source['url'])
     if not pdf_path:
@@ -339,42 +165,35 @@ def process_paper(exam_code: str, source: dict, dry_run: bool) -> list[dict]:
         print('  [warn] Almost no extractable text — likely a scanned/image PDF; OCR not configured, skipping.')
         return []
 
-    chunks = chunk_text(text)
-    print(f'  extracted {len(text)} chars across {len(chunks)} chunk(s)')
+    parsed = parse_paper(text)
+    rows: dict[str, dict] = {}
+    for item in parsed:
+        row = to_row(item, exam_code, source['year'], source)
+        if require_answers and not row['_has_answer']:
+            continue
+        rows[row['_dedupe_key']] = row
 
-    all_rows: dict[str, dict] = {}
-    for i, chunk in enumerate(chunks):
-        items = extract_questions_from_chunk(chunk, exam_code, source['year'])
-        for item in items:
-            row = normalize_question(item, exam_code, source['year'], source)
-            if row:
-                all_rows[row['_dedupe_key']] = row
-        print(f'  chunk {i + 1}/{len(chunks)}: {len(items)} raw items, {len(all_rows)} unique so far')
-        time.sleep(4.5)
-
-    rows = list(all_rows.values())
-    for r in rows:
-        r.pop('_dedupe_key', None)
-    print(f'  -> {len(rows)} questions extracted from this paper')
-    return rows
+    answered = sum(1 for r in rows.values() if r['_has_answer'])
+    print(f'  -> {len(rows)} unique questions ({answered} with a confirmed answer key)')
+    return list(rows.values())
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--exam', help='Only process this exam code (e.g. SSC_CGL)')
-    parser.add_argument('--dry-run', action='store_true', help='Extract and print only, skip Turso writes')
+    parser.add_argument('--dry-run', action='store_true', help='Parse and report only, skip writes')
+    parser.add_argument('--target', choices=['turso', 'supabase'], default='turso', help='Where to write questions')
+    parser.add_argument('--require-answers', action='store_true', help='Drop questions whose answer key could not be found')
     args = parser.parse_args()
 
     exam_codes = [args.exam] if args.exam else list(PAPERS.keys())
 
     writer = None
     if not args.dry_run:
-        writer = TursoWriter()
-        writer.ensure_schema()
-        writer.upsert_topics([{'id': tid, 'name': name, 'subject': subj} for tid, (name, subj) in TOPICS.items()])
+        writer = _open_writer(args.target)
 
-    report = {'batch': IMPORT_BATCH, 'exams': {}}
-    total_inserted = 0
+    report = {'batch': IMPORT_BATCH, 'extractor': 'deterministic (scripts/pyq_parser.py)', 'exams': {}}
+    total_written = 0
 
     for exam_code in exam_codes:
         papers = PAPERS.get(exam_code, [])
@@ -382,27 +201,86 @@ def main():
             print(f'[{exam_code}] no configured source papers, skipping')
             continue
 
-        exam_rows: list[dict] = []
+        exam_rows: dict[str, dict] = {}
         paper_reports = []
         for source in papers:
-            rows = process_paper(exam_code, source, args.dry_run)
-            exam_rows.extend(rows)
-            paper_reports.append({'label': source['label'], 'url': source['url'], 'questions': len(rows)})
-            time.sleep(2)
+            rows = process_paper(exam_code, source, args.require_answers)
+            for row in rows:
+                exam_rows.setdefault(row['_dedupe_key'], row)
+            paper_reports.append({
+                'label': source['label'],
+                'url': source['url'],
+                'questions': len(rows),
+                'answered': sum(1 for r in rows if r['_has_answer']),
+            })
 
-        if not args.dry_run and exam_rows:
-            inserted = writer.upsert_questions(exam_rows)
-            total_inserted += inserted
-            print(f'[{exam_code}] wrote {inserted} questions to Turso')
+        final_rows = list(exam_rows.values())
+        for row in final_rows:
+            row.pop('_dedupe_key', None)
+            row.pop('_has_answer', None)
+
+        if not args.dry_run and final_rows:
+            total_written += writer(final_rows)
+            print(f'[{exam_code}] wrote {len(final_rows)} questions to {args.target}')
         elif args.dry_run:
-            print(f'[{exam_code}] dry-run: would write {len(exam_rows)} questions')
+            print(f'[{exam_code}] dry-run: would write {len(final_rows)} questions')
 
-        report['exams'][exam_code] = {'papers': paper_reports, 'total_questions': len(exam_rows)}
+        report['exams'][exam_code] = {'papers': paper_reports, 'total_questions': len(final_rows)}
 
     REPORT_PATH.write_text(json.dumps(report, indent=2))
     print(f'\nReport written to {REPORT_PATH}')
     if not args.dry_run:
-        print(f'Total questions written this run: {total_inserted}')
+        print(f'Total questions written this run: {total_written}')
+
+
+def _open_writer(target: str):
+    """Return a callable that persists rows to the chosen backend."""
+    if target == 'turso':
+        from turso_writer import TursoWriter
+
+        writer = TursoWriter()
+        writer.ensure_schema()
+        writer.upsert_topics([
+            {'id': tid, 'name': name, 'subject': subj} for tid, (name, subj) in TOPICS.items()
+        ])
+        return writer.upsert_questions
+
+    from db_client import get_db_client
+
+    db = get_db_client()
+    for topic_id, (name, subject) in TOPICS.items():
+        db.table('topics').upsert({'id': topic_id, 'name': name, 'subject': subject}).execute()
+
+    def write(rows: list[dict]) -> int:
+        payload = [
+            {
+                'exam_code': r['exam_code'],
+                'year': r['year'],
+                'subject': r['subject'],
+                'topic_id': r['topic'],
+                'question_text': r['question_text'],
+                'options': json.loads(r['options']),
+                'correct_option': r['correct_option'],
+                'explanation': r['explanation'] or 'Answer taken from the cited question paper.',
+                'difficulty': r['difficulty'],
+                'metadata': {
+                    'source': r['source_label'],
+                    'source_url': r['source_url'],
+                    'source_type': r['source_type'],
+                    'is_verified_pyq': r['is_verified_pyq'],
+                    'import_batch': r['import_batch'],
+                },
+            }
+            for r in rows
+        ]
+        written = 0
+        for i in range(0, len(payload), 200):
+            chunk = payload[i:i + 200]
+            db.table('questions').insert(chunk).execute()
+            written += len(chunk)
+        return written
+
+    return write
 
 
 if __name__ == '__main__':
