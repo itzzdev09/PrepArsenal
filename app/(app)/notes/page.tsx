@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { FilePenLine, Trash2 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getSmartNotes, updateSmartNotes, type SmartNote } from '@/lib/db';
 import { useRouter } from 'next/navigation';
@@ -354,7 +355,7 @@ export default function NotesPage() {
       {/* Sidebar List */}
       <div className="notes-sidebar">
         <div className="sidebar-header">
-          <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>📝 Smart Notes</h2>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '.4rem' }}><FilePenLine size={19} />Smart Notes</h2>
           <button className="btn btn-primary btn-sm" onClick={createNote}>
             + New
           </button>
@@ -364,7 +365,7 @@ export default function NotesPage() {
           <input
             type="text"
             className="search-input"
-            placeholder="🔍 Search notes or formulas..."
+            placeholder="Search notes or formulas..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
@@ -436,7 +437,7 @@ export default function NotesPage() {
                 onClick={() => deleteNote(activeNote.id)}
                 title="Delete note"
               >
-                🗑️
+                <Trash2 size={16} />
               </button>
             </div>
 

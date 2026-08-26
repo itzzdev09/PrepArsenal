@@ -9,6 +9,10 @@
 
 /* --- Design Tokens --- */
 :root {
+  --font-inter: "Segoe UI";
+  --font-jetbrains: "Cascadia Code";
+  --font-kalam: "Segoe Print";
+  --font-patrick-hand: "Segoe Print";
   /* Colors — Deep Navy Base */
   --bg-primary: #060a14;
   --bg-secondary: #0a0e1a;
@@ -1258,3 +1262,208 @@ ul, ol {
     font-size: var(--text-3xl);
   }
 }
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Sketchbook application theme */
+.sketch-app-shell {
+  --bg-primary: #f8f2df;
+  --bg-secondary: #fffdf5;
+  --bg-tertiary: #f1ead8;
+  --bg-card: #fffdf5;
+  --bg-card-hover: #fff9e7;
+  --bg-glass: rgba(255, 253, 245, 0.88);
+  --bg-glass-strong: #fffdf5;
+  --bg-input: #fffdf5;
+  --border-subtle: rgba(23, 32, 51, 0.22);
+  --border-default: rgba(23, 32, 51, 0.48);
+  --border-strong: #172033;
+  --text-primary: #172033;
+  --text-secondary: #536071;
+  --text-tertiary: #777264;
+  --text-inverse: #fffdf5;
+  --accent-blue: #2b6cb0;
+  --accent-indigo: #5173a5;
+  --accent-purple: #a04f7b;
+  --accent-cyan: #218b88;
+  --success: #28745e;
+  --warning: #a96b13;
+  --error: #b74745;
+  --gradient-hero: linear-gradient(135deg, #5173a5, #218b88);
+  --gradient-hero-subtle: linear-gradient(135deg, rgba(81,115,165,.14), rgba(33,139,136,.12));
+  --font-body: var(--font-patrick-hand), "Segoe Print", "Comic Sans MS", cursive;
+  --font-mono: "Cascadia Code", monospace;
+  background-color: var(--bg-primary);
+  background-image: radial-gradient(rgba(23,32,51,.13) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+.sketch-app-shell .page-header { background: transparent; border-bottom: 2px solid #172033; }
+.sketch-app-shell .page-header h1 { font-family: var(--font-kalam); color: #172033; }
+.sketch-app-shell .page-body { background: transparent; }
+.sketch-app-shell .card, .sketch-app-shell .stat-card, .sketch-app-shell .question-card {
+  border: 2px solid #172033; border-radius: 5px 9px 6px 8px; background: #fffdf5; box-shadow: 3px 3px 0 #172033;
+}
+.sketch-app-shell .input, .sketch-app-shell input, .sketch-app-shell textarea, .sketch-app-shell select {
+  border: 2px solid #172033; border-radius: 4px 7px 5px 6px; background: #fffdf5; color: #172033;
+}
+.sketch-app-shell button, .sketch-app-shell .btn { font-family: var(--font-kalam); }
+
+/* Authentication is intentionally separate from the app shell. */
+.login-container {
+  min-height: 100vh !important;
+  background-color: #f8f2df !important;
+  background-image: radial-gradient(rgba(23,32,51,.13) 1px, transparent 1px) !important;
+  background-size: 18px 18px !important;
+  color: #172033;
+}
+.login-container .login-card {
+  background: #fffdf5 !important;
+  border: 2px solid #172033 !important;
+  border-radius: 6px 12px 7px 10px !important;
+  box-shadow: 7px 7px 0 #172033 !important;
+}
+.login-container .login-logo, .login-container .login-title { font-family: var(--font-kalam), "Segoe Print", cursive; color: #172033 !important; }
+.login-container .login-subtitle, .login-container .form-label, .login-container .back-link { color: #536071 !important; }
+.login-container .input { border: 2px solid #172033 !important; border-radius: 4px 8px 5px 7px !important; background: #fffdf5 !important; color: #172033 !important; }
+.login-container .btn-primary { border: 2px solid #172033 !important; border-radius: 5px 9px 6px 8px !important; box-shadow: 3px 3px 0 #172033 !important; background: #9ed5ca !important; color: #172033 !important; }
+.login-container .btn-secondary { border: 2px solid #172033 !important; border-radius: 5px 9px 6px 8px !important; background: #fff0a7 !important; color: #172033 !important; }
+
+/* The dashboard retains its data widgets but uses the same physical paper surfaces. */
+.sketch-app-shell .dashboard-page, .sketch-app-shell .onboarding { background: transparent !important; color: #172033 !important; }
+.sketch-app-shell .onboarding-card, .sketch-app-shell .dashboard-card, .sketch-app-shell .stat-box, .sketch-app-shell .section-card {
+  background: #fffdf5 !important; border: 2px solid #172033 !important; border-radius: 5px 10px 6px 8px !important; box-shadow: 3px 3px 0 #172033 !important;
+}
+
+/* Subtle colored paper layers shared by every authenticated study screen. */
+.sketch-app-shell [class*="card"], .sketch-app-shell [class*="panel"], .sketch-app-shell [class*="box"] {
+  border-color: #172033 !important;
+  border-radius: 5px 10px 6px 8px !important;
+}
+.sketch-app-shell [class*="card"]:nth-child(4n + 1), .sketch-app-shell [class*="panel"]:nth-child(4n + 1), .sketch-app-shell [class*="box"]:nth-child(4n + 1) { background-color: #e8f1ff !important; }
+.sketch-app-shell [class*="card"]:nth-child(4n + 2), .sketch-app-shell [class*="panel"]:nth-child(4n + 2), .sketch-app-shell [class*="box"]:nth-child(4n + 2) { background-color: #fff4b8 !important; }
+.sketch-app-shell [class*="card"]:nth-child(4n + 3), .sketch-app-shell [class*="panel"]:nth-child(4n + 3), .sketch-app-shell [class*="box"]:nth-child(4n + 3) { background-color: #e1f3eb !important; }
+.sketch-app-shell [class*="card"]:nth-child(4n + 4), .sketch-app-shell [class*="panel"]:nth-child(4n + 4), .sketch-app-shell [class*="box"]:nth-child(4n + 4) { background-color: #fdeceb !important; }
+.sketch-app-shell .btn, .sketch-app-shell .count-btn, .sketch-app-shell .quick-action, .sketch-app-shell [class*="start-btn"] {
+  border: 2px solid #172033 !important;
+  border-radius: 5px 10px 6px 8px !important;
+  box-shadow: 3px 3px 0 #172033 !important;
+  background: #9ed5ca !important;
+  color: #172033 !important;
+}
+.sketch-app-shell .btn:hover, .sketch-app-shell .count-btn:hover, .sketch-app-shell .quick-action:hover, .sketch-app-shell [class*="start-btn"]:hover {
+  transform: translate(2px, 2px) rotate(-.4deg) !important;
+  box-shadow: 1px 1px 0 #172033 !important;
+  background: #d9ecff !important;
+}
+.sketch-app-shell h1, .sketch-app-shell h2, .sketch-app-shell h3 { font-family: var(--font-kalam), "Segoe Print", cursive; color: #172033; }
+.sketch-app-shell [class*="header"] { border-color: #172033 !important; background: transparent !important; }
+
+/* Physical, hand-cut interaction surfaces. */
+.sketch-app-shell [class*="card"], .sketch-app-shell [class*="panel"], .sketch-app-shell [class*="box"], .sketch-app-shell [class*="item"], .sketch-app-shell [class*="tile"] {
+  box-shadow: 4px 4px 0 #172033 !important;
+  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease !important;
+}
+.sketch-app-shell a[class*="card"]:hover, .sketch-app-shell a[class*="item"]:hover,
+.sketch-app-shell [class*="card"]:hover, .sketch-app-shell [class*="panel"]:hover, .sketch-app-shell [class*="box"]:hover, .sketch-app-shell [class*="tile"]:hover {
+  transform: translate(2px, 2px) rotate(-.25deg) !important;
+  box-shadow: 2px 2px 0 #172033 !important;
+}
+.sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout),
+.sketch-app-shell .tag, .sketch-app-shell .tab, .sketch-app-shell .option-item {
+  border: 2px solid #172033 !important;
+  border-radius: 5px 9px 6px 8px !important;
+  box-shadow: 3px 3px 0 #172033 !important;
+  transition: transform 130ms ease, box-shadow 130ms ease, background-color 130ms ease !important;
+}
+.sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout):hover,
+.sketch-app-shell .tag:hover, .sketch-app-shell .tab:hover, .sketch-app-shell .option-item:hover {
+  transform: translate(2px, 2px) rotate(-.35deg) !important;
+  box-shadow: 1px 1px 0 #172033 !important;
+}
+.sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout):active,
+.sketch-app-shell .option-item:active { transform: translate(3px, 3px) !important; box-shadow: 0 0 0 #172033 !important; }
+
+/* Occasional ink arrows make the study flow feel like a working notebook. */
+.sketch-app-shell .dash-section-title, .sketch-app-shell .select-header h1, .sketch-app-shell .page-header h1 {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
+}
+.sketch-app-shell .dash-section-title::after, .sketch-app-shell .select-header h1::after, .sketch-app-shell .page-header h1::after {
+  content: '';
+  display: inline-block;
+  width: 50px;
+  height: 19px;
+  margin-top: 7px;
+  border-top: 4px dashed #172033;
+  border-radius: 50%;
+  transform: rotate(8deg);
+}
+.sketch-app-shell .dash-section-title::before, .sketch-app-shell .select-header h1::before, .sketch-app-shell .page-header h1::before {
+  content: '';
+  width: 11px;
+  height: 11px;
+  margin: 13px 0 0 -16px;
+  border-top: 3px solid #172033;
+  border-right: 3px solid #172033;
+  transform: rotate(45deg);
+}
+.sketch-app-shell .dash-section:nth-of-type(even) .dash-section-title::after { transform: rotate(-8deg) scaleX(-1); }
+@media (max-width: 560px) { .sketch-app-shell .dash-section-title::after, .sketch-app-shell .select-header h1::after, .sketch-app-shell .page-header h1::after { width: 28px; } }
+
+/* Practice mode needs a persistent selection state, not only the hover press. */
+.sketch-app-shell .mode-card {
+  position: relative;
+  cursor: pointer;
+}
+.sketch-app-shell .mode-card:not(.active) {
+  background: #fffdf5 !important;
+}
+.sketch-app-shell .mode-card.active {
+  background: #9ed5ca !important;
+  border: 3px solid #172033 !important;
+  box-shadow: 0 0 0 #172033 !important;
+  transform: translate(4px, 4px) rotate(-.35deg) !important;
+}
+.sketch-app-shell .mode-card.active::after {
+  content: 'Selected';
+  position: absolute;
+  top: .7rem;
+  right: .75rem;
+  padding: .14rem .5rem;
+  border: 2px solid #172033;
+  border-radius: 999px;
+  background: #fff0a7;
+  color: #172033;
+  font-family: var(--font-kalam), "Segoe Print", cursive;
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+/* Gentle stagger as route sections settle onto the page. */
+@keyframes sketch-section-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sketch-app-shell .dash-section,
+.sketch-app-shell .filter-section,
+.sketch-app-shell .target-exams-grid,
+.sketch-app-shell .exam-grid,
+.sketch-app-shell .page-body > * {
+  animation: sketch-section-enter 520ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.sketch-app-shell .dash-section:nth-of-type(2), .sketch-app-shell .filter-section:nth-of-type(2), .sketch-app-shell .page-body > *:nth-child(2) { animation-delay: 70ms; }
+.sketch-app-shell .dash-section:nth-of-type(3), .sketch-app-shell .filter-section:nth-of-type(3), .sketch-app-shell .page-body > *:nth-child(3) { animation-delay: 140ms; }

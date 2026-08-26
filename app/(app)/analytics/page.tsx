@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ChartNoAxesCombined } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getUserAnalytics } from '@/lib/db';
 import { 
@@ -158,7 +159,7 @@ export default function AnalyticsPage() {
       `}</style>
 
       <div className="header">
-        <h1>📊 Performance Analytics</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}><ChartNoAxesCombined size={26} />Performance Analytics</h1>
         <p>Track your accuracy, activity, and XP progression.</p>
       </div>
 

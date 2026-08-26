@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { BookOpenCheck, Bot, BrainCircuit, Landmark, RefreshCw, Send, Trash2, type LucideIcon } from 'lucide-react';
 import { saveChatHistory, getChatHistory, type ChatMessage as ChatEntry } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 import type { RagSearchResult } from '@/lib/rag/rag-engine';
@@ -18,6 +19,17 @@ interface ExtendedChatEntry extends ChatEntry {
   latencyMs?: number;
   citations?: RagSearchResult[];
 }
+
+const promptIcons: Record<string, LucideIcon> = {
+  Polity: Landmark,
+  Quant: BrainCircuit,
+  Economics: Landmark,
+  History: BookOpenCheck,
+  Geography: BookOpenCheck,
+  Science: BrainCircuit,
+  Reasoning: BrainCircuit,
+  English: BookOpenCheck,
+};
 
 const ALL_PROMPT_POOL = [
   // ===== POLITY & CONSTITUTION =====
@@ -265,7 +277,9 @@ export default function TutorPage() {
         .tutor-container {
           display: flex;
           flex-direction: column;
-          height: calc(100vh - 64px);
+          height: calc(100dvh - 102px);
+          min-height: 0;
+          overflow: hidden;
         }
 
         .tutor-header {
@@ -314,6 +328,7 @@ export default function TutorPage() {
 
         .chat-messages-area {
           flex: 1;
+          min-height: 0;
           overflow-y: auto;
           padding: 1.5rem 2rem;
           display: flex;
@@ -331,7 +346,7 @@ export default function TutorPage() {
           padding: 2rem;
         }
 
-        .welcome-icon { font-size: 3rem; margin-bottom: 0.75rem; }
+        .welcome-icon { width: 54px; height: 54px; display: grid; place-items: center; margin-bottom: 0.75rem; border: 3px solid #172033; border-radius: 50%; background: #d9ecff; color: #2b6cb0; }
         .welcome-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
         .welcome-sub { color: var(--text-secondary); font-size: 0.92rem; max-width: 580px; margin-bottom: 1.75rem; line-height: 1.55; }
 
@@ -522,7 +537,7 @@ export default function TutorPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 1.2rem;
+          font-size: 0;
           flex-shrink: 0;
           transition: all 150ms;
           color: white;
@@ -554,10 +569,10 @@ export default function TutorPage() {
       <div className="tutor-container">
         <div className="tutor-header">
           <div className="tutor-title">
-            <span>🤖 AI Tutor</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.4rem' }}><Bot size={21} />AI Tutor</span>
             <div className="tech-badges">
-              <span className="badge-rag">📚 Verified Sources</span>
-              <span className="badge-cache">⚡ Semantic Cache</span>
+              <span className="badge-rag"><BookOpenCheck size={13} /> Verified Sources</span>
+              <span className="badge-cache"><BrainCircuit size={13} /> Semantic Cache</span>
             </div>
           </div>
 
@@ -569,16 +584,16 @@ export default function TutorPage() {
             )}
             {mounted && messages.length > 0 && (
               <button className="clear-btn" onClick={handleClear}>
-                🗑️ Clear Chat
+                <Trash2 size={14} /> Clear Chat
               </button>
             )}
           </div>
         </div>
 
-        <div className="chat-messages-area">
+        <div className="chat-messages-area" data-lenis-prevent>
           {messages.length === 0 ? (
             <div className="welcome-screen">
-              <div className="welcome-icon">🧠</div>
+              <div className="welcome-icon"><BrainCircuit size={28} /></div>
               <h2 className="welcome-title">AI Tutor & Knowledge Base</h2>
               <p className="welcome-sub">
                 Ask any exam question, shortcut formula, or concept doubt. Answers are verified against official NCERT textbooks, standard references (Laxmikanth, Spectrum), and historical PYQs.
@@ -603,7 +618,7 @@ export default function TutorPage() {
                   onClick={() => shufflePrompts(selectedCategory)}
                   title="Show different questions"
                 >
-                  <span>🔄</span>
+                  <RefreshCw size={15} />
                   <span>Shuffle Prompts</span>
                 </button>
               </div>
@@ -619,8 +634,8 @@ export default function TutorPage() {
                       if (textareaRef.current) textareaRef.current.focus();
                     }}
                   >
-                    <span>{prompt.icon}</span>
-                    <span>{prompt.text}</span>
+                    {(() => { const PromptIcon = promptIcons[prompt.category] || BookOpenCheck; return <PromptIcon size={18} />; })()}
+                    <span>{prompt.text.replace(/^[^\p{L}\p{N}]+/u, '')}</span>
                   </button>
                 ))}
               </div>
@@ -699,6 +714,7 @@ export default function TutorPage() {
               disabled={!input.trim() || isLoading}
               aria-label="Send message"
             >
+              <Send size={19} aria-hidden="true" />
               ➤
             </button>
           </div>

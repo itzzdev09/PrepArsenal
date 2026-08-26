@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
+import { BrainCircuit, ChartNoAxesCombined, Target, TrendingDown, TrendingUp } from 'lucide-react';
 import { exams } from '@/lib/data';
 import { getTrends, getTopics, type TrendAnalytics } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
+import { getExamLogo } from '@/lib/exam-logos';
 
 export default function TrendsPage() {
   const [selectedExam, setSelectedExam] = useState('SSC_CGL');
@@ -96,6 +99,9 @@ export default function TrendsPage() {
           margin-top: 1rem;
         }
         .exam-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
           padding: 0.5rem 1rem;
           background: var(--bg-input);
           border: 1px solid var(--border-subtle);
@@ -108,6 +114,8 @@ export default function TrendsPage() {
         }
         .exam-btn:hover { border-color: var(--border-default); color: var(--text-primary); }
         .exam-btn.active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(59,130,246,0.08); }
+        .exam-logo { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; border: 1px solid currentColor; }
+        .exam-logo-fallback { width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 50%; }
 
         .insights-row {
           display: grid;
@@ -249,7 +257,7 @@ export default function TrendsPage() {
       `}</style>
 
       <div className="trends-header">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>🧠 Trend Explorer</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><BrainCircuit size={25} />Trend Explorer</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
           Analyze topic frequency, difficulty trends, and prediction scores across exams.
         </p>
@@ -260,7 +268,12 @@ export default function TrendsPage() {
               className={`exam-btn ${selectedExam === e.code ? 'active' : ''}`}
               onClick={() => { setSelectedExam(e.code); setSelectedSubject(''); }}
             >
-              {e.icon} {e.name}
+              {getExamLogo(e.code) ? (
+                <Image className="exam-logo" src={getExamLogo(e.code)!} alt="" width={18} height={18} />
+              ) : (
+                <span className="exam-logo-fallback" aria-hidden="true" />
+              )}
+              {e.name}
             </button>
           ))}
         </div>
@@ -270,7 +283,7 @@ export default function TrendsPage() {
         {/* Insights Cards */}
         <div className="insights-row">
           <div className="insight-card">
-            <div className="insight-title">🎯 Top Predicted Topics</div>
+            <div className="insight-title"><Target size={18} />Top Predicted Topics</div>
             <div className="insight-list">
               {topPredictions.map(t => {
                 const topic = dbTopics.find(top => top.id === t.topic_id);
@@ -284,7 +297,7 @@ export default function TrendsPage() {
             </div>
           </div>
           <div className="insight-card">
-            <div className="insight-title">📈 Getting Harder</div>
+            <div className="insight-title"><TrendingUp size={18} />Getting Harder</div>
             <div className="insight-list">
               {gettingHarder.length === 0 ? (
                 <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>No difficulty increase detected</div>
@@ -332,7 +345,7 @@ export default function TrendsPage() {
         {/* Trend Table */}
         {examTrends.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📊</div>
+            <div className="empty-icon"><ChartNoAxesCombined size={36} /></div>
             <h3>No trend data for this selection</h3>
             <p>Try selecting a different exam to view topic trends.</p>
           </div>
@@ -390,8 +403,8 @@ export default function TrendsPage() {
                       </td>
                       <td>
                         <span className="difficulty-trend">
-                          {t.difficulty_trend === 'harder' && <><span style={{ color: 'var(--error)' }}>📈</span> Harder</>}
-                          {t.difficulty_trend === 'easier' && <><span style={{ color: 'var(--success)' }}>📉</span> Easier</>}
+                          {t.difficulty_trend === 'harder' && <><TrendingUp size={15} style={{ color: 'var(--error)' }} /> Harder</>}
+                          {t.difficulty_trend === 'easier' && <><TrendingDown size={15} style={{ color: 'var(--success)' }} /> Easier</>}
                           {t.difficulty_trend === 'stable' && <><span style={{ color: 'var(--text-tertiary)' }}>➡️</span> Stable</>}
                         </span>
                       </td>

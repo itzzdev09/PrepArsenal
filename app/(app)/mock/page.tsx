@@ -3,9 +3,12 @@
 import { useState, useEffect } from 'react';
 import { exams } from '@/lib/data';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Target, TriangleAlert } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getExamQuestionCounts } from '@/lib/db';
+import { getExamLogo } from '@/lib/exam-logos';
 
 export default function MockTestConfigPage() {
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
@@ -80,9 +83,20 @@ export default function MockTestConfigPage() {
         }
         
         .ec-icon {
-          font-size: 3rem;
+          display: grid;
+          place-items: center;
+          width: 58px;
+          height: 58px;
+          overflow: hidden;
+          border: 2px solid #172033;
+          border-radius: 50%;
+          background: #5173a5;
           margin-bottom: 1rem;
+          margin-left: auto;
+          margin-right: auto;
         }
+        .ec-icon img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+        .ec-icon.no-logo::after { content: ''; width: 18px; height: 18px; border: 3px solid #fff; border-radius: 50%; }
         .ec-name {
           font-weight: 700;
           font-size: 1.2rem;
@@ -149,7 +163,7 @@ export default function MockTestConfigPage() {
       `}</style>
 
       <div className="header">
-        <h1>🎯 Full-Length Mock Tests</h1>
+        <h1><Target size={31} style={{ verticalAlign: '-5px', marginRight: '.5rem' }} />Full-Length Mock Tests</h1>
         <p>Experience the real exam environment. Timed sessions with comprehensive analytics.</p>
       </div>
 
@@ -160,7 +174,9 @@ export default function MockTestConfigPage() {
             className={`exam-card ${selectedExam === exam.code ? 'selected' : ''}`}
             onClick={() => setSelectedExam(exam.code)}
           >
-            <div className="ec-icon">{exam.icon}</div>
+            <div className={`ec-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+              {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={58} height={58} />}
+            </div>
             <div className="ec-name">{exam.name}</div>
             <div className="ec-meta">
               <span>{exam.totalQuestions} Questions</span>
@@ -200,7 +216,7 @@ export default function MockTestConfigPage() {
         </button>
         {selectedExam && (
           <div className="warning-text">
-            ⚠️ Do not close the window once the test begins.
+            <TriangleAlert size={16} /> Do not close the window once the test begins.
           </div>
         )}
       </div>

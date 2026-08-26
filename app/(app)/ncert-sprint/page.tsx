@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { ClipboardCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { NCERT_QUESTION_TEXTS, NCERT_TRACKS, type NcertChapter } from '@/lib/ncert-booster';
 import {
@@ -182,7 +183,7 @@ export default function NcertSprintPage() {
 
           {chapterProgress && !testQuestions && (
             <button className="test-cta" onClick={handleStartTest} disabled={testLoading}>
-              {testLoading ? 'Generating chapter test...' : '📝 Take Chapter Test'}
+              {testLoading ? 'Generating chapter test...' : <><ClipboardCheck size={17} />Take Chapter Test</>}
             </button>
           )}
           {testError && <p className="test-error">{testError}</p>}

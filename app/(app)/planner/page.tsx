@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { CheckCircle2, Clock3, NotebookPen, Trash2, CalendarDays } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getStudyPlan, updateStudyPlan, type StudyPlanItem } from '@/lib/db';
 import Link from 'next/link';
@@ -49,10 +50,10 @@ export default function PlannerPage() {
     await updateStudyPlan(supabase, userId, newPlan);
   };
 
-  const columns: { id: StudyPlanItem['status']; title: string; emoji: string }[] = [
-    { id: 'todo', title: 'To Study', emoji: '📝' },
-    { id: 'in-progress', title: 'In Progress', emoji: '⏳' },
-    { id: 'mastered', title: 'Mastered', emoji: '✅' }
+  const columns = [
+    { id: 'todo' as const, title: 'To Study', icon: NotebookPen },
+    { id: 'in-progress' as const, title: 'In Progress', icon: Clock3 },
+    { id: 'mastered' as const, title: 'Mastered', icon: CheckCircle2 }
   ];
 
   if (loading) {
@@ -172,7 +173,7 @@ export default function PlannerPage() {
       `}</style>
 
       <div className="planner-header">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>📅 Smart Study Planner</h1>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><CalendarDays size={25} />Smart Study Planner</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
           Organize your AI-recommended topics and track your mastery.
         </p>
@@ -182,10 +183,11 @@ export default function PlannerPage() {
         <div className="kanban-board">
           {columns.map(col => {
             const colItems = plan.filter(item => item.status === col.id);
+            const ColumnIcon = col.icon;
             return (
               <div key={col.id} className="kanban-col">
                 <div className="col-header">
-                  <span>{col.emoji} {col.title}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.45rem' }}><ColumnIcon size={20} />{col.title}</span>
                   <span className="col-count">{colItems.length}</span>
                 </div>
                 
@@ -215,7 +217,7 @@ export default function PlannerPage() {
                           fontWeight: 600
                         }}
                       >
-                        ⏱️ Practice PYQs
+                          Practice PYQs
                       </Link>
 
                       <div className="item-actions">
@@ -236,7 +238,7 @@ export default function PlannerPage() {
                           <option value="mastered" style={{ background: 'var(--bg-card)' }}>Mastered</option>
                         </select>
                         <button className="action-btn delete" onClick={() => deleteItem(item.id)}>
-                          🗑️
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>

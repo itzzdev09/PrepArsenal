@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { BookOpen, Newspaper } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { GK_TRACKS } from '@/lib/gk-booster';
 import { getApprovedGkItems, recordGkQuizResult, type GkDailyItem } from '@/lib/db';
@@ -66,7 +67,7 @@ export default function GkBoosterPage() {
         h1 { margin: .4rem 0 .65rem; font-size: 2.25rem; }
         .intro { color: var(--text-secondary); max-width: 760px; line-height: 1.6; margin-bottom: 1.5rem; }
         .tabs { display: flex; gap: .6rem; margin-bottom: 1.5rem; }
-        .tab-btn { border: 1px solid var(--border-subtle); background: var(--bg-card); color: var(--text-secondary); padding: .7rem 1.1rem; border-radius: .7rem; cursor: pointer; font-weight: 700; }
+        .tab-btn { display: inline-flex; align-items: center; gap: .4rem; border: 1px solid var(--border-subtle); background: var(--bg-card); color: var(--text-secondary); padding: .7rem 1.1rem; border-radius: .7rem; cursor: pointer; font-weight: 700; }
         .tab-btn.active { background: var(--accent-blue); border-color: var(--accent-blue); color: white; }
         .question { border-top: 1px solid var(--border-subtle); margin-top: 1.25rem; padding-top: 1.25rem; } .question h3 { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.5; }
         .options { display: grid; gap: .6rem; } .option { text-align: left; border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); padding: .75rem .9rem; border-radius: .6rem; cursor: pointer; }
@@ -91,8 +92,8 @@ export default function GkBoosterPage() {
       <p className="intro">Evergreen static GK organised like a revision track, plus a daily current-affairs feed drafted automatically and reviewed by an admin before it goes live.</p>
 
       <div className="tabs">
-        <button className={`tab-btn ${tab === 'static' ? 'active' : ''}`} onClick={() => setTab('static')}>📘 Static GK</button>
-        <button className={`tab-btn ${tab === 'daily' ? 'active' : ''}`} onClick={() => setTab('daily')}>📰 Daily Current Affairs</button>
+        <button className={`tab-btn ${tab === 'static' ? 'active' : ''}`} onClick={() => setTab('static')}><BookOpen size={17} />Static GK</button>
+        <button className={`tab-btn ${tab === 'daily' ? 'active' : ''}`} onClick={() => setTab('daily')}><Newspaper size={17} />Daily Current Affairs</button>
       </div>
 
       {tab === 'static' && (

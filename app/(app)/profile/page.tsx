@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { CalendarDays, Flame, LockKeyhole, Medal, UserRound, UserRoundPen, Zap } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getUserProfile, updateUserProfile, type UserProfile } from '@/lib/db';
 import { exams } from '@/lib/data';
+import { getExamLogo } from '@/lib/exam-logos';
 
 export default function ProfilePage() {
   const [mounted, setMounted] = useState(false);
@@ -306,7 +309,7 @@ export default function ProfilePage() {
       `}</style>
 
       <div className="header">
-        <h1>👤 My Account Profile</h1>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}><UserRound size={26} />My Account Profile</h1>
         <p>Manage your personal details, target exam preferences, and account security</p>
       </div>
 
@@ -320,7 +323,7 @@ export default function ProfilePage() {
           )}
 
           <div className="card">
-            <div className="card-title">📝 Personal Information</div>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}><UserRoundPen size={18} />Personal Information</div>
             <form onSubmit={handleSaveProfile}>
               <div className="form-group">
                 <label className="form-label">Full Name</label>
@@ -378,7 +381,7 @@ export default function ProfilePage() {
                         className={`exam-chip ${isSelected ? 'selected' : ''}`}
                         onClick={() => toggleExam(ex.code)}
                       >
-                        <span>{ex.icon}</span> {ex.name}
+                        {getExamLogo(ex.code) ? <Image src={getExamLogo(ex.code)!} alt="" width={20} height={20} style={{ borderRadius: '50%', objectFit: 'cover' }} /> : <span aria-hidden="true" style={{ width: 14, height: 14, border: '2px solid currentColor', borderRadius: '50%' }} />} {ex.name}
                       </button>
                     );
                   })}
@@ -398,7 +401,7 @@ export default function ProfilePage() {
 
           {/* Password Security Card */}
           <div className="card">
-            <div className="card-title">🔐 Change Password</div>
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}><LockKeyhole size={18} />Change Password</div>
             {passwordMsg && (
               <div className={`toast-banner toast-${passwordMsg.type}`}>
                 {passwordMsg.text}
@@ -447,28 +450,28 @@ export default function ProfilePage() {
           <div className="card">
             <div className="avatar-box">
               <div className="avatar-circle">
-                {fullName ? fullName.charAt(0).toUpperCase() : '👤'}
+                {fullName ? fullName.charAt(0).toUpperCase() : <UserRound size={22} />}
               </div>
               <h3 style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fullName || 'Aspirant'}</h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>{userEmail}</p>
             </div>
 
             <div className="stat-item">
-              <span style={{ color: 'var(--text-secondary)' }}>🔥 Study Streak</span>
+              <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '.35rem' }}><Flame size={16} />Study Streak</span>
               <span className="stat-val" style={{ color: 'var(--warning)' }}>
                 {profile?.streak_count || 3} Days
               </span>
             </div>
 
             <div className="stat-item">
-              <span style={{ color: 'var(--text-secondary)' }}>⭐ Experience XP</span>
+              <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '.35rem' }}><Zap size={16} />Experience XP</span>
               <span className="stat-val" style={{ color: 'var(--accent-blue)' }}>
                 {profile?.xp || 240} XP
               </span>
             </div>
 
             <div className="stat-item">
-              <span style={{ color: 'var(--text-secondary)' }}>🎖️ Aspirant Level</span>
+              <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '.35rem' }}><Medal size={16} />Aspirant Level</span>
               <span className="stat-val">
                 Level {profile?.current_level || 2}
               </span>
@@ -482,7 +485,7 @@ export default function ProfilePage() {
             </div>
 
             <div className="stat-item">
-              <span style={{ color: 'var(--text-secondary)' }}>📅 Joined PrepArsenal</span>
+              <span style={{ color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '.35rem' }}><CalendarDays size={16} />Joined PrepArsenal</span>
               <span className="stat-val" style={{ fontSize: '0.78rem' }}>
                 {profile?.created_at ? profile.created_at.substring(0, 10) : 'Active Member'}
               </span>

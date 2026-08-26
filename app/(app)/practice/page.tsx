@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Clock3, NotebookPen, Target } from 'lucide-react';
 import type { Question } from '@/lib/data';
 import { savePracticeSession, updateStreak, getExams, getTopics, getQuestions } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
+import { getExamLogo } from '@/lib/exam-logos';
 import {
   createInitialIRTState,
   selectNextAdaptiveQuestion,
@@ -338,29 +341,50 @@ export default function PracticePage() {
             gap: 0.5rem;
           }
           .filter-chip {
-            padding: 0.5rem 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            min-height: 48px;
+            padding: .45rem 1rem;
             background: var(--bg-input);
-            border: 2px solid var(--border-subtle);
-            border-radius: 0.75rem;
-            font-size: 0.85rem;
-            font-weight: 500;
+            border: 2px solid #172033;
+            border-radius: 4px 9px 5px 8px;
+            box-shadow: 2px 2px 0 #172033;
+            font-family: var(--font-kalam), "Segoe Print", cursive;
+            font-size: 1rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 200ms;
-            color: var(--text-secondary);
+            transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+            color: #172033;
           }
           .filter-chip:hover {
             border-color: var(--border-default);
             color: var(--text-primary);
           }
           .filter-chip.active {
-            border-color: var(--accent-blue);
-            background: rgba(59,130,246,0.1);
-            color: var(--accent-blue);
+            border-color: #172033;
+            background: #d9ecff;
+            color: #172033;
+            transform: translate(2px, 2px) rotate(-.5deg);
+            box-shadow: 0 0 0 #172033;
           }
+          .exam-chip-logo {
+            width: 22px;
+            height: 22px;
+            overflow: hidden;
+            border: 2px solid #172033;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            flex: 0 0 auto;
+          }
+          .exam-chip-logo img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+          .exam-chip-logo.no-logo::after { content: ''; display: block; width: 7px; height: 7px; margin: 5px; border: 2px solid #fff; border-radius: 50%; }
           .count-selector {
-            display: flex;
+            display: inline-grid !important;
+            grid-template-columns: 40px 50px 40px;
             gap: 0.5rem;
             align-items: center;
+            width: max-content;
           }
           .count-btn {
             width: 40px;
@@ -375,6 +399,7 @@ export default function PracticePage() {
             color: var(--text-primary);
             cursor: pointer;
             transition: all 150ms;
+            flex: 0 0 40px;
           }
           .count-btn:hover { border-color: var(--accent-blue); }
           .count-display {
@@ -397,7 +422,7 @@ export default function PracticePage() {
         `}</style>
 
         <div className="select-header">
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>⏱️ Practice Arena</h1>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><Clock3 size={24} />Practice Arena</h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             Choose standard quiz or AI Adaptive Testing powered by Item Response Theory (IRT 3PL).
           </p>
@@ -411,7 +436,7 @@ export default function PracticePage() {
               onClick={() => setPracticeMode('adaptive')}
             >
               <div className="mode-title">
-                <span>🎯 AI Adaptive Test (IRT CAT)</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.45rem' }}><Target size={19} />AI Adaptive Test (IRT CAT)</span>
                 <span className="badge badge-purple" style={{ fontSize: '0.65rem' }}>AI Powered</span>
               </div>
               <div className="mode-desc">
@@ -424,7 +449,7 @@ export default function PracticePage() {
               onClick={() => setPracticeMode('standard')}
             >
               <div className="mode-title">
-                <span>📝 Standard Practice</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.45rem' }}><NotebookPen size={19} />Standard Practice</span>
               </div>
               <div className="mode-desc">
                 Static randomized question drill with fixed subject/topic filters and instant explanations.
@@ -449,7 +474,10 @@ export default function PracticePage() {
                     setSelectedTopic('');
                   }}
                 >
-                  {exam.icon || '📝'} {exam.name || exam.code}
+                  <span className={`exam-chip-logo ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+                    {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={22} height={22} />}
+                  </span>
+                  {exam.name || exam.code}
                 </button>
               ))}
             </div>

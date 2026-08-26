@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Bot, ChartNoAxesCombined, ClipboardCheck, Clock3, Lightbulb, Target, TrendingDown, TrendingUp } from 'lucide-react';
 import { exams, getQuestionsByExam } from '@/lib/data';
+import { getExamLogo } from '@/lib/exam-logos';
 import {
   getUserProfile,
   createUserProfile,
@@ -240,42 +243,59 @@ export default function DashboardPage() {
             color: var(--text-secondary);
           }
           .exam-select-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: .85rem .95rem;
             margin-bottom: 2rem;
           }
           .exam-select-item {
-            padding: 0.75rem;
-            background: var(--bg-input);
-            border: 2px solid var(--border-subtle);
-            border-radius: 0.75rem;
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            min-height: 48px;
+            padding: .45rem 1rem;
+            background: #fffdf5;
+            border: 2px solid #172033;
+            border-radius: 4px 9px 5px 8px;
+            box-shadow: 2px 2px 0 #172033;
             cursor: pointer;
-            transition: all 200ms;
-            text-align: center;
-            font-size: 0.8rem;
-            font-weight: 600;
+            transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+            text-align: left;
+            font-family: var(--font-kalam), "Segoe Print", cursive;
+            font-size: 1rem;
+            font-weight: 700;
           }
           .exam-select-item:hover {
-            border-color: var(--border-default);
+            background: #fff0a7;
+            transform: translateY(-1px) rotate(-.4deg);
           }
           .exam-select-item.selected {
-            border-color: var(--accent-blue);
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-blue);
+            border-color: #172033;
+            background: #d9ecff;
+            color: #172033;
+            transform: translate(2px, 2px) rotate(-.5deg);
+            box-shadow: 0 0 0 #172033;
           }
           .exam-select-icon {
-            font-size: 1.5rem;
-            display: block;
-            margin-bottom: 0.25rem;
+            width: 24px;
+            height: 24px;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border: 2px solid #172033;
+            border-radius: 50%;
+            background: #5173a5;
+            flex: 0 0 auto;
           }
+          .exam-select-icon img { width: 100%; height: 100%; object-fit: cover; background: #fff; }
+          .exam-select-icon.no-logo::after { content: ''; width: 8px; height: 8px; border: 2px solid #fff; border-radius: 50%; }
           @media (max-width: 600px) {
             .exam-select-grid { grid-template-columns: repeat(2, 1fr); }
           }
         `}</style>
         <div className="onboarding">
           <div className="onboarding-card">
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>⚔️</div>
+            <div style={{ marginBottom: '1rem' }}><Target size={38} /></div>
             <h1 className="onboarding-title">Welcome to PrepArsenal</h1>
             <p className="onboarding-sub">Let&apos;s set up your exam preparation profile.</p>
 
@@ -297,7 +317,9 @@ export default function DashboardPage() {
                   className={`exam-select-item ${selectedExams.includes(exam.code) ? 'selected' : ''}`}
                   onClick={() => toggleExamSelection(exam.code)}
                 >
-                  <span className="exam-select-icon">{exam.icon}</span>
+                  <span className={`exam-select-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+                    {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={24} height={24} />}
+                  </span>
                   {exam.name}
                 </div>
               ))}
@@ -540,7 +562,7 @@ export default function DashboardPage() {
             <div className="s-label">Questions Attempted</div>
           </div>
           <div className="stat-box">
-            <div className="s-icon">🎯</div>
+            <div className="s-icon"><Target size={24} /></div>
             <div className="s-val">{accuracy}%</div>
             <div className="s-label">Overall Accuracy</div>
           </div>
@@ -548,20 +570,20 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="dash-section">
-          <h2 className="dash-section-title">⚡ Quick Actions</h2>
+          <h2 className="dash-section-title"><Lightbulb size={21} />Quick Actions</h2>
           <div className="quick-actions">
             <Link href="/practice" className="quick-action">
-              <div className="qa-icon">⏱️</div>
+              <div className="qa-icon"><Clock3 size={21} /></div>
               <div className="qa-title">Practice Questions</div>
               <div className="qa-sub">Timed solving with PYQs</div>
             </Link>
             <Link href="/trends" className="quick-action">
-              <div className="qa-icon">🧠</div>
+              <div className="qa-icon"><ChartNoAxesCombined size={21} /></div>
               <div className="qa-title">View Trends</div>
               <div className="qa-sub">See what&apos;s most asked</div>
             </Link>
             <Link href="/tutor" className="quick-action">
-              <div className="qa-icon">🤖</div>
+              <div className="qa-icon"><Bot size={21} /></div>
               <div className="qa-title">Ask AI Tutor</div>
               <div className="qa-sub">Get doubt explanations</div>
             </Link>
@@ -571,7 +593,7 @@ export default function DashboardPage() {
         {/* Target Exams */}
         <div className="dash-section">
           <div className="dash-section-title" style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>🎯 Your Target Exams</span>
+            <span><Target size={19} />Your Target Exams</span>
             {!isEditingExams && (
               <button 
                 className="btn" 
@@ -596,7 +618,9 @@ export default function DashboardPage() {
                       );
                     }}
                   >
-                    <span className="exam-select-icon">{exam.icon}</span>
+                    <span className={`exam-select-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+                      {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={24} height={24} />}
+                    </span>
                     {exam.name}
                   </div>
                 ))}
@@ -614,7 +638,9 @@ export default function DashboardPage() {
                 return (
                   <Link href={`/practice?exam=${exam.code}`} key={exam.code} className="target-exam-card" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className="tec-header">
-                      <span className="tec-icon">{exam.icon}</span>
+                      <span className={`tec-icon exam-select-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+                        {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={24} height={24} />}
+                      </span>
                       <div>
                         <div className="tec-name">{exam.name}</div>
                         <div className="tec-category">{exam.category}</div>
@@ -637,7 +663,7 @@ export default function DashboardPage() {
 
         {/* Top Trends */}
         <div className="dash-section">
-          <h2 className="dash-section-title">📈 High Priority Topics</h2>
+          <h2 className="dash-section-title"><TrendingUp size={21} />High Priority Topics</h2>
           <p style={{ color: 'var(--text-secondary)', marginTop: '-0.75rem', marginBottom: '1rem', fontSize: '0.9rem' }}>
             Ranked from verified PYQ frequency, recency, and difficulty trends.
           </p>
@@ -655,7 +681,7 @@ export default function DashboardPage() {
                       </span>
                       <span>{topic.name}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                        {trend.difficulty_trend === 'harder' ? '📈' : trend.difficulty_trend === 'easier' ? '📉' : '➡️'}
+                        {trend.difficulty_trend === 'harder' ? <TrendingUp size={16} /> : trend.difficulty_trend === 'easier' ? <TrendingDown size={16} /> : <span style={{ fontWeight: 800 }}>-</span>}
                       </span>
                     </div>
                     <button 
