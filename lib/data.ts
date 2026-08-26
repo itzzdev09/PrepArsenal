@@ -1267,6 +1267,376 @@ export const questions: Question[] = [
     explanation: 'SI = 6500 - 5000 = 1500. Rate = (SI × 100)/(P × T) = (1500 × 100)/(5000 × 3) = 150000/15000 = 10%.',
     difficulty: 'easy'
   },
+
+  // ===== UPSC CSE (Additional Batch) =====
+  {
+    id: 'q106', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Indian Polity', topic: 'Constitutional Bodies',
+    questionText: 'Under the Constitution of India, which one of the following is NOT a Fundamental Duty?',
+    options: [
+      'To vote in public elections',
+      'To develop the scientific temper',
+      'To safeguard public property',
+      'To abide by the Constitution and respect its ideals'
+    ],
+    correctOption: 0,
+    explanation: 'Voting in public elections is a statutory/legal right (Representation of People Act, 1951), not a Fundamental Duty under Article 51A. Developing scientific temper, safeguarding public property, and abiding by the Constitution are all listed under Article 51A.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q107', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Indian Polity', topic: 'Parliament',
+    questionText: 'With reference to the Anti-Defection Law in India, consider the following statements:\n1. The law specifies that a nominated legislator cannot join any political party within six months of being appointed.\n2. The law does not provide any time-frame within which the presiding officer has to decide a defection case.\nWhich of the statements given above is/are correct?',
+    options: ['1 only', '2 only', 'Both 1 and 2', 'Neither 1 nor 2'],
+    correctOption: 1,
+    explanation: 'Statement 1 is incorrect: A nominated member CAN join a party within 6 months, but if they join AFTER 6 months, they face disqualification. Statement 2 is correct: The 10th Schedule does not prescribe a specific time-limit for the Speaker/Chairman to adjudicate defection petitions.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q108', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'History', topic: 'Modern India',
+    questionText: 'With reference to the Swadeshi Movement (1905), which of the following is correct?',
+    options: [
+      'It was launched in response to the partition of Bengal by Lord Curzon.',
+      'It was exclusively confined to the province of Bengal.',
+      'Mahatma Gandhi spearheaded the movement from its inception.',
+      'It completely rejected national education institutions.'
+    ],
+    correctOption: 0,
+    explanation: 'The Swadeshi Movement was formally proclaimed on August 7, 1905 at the Calcutta Town Hall in protest against Lord Curzon\'s partition of Bengal. It spread to Punjab, Bombay, and Madras under Tilak, Lala Lajpat Rai, and Chidambaram Pillai.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q109', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'History', topic: 'Ancient India',
+    questionText: 'With reference to the religious history of India, consider the following:\n1. Sthaviravadins belong to Mahayana Buddhism.\n2. Lokottaravadin sect was an offshoot of Mahasanghika sect.\nWhich of the statements given above is/are correct?',
+    options: ['1 only', '2 only', 'Both 1 and 2', 'Neither 1 nor 2'],
+    correctOption: 1,
+    explanation: 'Sthaviravadins belong to Theravada/Hinayana tradition, not Mahayana (Statement 1 incorrect). The Lokottaravada was indeed a sub-sect originating from the Mahasanghikas during early Buddhist schisms (Statement 2 correct).',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q110', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Geography', topic: 'Physical Geography',
+    questionText: 'Which one of the following pairs of national parks and states is correctly matched?',
+    options: [
+      'Keibul Lamjao National Park — Manipur',
+      'Namdapha National Park — Assam',
+      'Silent Valley National Park — Karnataka',
+      'Dachigam National Park — Himachal Pradesh'
+    ],
+    correctOption: 0,
+    explanation: 'Keibul Lamjao (the only floating national park on Loktak Lake, home to the Sangai deer) is in Manipur. Namdapha is in Arunachal Pradesh, Silent Valley is in Kerala, and Dachigam is in Jammu & Kashmir.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q111', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Geography', topic: 'Indian Geography',
+    questionText: 'The Western Ghats and Eastern Ghats meet at which of the following mountain ranges?',
+    options: ['Cardamom Hills', 'Anamalai Hills', 'Nilgiri Hills', 'Palani Hills'],
+    correctOption: 2,
+    explanation: 'The Western Ghats and the Eastern Ghats converge at the Nilgiri Hills (Blue Mountains) in southern India, with Doddabetta being the highest peak in the Nilgiris (2,637 m).',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q112', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Economy', topic: 'Monetary Policy',
+    questionText: 'If the RBI decides to adopt an expansionary monetary policy, which of the following would it NOT do?',
+    options: [
+      'Cut and optimize the Statutory Liquidity Ratio (SLR)',
+      'Increase the Marginal Standing Facility (MSF) rate',
+      'Cut the Repo Rate and Bank Rate',
+      'Decrease the Cash Reserve Ratio (CRR)'
+    ],
+    correctOption: 1,
+    explanation: 'An expansionary (dovish) monetary policy aims to inject liquidity into the economy. Increasing the MSF rate makes borrowing more expensive for banks, which is a contractionary (tightening) measure, not expansionary.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q113', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Economy', topic: 'Public Finance',
+    questionText: 'Which one of the following constitutes the largest component of India\'s Foreign Exchange Reserves?',
+    options: [
+      'Foreign Currency Assets (FCA)',
+      'Gold reserves',
+      'Special Drawing Rights (SDRs)',
+      'Reserve Tranche Position (RTP) in the IMF'
+    ],
+    correctOption: 0,
+    explanation: 'India\'s Forex Reserves consist of 4 components: Foreign Currency Assets (FCA), Gold, SDRs, and Reserve Position in IMF. FCAs typically constitute over 85–90% of total reserves.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q114', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Environment & Ecology', topic: 'Biodiversity',
+    questionText: 'Consider the following fauna of India:\n1. Gharial\n2. Leatherback turtle\n3. Swamp deer (Barasingha)\nWhich of the above are naturally found in India?',
+    options: ['1 and 2 only', '2 and 3 only', '1 and 3 only', '1, 2 and 3'],
+    correctOption: 3,
+    explanation: 'All three are naturally found in India: Gharial (Chambal, Girwa rivers), Leatherback turtle (Andaman & Nicobar Islands nesting sites), and Swamp deer (Kanha, Kaziranga, Dudhwa National Parks).',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q115', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'General Science', topic: 'Biology',
+    questionText: 'What is the primary mechanism of action of mRNA vaccines (such as Pfizer-BioNTech / Moderna COVID-19 vaccines)?',
+    options: [
+      'They introduce an attenuated live virus into the host cells',
+      'They provide instructions to host cells to make a harmless viral protein to trigger immune response',
+      'They inject pre-formed monoclonal antibodies directly into the bloodstream',
+      'They use inactivated bacterial vectors to deliver viral antigens'
+    ],
+    correctOption: 1,
+    explanation: 'mRNA vaccines deliver lipid nanoparticle-encapsulated messenger RNA instructing cells to synthesize the harmless spike protein, teaching the immune system to recognize and produce antibodies against the target virus.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q116', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'General Science', topic: 'Physics',
+    questionText: 'CRISPR-Cas9 technology, frequently mentioned in the news, is best described as:',
+    options: [
+      'A molecular tool for targeted genome editing',
+      'A cryogenic propellant system for deep-space probes',
+      'A quantum encryption protocol for financial transactions',
+      'A deep-learning algorithm for climate modeling'
+    ],
+    correctOption: 0,
+    explanation: 'CRISPR-Cas9 is a precise gene-editing technology derived from bacterial antiviral defense systems that enables researchers to cut and modify specific sequences of DNA.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q117', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Current Affairs', topic: 'International Relations',
+    questionText: 'The "Belt and Road Initiative" is an ambitious infrastructure and economic development project initiated by:',
+    options: ['Japan', 'China', 'Russia', 'European Union'],
+    correctOption: 1,
+    explanation: 'The Belt and Road Initiative (BRI / One Belt One Road) was launched by China in 2013 by President Xi Jinping to develop overland Silk Road Economic Belts and 21st-Century Maritime Silk Roads.',
+    difficulty: 'easy'
+  },
+
+  // ===== SBI PO (Additional Batch) =====
+  {
+    id: 'q118', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Quadratic Equations',
+    questionText: 'Equation I: x² - 13x + 40 = 0\nEquation II: y² - 17y + 72 = 0\nDetermine the relationship between x and y:',
+    options: ['x > y', 'x < y', 'x ≥ y', 'x ≤ y or Relationship cannot be established'],
+    correctOption: 3,
+    explanation: 'Equation I: (x - 5)(x - 8) = 0 ⇒ x = 5, 8. Equation II: (y - 8)(y - 9) = 0 ⇒ y = 8, 9. Comparing: 5 < 8, 5 < 9; 8 = 8, 8 < 9. So x ≤ y.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q119', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Mixture & Alligation',
+    questionText: 'A vessel contains 80 liters of milk. 8 liters of milk is taken out and replaced with water. This process is repeated 2 more times. How much milk is left in the vessel now?',
+    options: ['58.32 liters', '56.44 liters', '61.20 liters', '52.48 liters'],
+    correctOption: 0,
+    explanation: 'Remaining Milk = Initial × [1 - (x/V)]ⁿ = 80 × [1 - (8/80)]³ = 80 × (0.9)³ = 80 × 0.729 = 58.32 liters.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q120', examCode: 'SBI_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Time & Work',
+    questionText: 'Pipe A can fill a tank in 12 hours and Pipe B can fill it in 15 hours. Pipe C can empty the full tank in 20 hours. If all three pipes are opened together, how long will it take to fill the tank completely?',
+    options: ['8 hours', '10 hours', '7.5 hours', '9 hours'],
+    correctOption: 1,
+    explanation: 'Net rate = (1/12) + (1/15) - (1/20). LCM of 12, 15, 20 = 60. Net = (5 + 4 - 3)/60 = 6/60 = 1/10. Hence, it takes 10 hours.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q121', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Probability',
+    questionText: 'From a standard deck of 52 cards, two cards are drawn at random without replacement. What is the probability that both cards are Queens?',
+    options: ['1/221', '1/169', '1/26', '4/663'],
+    correctOption: 0,
+    explanation: 'Total ways = C(52, 2) = (52 × 51)/2 = 1326. Favorable ways = C(4, 2) = 6. Probability = 6/1326 = 1/221.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q122', examCode: 'SBI_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Syllogism',
+    questionText: 'Statements:\nOnly a few laptops are tablets.\nAll tablets are mobiles.\nNo mobile is a television.\nConclusions:\nI. Some laptops are not televisions.\nII. All laptops being mobiles is a possibility.',
+    options: ['Only conclusion I follows', 'Only conclusion II follows', 'Either I or II follows', 'Both I and II follow'],
+    correctOption: 3,
+    explanation: 'Since the tablet part of laptop is within mobile and no mobile is TV, those laptops cannot be TV (I follows). "Only a few laptops are tablets" restricts laptop-tablet overlap but doesn\'t prevent all laptops from being mobiles (II is a valid possibility). Both follow.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q123', examCode: 'SBI_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Puzzles',
+    questionText: 'Eight boxes A, B, C, D, E, F, G, H are placed one above another. Box D is 3rd from the top. Only two boxes are between D and B. Box G is immediately above B. How many boxes are placed below Box G if B is placed below D?',
+    options: ['2', '3', '4', '1'],
+    correctOption: 0,
+    explanation: 'Top is position 8 down to 1 (or 1 to 8). From top: Pos 3 = D. Two boxes between D and B (downwards) puts B at Pos 6. G is immediately above B ⇒ G is at Pos 5. Below G (Pos 6, 7, 8) there are 3 boxes, or from position 5 down to 8 there are 3 boxes.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q124', examCode: 'SBI_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Inequality',
+    questionText: 'Statements: M ≥ N = O > P; Q ≤ R < P; S > M\nConclusions:\nI. S > Q\nII. O > R',
+    options: ['Only I follows', 'Only II follows', 'Both I and II follow', 'Neither follows'],
+    correctOption: 2,
+    explanation: 'From the statements: S > M ≥ N = O > P > R ≥ Q. Comparing S and Q: S > Q (I follows). Comparing O and R: O > P > R ⇒ O > R (II follows). Both conclusions are valid.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q125', examCode: 'SBI_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Direction & Distance',
+    questionText: 'Point A is 10 m West of Point B. Point C is 6 m North of Point B. Point D is 18 m East of Point C. Point E is 6 m South of Point D. What is the shortest distance between Point A and Point E?',
+    options: ['28 m', '26 m', '24 m', '30 m'],
+    correctOption: 0,
+    explanation: 'A is at (-10, 0), B is at (0, 0). C is at (0, 6). D is at (18, 6). E is at (18, 0). Since A and E share the same y-coordinate (0), distance AE = 18 - (-10) = 28 meters along the straight line.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q126', examCode: 'SBI_PO', year: 2023,
+    subject: 'English', topic: 'Reading Comprehension',
+    questionText: 'What is the term for the interest rate at which commercial banks borrow short-term funds from the Reserve Bank of India against government securities?',
+    options: ['Reverse Repo Rate', 'Repo Rate', 'Bank Rate', 'Marginal Cost of Funds Rate'],
+    correctOption: 1,
+    explanation: 'Repo Rate (Repurchase Rate) is the key benchmark rate at which the RBI lends money to commercial banks against pledged government collateral in case of liquidity shortage.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q127', examCode: 'SBI_PO', year: 2022,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Read the sentence to find the grammatical error:\n"Seldom we have (A) / seen such dedication (B) / among the frontline workers (C) / during the pandemic (D)."',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 0,
+    explanation: 'Negative adverbs like "Seldom", "Hardly", "Rarely" at the beginning of a clause require subject-verb inversion: "Seldom have we seen" instead of "Seldom we have seen". Part A contains the error.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q128', examCode: 'SBI_PO', year: 2023,
+    subject: 'English', topic: 'Vocabulary',
+    questionText: 'Select the word that is most nearly SIMILAR in meaning to "PERVASIVE":',
+    options: ['Omnipresent', 'Confined', 'Scarce', 'Peripheral'],
+    correctOption: 0,
+    explanation: '"Pervasive" means spreading widely throughout an area or group of people; ubiquitous/omnipresent. Confined and scarce are antonyms.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q129', examCode: 'SBI_PO', year: 2022,
+    subject: 'English', topic: 'Cloze Test',
+    questionText: 'The introduction of Central Bank Digital Currency (CBDC) is expected to _____ transaction costs and bolster financial inclusion.',
+    options: ['curtail', 'curtailing', 'curtailed', 'curtailment'],
+    correctOption: 0,
+    explanation: 'The modal auxiliary "is expected to" followed by "to [infinitive]" requires the base form of the verb "curtail" (meaning reduce or cut back).',
+    difficulty: 'easy'
+  },
+
+  // ===== IBPS PO (Additional Batch) =====
+  {
+    id: 'q130', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Data Interpretation',
+    questionText: 'In a pie chart representing student enrollments, the sector angle for the Science stream is 108°. If the total number of enrolled students is 1,200, how many students are enrolled in Science?',
+    options: ['320', '360', '400', '300'],
+    correctOption: 1,
+    explanation: 'Percentage or fraction = 108°/360° = 3/10 = 30%. Number of students = 30% of 1,200 = (30 × 1200)/100 = 360.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q131', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Profit & Loss',
+    questionText: 'A dishonest dealer professes to sell his goods at cost price, but uses a false weight of 950 grams for a 1 kilogram weight. What is his gain percentage?',
+    options: ['5%', '5.26%', '4.75%', '5.55%'],
+    correctOption: 1,
+    explanation: 'Gain % = [Error / (True Value - Error)] × 100 = [50 / 950] × 100 = (5/95) × 100 = 100/19 ≈ 5.26%.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q132', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Time, Speed & Distance',
+    questionText: 'Two trains of lengths 140 m and 160 m run at speeds of 60 km/h and 40 km/h respectively in opposite directions on parallel tracks. How much time will they take to cross each other?',
+    options: ['10.8 seconds', '12 seconds', '9.6 seconds', '11.2 seconds'],
+    correctOption: 0,
+    explanation: 'Total distance = 140 + 160 = 300 m. Relative speed = 60 + 40 = 100 km/h = 100 × (5/18) = 250/9 m/s. Time = Distance / Speed = 300 / (250/9) = (300 × 9) / 250 = 10.8 seconds.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q133', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Ratio & Proportion',
+    questionText: 'The ratio of present ages of Rahul and his father is 2:5. Four years ago, the ratio was 1:3. What is the present age of the father?',
+    options: ['40 years', '36 years', '45 years', '50 years'],
+    correctOption: 0,
+    explanation: 'Let ages be 2x and 5x. Four years ago: (2x - 4)/(5x - 4) = 1/3. Cross-multiplying: 6x - 12 = 5x - 4 ⇒ x = 8. Father\'s present age = 5 × 8 = 40 years.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q134', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Puzzles',
+    questionText: 'Seven friends P, Q, R, S, T, U, V attend lectures from Monday to Sunday of the same week. Only two people attend between P and R. P attends on Tuesday. V attends immediately before S. Who attends on Monday if R attends after P?',
+    options: ['T or U or Q', 'S', 'V', 'Cannot be determined'],
+    correctOption: 0,
+    explanation: 'Monday to Sunday. P is on Tuesday. Two between P and R puts R on Friday. V immediately before S means (V, S) pair can take (Wed, Thu) or (Sat, Sun). Monday remains available for any of Q, T, U.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q135', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Coding-Decoding',
+    questionText: 'In a code language: "market demand creates supply" is written as "la ki no pe", "supply chain requires market" is written as "pe ta zo la". What is the code for "supply"?',
+    options: ['pe or la', 'pe', 'la', 'ki'],
+    correctOption: 0,
+    explanation: 'Both "market" and "supply" are common words between the two sentences, and both "pe" and "la" are common in the coded forms. Without a third statement, "supply" is either "pe" or "la".',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q136', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Blood Relations',
+    questionText: 'Introducing a woman, a man said, "Her mother is the only daughter of my mother-in-law." How is the man related to the woman?',
+    options: ['Father', 'Brother', 'Uncle', 'Husband'],
+    correctOption: 0,
+    explanation: 'Mother-in-law\'s only daughter = The man\'s wife. The woman\'s mother is the man\'s wife. Therefore, the man is the father of the woman.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q137', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Syllogism',
+    questionText: 'Statements: All banks are financial institutions. No bank is a fraudulent entity. Some fintechs are banks.\nConclusions:\nI. Some fintechs are financial institutions.\nII. No fintech is a fraudulent entity.',
+    options: ['Only conclusion I follows', 'Only conclusion II follows', 'Both follow', 'Neither follows'],
+    correctOption: 0,
+    explanation: 'Since "Some fintechs are banks" and "All banks are financial institutions", some fintechs are definitely financial institutions (I follows). But the part of fintechs that are not banks could still overlap with fraudulent entities (II does not follow).',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q138', examCode: 'IBPS_PO', year: 2022,
+    subject: 'English', topic: 'Reading Comprehension',
+    questionText: 'What does the abbreviation "CIBIL" stand for in the context of Indian credit scoring?',
+    options: [
+      'Credit Information Bureau (India) Limited',
+      'Central Investment and Banking Intelligence League',
+      'Commercial Insurance and Borrowing Index Limit',
+      'Certified Institutional Banking and Insolvency List'
+    ],
+    correctOption: 0,
+    explanation: 'CIBIL stands for Credit Information Bureau (India) Limited (now TransUnion CIBIL), India\'s premier credit rating and information agency.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q139', examCode: 'IBPS_PO', year: 2023,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Identify the segment with an error:\n"Neither the branch manager (A) / nor the loan officers (B) / was aware of the (C) / revised regulatory guidelines (D)."',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 2,
+    explanation: 'When subjects are connected by "Neither... nor", the verb agrees with the subject closest to it. "Loan officers" is plural, so the verb should be "were aware" instead of "was aware". Part C has the error.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q140', examCode: 'IBPS_PO', year: 2022,
+    subject: 'English', topic: 'Fill in the Blanks',
+    questionText: 'In order to prevent systemic default, the regulator decided to _____ strict capital adequacy norms on cooperative banks.',
+    options: ['impose', 'imposing', 'imposition', 'imposed'],
+    correctOption: 0,
+    explanation: 'The infinitive construction "to [verb]" requires the base form "impose".',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q141', examCode: 'IBPS_PO', year: 2023,
+    subject: 'English', topic: 'Vocabulary',
+    questionText: 'Choose the word that is an ANTONYM of "INSOLVENT":',
+    options: ['Solvent / Wealthy', 'Bankrupt', 'Indebted', 'Destitute'],
+    correctOption: 0,
+    explanation: '"Insolvent" means unable to pay one\'s debts / bankrupt. Its direct antonym is "solvent", meaning having assets in excess of liabilities and able to pay all debts.',
+    difficulty: 'easy'
+  },
 ];
 
 // ========== TREND DATA (Pre-computed) ==========
