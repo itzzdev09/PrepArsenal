@@ -10,7 +10,8 @@ import { createClient } from '@/utils/supabase/client';
 import { getUserProfile } from '@/lib/db';
 
 const navItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, { label: 'Practice', href: '/practice', icon: ClipboardCheck },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, { label: 'Exams', href: '/exams', icon: BookOpen },
+  { label: 'Practice', href: '/practice', icon: ClipboardCheck },
   { label: 'Mock tests', href: '/mock', icon: Target }, { label: 'Study planner', href: '/planner', icon: CalendarDays },
   { label: 'Trend explorer', href: '/trends', icon: BarChart3 }, { label: 'Analytics', href: '/analytics', icon: BrainCircuit },
   { label: 'Notes', href: '/notes', icon: NotebookPen }, { label: 'Formula vault', href: '/vault', icon: BookOpen },

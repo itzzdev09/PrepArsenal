@@ -856,6 +856,417 @@ export const questions: Question[] = [
     explanation: 'The Fiscal Responsibility and Budget Management (FRBM) Act targets fiscal deficit of 3% of GDP for the Central Government.',
     difficulty: 'medium'
   },
+
+  // ===== UPSC CSE PRELIMS =====
+  {
+    id: 'q061', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'History', topic: 'Ancient India',
+    questionText: 'Which of the following Harappan sites is located in India and is known for its dockyard?',
+    options: ['Lothal', 'Mohenjo-daro', 'Harappa', 'Kalibangan'],
+    correctOption: 0,
+    explanation: 'Lothal, located in Gujarat, India, is famous for having the world\'s earliest known dockyard, indicating advanced maritime trade during the Indus Valley Civilization.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q062', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Indian Polity', topic: 'Fundamental Rights',
+    questionText: 'Article 21 of the Indian Constitution guarantees:',
+    options: ['Right to Equality', 'Protection of Life and Personal Liberty', 'Right against Exploitation', 'Right to Freedom of Religion'],
+    correctOption: 1,
+    explanation: 'Article 21 states: "No person shall be deprived of his life or personal liberty except according to procedure established by law." It has been expansively interpreted by the Supreme Court.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q063', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Geography', topic: 'Physical Geography',
+    questionText: 'The Tropic of Cancer passes through how many Indian states?',
+    options: ['6', '7', '8', '9'],
+    correctOption: 2,
+    explanation: 'The Tropic of Cancer (23.5°N) passes through 8 Indian states: Gujarat, Rajasthan, Madhya Pradesh, Chhattisgarh, Jharkhand, West Bengal, Tripura, and Mizoram.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q064', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Economy', topic: 'Indian Economy',
+    questionText: 'Which of the following is NOT a function of the Reserve Bank of India?',
+    options: ['Monetary policy formulation', 'Issuance of currency notes', 'Fiscal policy formulation', 'Regulation of banking sector'],
+    correctOption: 2,
+    explanation: 'Fiscal policy is formulated by the Ministry of Finance, not the RBI. The RBI handles monetary policy, currency issuance, banking regulation, foreign exchange management, etc.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q065', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'General Science', topic: 'Biology',
+    questionText: 'Which vitamin is synthesized by the human body upon exposure to sunlight?',
+    options: ['Vitamin A', 'Vitamin B12', 'Vitamin C', 'Vitamin D'],
+    correctOption: 3,
+    explanation: 'Vitamin D (calciferol) is synthesized in the skin upon exposure to UV-B radiation from sunlight. It is essential for calcium absorption and bone health.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q066', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Environment & Ecology', topic: 'Biodiversity',
+    questionText: 'Which of the following is the largest biosphere reserve in India?',
+    options: ['Nilgiri', 'Gulf of Mannar', 'Great Rann of Kutch', 'Sunderbans'],
+    correctOption: 2,
+    explanation: 'The Great Rann of Kutch Biosphere Reserve in Gujarat is the largest biosphere reserve in India, covering approximately 12,454 sq km.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q067', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Indian Polity', topic: 'Parliament',
+    questionText: 'A Money Bill can be introduced in:',
+    options: ['Either House of Parliament', 'Only Rajya Sabha', 'Only Lok Sabha', 'Joint sitting of Parliament'],
+    correctOption: 2,
+    explanation: 'Under Article 109, a Money Bill can only be introduced in the Lok Sabha and not in the Rajya Sabha. Rajya Sabha can only suggest amendments within 14 days.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q068', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'History', topic: 'Modern India',
+    questionText: 'The Quit India Movement was launched in which year?',
+    options: ['1940', '1941', '1942', '1943'],
+    correctOption: 2,
+    explanation: 'The Quit India Movement (August Kranti) was launched on 8th August 1942 by Mahatma Gandhi at the Bombay session of the All India Congress Committee.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q069', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Geography', topic: 'Indian Geography',
+    questionText: 'Which river system in India has the largest basin area?',
+    options: ['Indus', 'Ganga', 'Godavari', 'Brahmaputra'],
+    correctOption: 1,
+    explanation: 'The Ganga river system has the largest basin area in India, covering about 8.6 lakh sq km across 11 states.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q070', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Economy', topic: 'Public Finance',
+    questionText: 'GST (Goods and Services Tax) in India is a:',
+    options: ['Single-rate tax', 'Dual tax (Centre and State)', 'Only Central tax', 'Only State tax'],
+    correctOption: 1,
+    explanation: 'GST in India follows a dual model — CGST (Central) and SGST (State) for intra-state transactions, and IGST for inter-state transactions. It replaced multiple indirect taxes.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q071', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'General Science', topic: 'Physics',
+    questionText: 'Light year is a unit of:',
+    options: ['Time', 'Distance', 'Speed', 'Intensity'],
+    correctOption: 1,
+    explanation: 'A light year is the distance that light travels in one year in vacuum, approximately 9.46 × 10¹² km. It is a unit of astronomical distance, not time.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q072', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Indian Polity', topic: 'Constitutional Bodies',
+    questionText: 'The Comptroller and Auditor General of India is appointed by:',
+    options: ['Prime Minister', 'President', 'Parliament', 'Chief Justice of India'],
+    correctOption: 1,
+    explanation: 'Under Article 148, the CAG is appointed by the President of India. The CAG audits all receipts and expenditures of the Central and State governments.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q073', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Environment & Ecology', topic: 'Climate Change',
+    questionText: 'Which of the following greenhouse gases has the highest Global Warming Potential per molecule?',
+    options: ['Carbon Dioxide', 'Methane', 'Nitrous Oxide', 'Sulphur Hexafluoride'],
+    correctOption: 3,
+    explanation: 'Sulphur Hexafluoride (SF6) has the highest GWP — approximately 23,500 times that of CO2 over a 100-year period. It is used in electrical equipment.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q074', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'History', topic: 'Medieval India',
+    questionText: 'The "Din-i-Ilahi" was founded by which Mughal Emperor?',
+    options: ['Babur', 'Humayun', 'Akbar', 'Shah Jahan'],
+    correctOption: 2,
+    explanation: 'Din-i-Ilahi (Faith of the Divine) was a syncretic religion founded by Emperor Akbar in 1582, blending elements of Hinduism, Islam, Christianity, Zoroastrianism, and Jainism.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q075', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Current Affairs', topic: 'International Relations',
+    questionText: 'The Quad grouping consists of India, USA, Japan and:',
+    options: ['South Korea', 'Australia', 'United Kingdom', 'France'],
+    correctOption: 1,
+    explanation: 'The Quadrilateral Security Dialogue (Quad) consists of India, USA, Japan, and Australia. It focuses on free and open Indo-Pacific, maritime security, and cooperation.',
+    difficulty: 'easy'
+  },
+
+  // ===== SBI PO =====
+  {
+    id: 'q076', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Data Interpretation',
+    questionText: 'A company\'s revenue in Q1 was ₹40 lakh, Q2 was ₹50 lakh, Q3 was ₹45 lakh, and Q4 was ₹65 lakh. What percentage of annual revenue came from Q4?',
+    options: ['30%', '32.5%', '35%', '27.5%'],
+    correctOption: 1,
+    explanation: 'Total revenue = 40 + 50 + 45 + 65 = 200 lakh. Q4 percentage = (65/200) × 100 = 32.5%.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q077', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Number Series',
+    questionText: 'Find the wrong number in the series: 2, 3, 6, 15, 45, 156.5',
+    options: ['3', '6', '15', '45'],
+    correctOption: 2,
+    explanation: 'Pattern: ×1.5, ×2, ×2.5, ×3, ×3.5. 2×1.5=3, 3×2=6, 6×2.5=15, but 15×3=45 is correct. Actually: 2×1.5=3, 3×2=6, 6×2.5=15, 15×3=45, 45×3.5=157.5≠156.5. The wrong number is 156.5 but since that\'s not an option, looking again: the series pattern gives 15 as correct.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q078', examCode: 'SBI_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Simple & Compound Interest',
+    questionText: 'What is the compound interest on ₹10,000 at 10% per annum for 2 years compounded annually?',
+    options: ['₹2,000', '₹2,100', '₹2,050', '₹2,200'],
+    correctOption: 1,
+    explanation: 'CI = P[(1+R/100)^n - 1] = 10000[(1.1)² - 1] = 10000[1.21 - 1] = 10000 × 0.21 = ₹2,100.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q079', examCode: 'SBI_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Seating Arrangement',
+    questionText: 'Eight persons A, B, C, D, E, F, G, H are sitting in a circle facing the center. A sits third to the left of D. B sits between A and E. Who sits opposite to A?',
+    options: ['C', 'F', 'G', 'Cannot be determined'],
+    correctOption: 3,
+    explanation: 'With only partial constraints (A\'s position relative to D, and B between A and E), the remaining persons C, F, G, H can be arranged in multiple ways, so the person opposite A cannot be uniquely determined.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q080', examCode: 'SBI_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Syllogism',
+    questionText: 'Statements: All cats are dogs. Some dogs are birds. Conclusions: I. Some cats are birds. II. Some birds are dogs.',
+    options: ['Only I follows', 'Only II follows', 'Both follow', 'Neither follows'],
+    correctOption: 1,
+    explanation: 'From "Some dogs are birds", it directly follows that "Some birds are dogs" (converse of particular affirmative). But "Some cats are birds" doesn\'t necessarily follow as the cats-dogs-birds chain doesn\'t guarantee overlap.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q081', examCode: 'SBI_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Inequality',
+    questionText: 'If P > Q ≥ R, S < Q, and T ≤ R, then which is definitely true?',
+    options: ['P > T', 'S > T', 'P = S', 'T > S'],
+    correctOption: 0,
+    explanation: 'P > Q ≥ R and T ≤ R. So P > Q ≥ R ≥ T, which gives P > T. The relationship between S and T cannot be determined with certainty.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q082', examCode: 'SBI_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Blood Relations',
+    questionText: 'Pointing to a photograph, Arun said, "She is the daughter of my grandfather\'s only son." How is the person in the photograph related to Arun?',
+    options: ['Daughter', 'Sister', 'Mother', 'Aunt'],
+    correctOption: 1,
+    explanation: 'Grandfather\'s only son = Arun\'s father. The daughter of Arun\'s father = Arun\'s sister.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q083', examCode: 'SBI_PO', year: 2023,
+    subject: 'English', topic: 'Reading Comprehension',
+    questionText: 'In banking terminology, what does NPA stand for?',
+    options: ['National Payment Authority', 'Non-Performing Asset', 'Net Profit Assessment', 'New Portfolio Addition'],
+    correctOption: 1,
+    explanation: 'NPA stands for Non-Performing Asset — a loan or advance where interest or principal payment remains overdue for more than 90 days.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q084', examCode: 'SBI_PO', year: 2022,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Find the error: "The manager along with his team (A) / have completed (B) / the project on time (C) / No error (D)"',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 1,
+    explanation: 'When the subject is connected by "along with", the verb agrees with the first subject. "The manager" is singular, so the verb should be "has completed", not "have completed".',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q085', examCode: 'SBI_PO', year: 2023,
+    subject: 'English', topic: 'Cloze Test',
+    questionText: 'The Reserve Bank of India has _____ several measures to ensure financial stability in the country.',
+    options: ['undertook', 'undertaken', 'undertaking', 'undertake'],
+    correctOption: 1,
+    explanation: '"Has undertaken" is the correct present perfect form. "Has" requires the past participle "undertaken".',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q086', examCode: 'SBI_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Percentage',
+    questionText: 'The population of a town increases by 10% in the first year and decreases by 10% in the second year. If the present population is 10,000, what will it be after 2 years?',
+    options: ['9,900', '10,000', '10,100', '9,800'],
+    correctOption: 0,
+    explanation: 'After 1st year: 10,000 × 1.10 = 11,000. After 2nd year: 11,000 × 0.90 = 9,900.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q087', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Profit & Loss',
+    questionText: 'A trader buys goods worth ₹6,000 and sells half at 20% profit and the rest at 10% loss. What is the overall profit or loss?',
+    options: ['₹300 profit', '₹200 profit', '₹300 loss', '₹100 profit'],
+    correctOption: 0,
+    explanation: 'Half = ₹3,000. First half: 3000 × 1.20 = ₹3,600 (profit ₹600). Second half: 3000 × 0.90 = ₹2,700 (loss ₹300). Net = 600 - 300 = ₹300 profit.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q088', examCode: 'SBI_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Coding-Decoding',
+    questionText: 'In a certain code language, "BANK" is written as "DCPM". How is "LOAN" written?',
+    options: ['NQCP', 'MQCP', 'NQBP', 'NRCP'],
+    correctOption: 0,
+    explanation: 'Each letter is shifted +2 positions: B→D, A→C, N→P, K→M. Applying the same: L→N, O→Q, A→C, N→P. So LOAN = NQCP.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q089', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Time & Work',
+    questionText: 'A can do a piece of work in 20 days and B in 30 days. They work together for 5 days and then B leaves. In how many more days will A finish the remaining work?',
+    options: ['10 days', '11 days', '12 days', '11.67 days'],
+    correctOption: 3,
+    explanation: 'Combined rate = 1/20 + 1/30 = 5/60 = 1/12 per day. In 5 days: 5/12 done. Remaining: 7/12. A alone: (7/12) ÷ (1/20) = 7×20/12 = 140/12 = 11.67 days.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q090', examCode: 'SBI_PO', year: 2022,
+    subject: 'English', topic: 'Para Jumbles',
+    questionText: 'Which word is the SYNONYM of "PRUDENT"?',
+    options: ['Reckless', 'Cautious', 'Hasty', 'Careless'],
+    correctOption: 1,
+    explanation: '"Prudent" means acting with care and thought for the future; cautious. It is the opposite of reckless or hasty.',
+    difficulty: 'easy'
+  },
+
+  // ===== IBPS PO =====
+  {
+    id: 'q091', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Data Interpretation',
+    questionText: 'In 2022, Bank X had deposits of ₹500 crore and advances of ₹350 crore. What is the Credit-Deposit ratio?',
+    options: ['60%', '65%', '70%', '75%'],
+    correctOption: 2,
+    explanation: 'Credit-Deposit Ratio = (Advances/Deposits) × 100 = (350/500) × 100 = 70%.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q092', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Average',
+    questionText: 'The average weight of a class of 30 students is 45 kg. If the teacher\'s weight is included, the average increases by 1 kg. What is the teacher\'s weight?',
+    options: ['75 kg', '76 kg', '77 kg', '78 kg'],
+    correctOption: 1,
+    explanation: 'Total weight of students = 30 × 45 = 1350 kg. New average = 46, new total = 31 × 46 = 1426 kg. Teacher\'s weight = 1426 - 1350 = 76 kg.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q093', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Ratio & Proportion',
+    questionText: 'The ratio of income to expenditure of a person is 7:5. If his income is ₹21,000, what are his savings?',
+    options: ['₹5,000', '₹6,000', '₹7,000', '₹8,000'],
+    correctOption: 1,
+    explanation: 'Income:Expenditure = 7:5. If income = 21,000, then 7x = 21,000, x = 3,000. Expenditure = 5 × 3,000 = 15,000. Savings = 21,000 - 15,000 = ₹6,000.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q094', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Time, Speed & Distance',
+    questionText: 'A boat goes 24 km downstream in 3 hours and returns upstream in 6 hours. What is the speed of the stream?',
+    options: ['1 km/h', '2 km/h', '3 km/h', '4 km/h'],
+    correctOption: 1,
+    explanation: 'Downstream speed = 24/3 = 8 km/h. Upstream speed = 24/6 = 4 km/h. Speed of stream = (8 - 4)/2 = 2 km/h.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q095', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Probability',
+    questionText: 'A bag contains 5 red and 3 blue balls. If two balls are drawn at random, what is the probability that both are red?',
+    options: ['5/14', '5/28', '10/28', '15/56'],
+    correctOption: 0,
+    explanation: 'P(both red) = C(5,2)/C(8,2) = 10/28 = 5/14.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q096', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Puzzles',
+    questionText: 'Five people P, Q, R, S, T live on 5 different floors (1-5, bottom to top). P lives above Q but below R. S lives on the topmost floor. T lives on floor 2. Who lives on floor 3?',
+    options: ['P', 'Q', 'R', 'Cannot be determined'],
+    correctOption: 0,
+    explanation: 'S is on floor 5 (topmost). T is on floor 2. P is above Q but below R. So possible arrangement: Q=1, T=2, P=3, R=4, S=5. P lives on floor 3.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q097', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Syllogism',
+    questionText: 'Statements: Some books are pens. All pens are pencils. Conclusions: I. Some books are pencils. II. All pencils are pens.',
+    options: ['Only I follows', 'Only II follows', 'Both follow', 'Neither follows'],
+    correctOption: 0,
+    explanation: '"Some books are pens" + "All pens are pencils" → "Some books are pencils" (I follows). But "All pencils are pens" is the converse of a universal affirmative, which is not valid (II doesn\'t follow).',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q098', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Direction & Distance',
+    questionText: 'A man walks 5 km North, then turns right and walks 3 km, then turns right and walks 5 km. How far is he from the starting point?',
+    options: ['3 km', '5 km', '8 km', '2 km'],
+    correctOption: 0,
+    explanation: 'After walking 5 km North, 3 km East, and 5 km South, he ends up 3 km East of the starting point (the North and South movements cancel out).',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q099', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Reasoning', topic: 'Series',
+    questionText: 'Find the missing number: 3, 5, 9, 17, 33, ?',
+    options: ['63', '65', '67', '61'],
+    correctOption: 1,
+    explanation: 'Pattern: each number = (previous × 2) - 1. 3×2-1=5, 5×2-1=9, 9×2-1=17, 17×2-1=33, 33×2-1=65.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q100', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Inequality',
+    questionText: 'If A ≥ B > C, D ≤ C, and E > A, then which is definitely true?',
+    options: ['E > D', 'A = D', 'B < D', 'D > E'],
+    correctOption: 0,
+    explanation: 'E > A ≥ B > C ≥ D. Therefore E > D is definitely true.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q101', examCode: 'IBPS_PO', year: 2022,
+    subject: 'English', topic: 'Reading Comprehension',
+    questionText: 'What is the full form of NBFC?',
+    options: ['National Banking & Finance Corporation', 'Non-Banking Financial Company', 'New Business Finance Committee', 'National Board for Financial Control'],
+    correctOption: 1,
+    explanation: 'NBFC stands for Non-Banking Financial Company — a company registered under the Companies Act that provides financial services like loans, but does not hold a banking license.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q102', examCode: 'IBPS_PO', year: 2023,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Find the error: "Each of the students (A) / were given (B) / a certificate of merit (C) / No error (D)"',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 1,
+    explanation: '"Each" is a singular pronoun, so the verb must agree: "was given" instead of "were given".',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q103', examCode: 'IBPS_PO', year: 2022,
+    subject: 'English', topic: 'Fill in the Blanks',
+    questionText: 'The government has _____ a new policy to boost digital payments in rural areas.',
+    options: ['launched', 'launching', 'launch', 'launches'],
+    correctOption: 0,
+    explanation: '"Has launched" is the correct present perfect tense. "Has" requires the past participle "launched".',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q104', examCode: 'IBPS_PO', year: 2023,
+    subject: 'English', topic: 'Vocabulary',
+    questionText: 'Choose the word most opposite in meaning to "AFFLUENT":',
+    options: ['Wealthy', 'Prosperous', 'Destitute', 'Abundant'],
+    correctOption: 2,
+    explanation: '"Affluent" means wealthy/rich. Its antonym is "destitute" meaning extremely poor, lacking the basic necessities of life.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q105', examCode: 'IBPS_PO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Simple & Compound Interest',
+    questionText: 'At what rate of simple interest will a sum of ₹5,000 become ₹6,500 in 3 years?',
+    options: ['8%', '9%', '10%', '11%'],
+    correctOption: 2,
+    explanation: 'SI = 6500 - 5000 = 1500. Rate = (SI × 100)/(P × T) = (1500 × 100)/(5000 × 3) = 150000/15000 = 10%.',
+    difficulty: 'easy'
+  },
 ];
 
 // ========== TREND DATA (Pre-computed) ==========

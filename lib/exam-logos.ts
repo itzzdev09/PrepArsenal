@@ -7,6 +7,9 @@ export const examLogos: Record<string, string> = {
   LIC_AAO: '/liclogo.jpg',
   UPSC_APFC: '/upsclogo.jpg',
   IRDA: '/irdailogo.jpg',
+  UPSC_CSE: '/upsclogo.jpg',
+  SBI_PO: '/sbilogo.jpg',
+  IBPS_PO: '/ibpslogo.jpg',
 };
 
 export function getExamLogo(examCode: string) {
