@@ -7,11 +7,11 @@
         {
           "label": "IB ACIO Grade-II Executive Tier I 2021 (Disha)",
           "url": "https://freedownloads.dishapublication.com/wp-content/uploads/2024/01/IB-ACIO-Solved-Paper-2021_interior.pdf",
-          "questions": 76,
-          "answered": 76
+          "questions": 97,
+          "answered": 97
         }
       ],
-      "total_questions": 76
+      "total_questions": 97
     },
     "RRB_NTPC": {
       "papers": [
@@ -35,43 +35,73 @@
         {
           "label": "RBI Grade B 2025 Phase 1&2 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2025-Phase-12.pdf",
-          "questions": 177,
-          "answered": 177
+          "questions": 255,
+          "answered": 255
         },
         {
           "label": "RBI Grade B 2024 Phase 1&2 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2024-Phase-12.pdf",
-          "questions": 187,
-          "answered": 187
+          "questions": 255,
+          "answered": 255
         },
         {
           "label": "RBI Grade B 2023 Phase 1&2 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2023-Phase-12.pdf",
-          "questions": 180,
-          "answered": 180
+          "questions": 250,
+          "answered": 250
+        },
+        {
+          "label": "RBI Grade B 2022 Phase 1&2 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2022-Phase-12.pdf",
+          "questions": 247,
+          "answered": 247
+        },
+        {
+          "label": "RBI Grade B 2021 Phase 1&2 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2021-Phase-12.pdf",
+          "questions": 255,
+          "answered": 255
+        },
+        {
+          "label": "RBI Grade B 2019 Phase 1&2 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2019-Phase-12.pdf",
+          "questions": 0,
+          "answered": 0
         }
       ],
-      "total_questions": 544
+      "total_questions": 1261
     },
     "NABARD_GRADEA": {
       "papers": [
         {
           "label": "NABARD Grade A 2025 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2025-PYQs-Book.pdf",
-          "questions": 40,
-          "answered": 40
+          "questions": 225,
+          "answered": 225
         },
         {
           "label": "NABARD Grade A 2024 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2024-PYQs-Book.pdf",
-          "questions": 40,
-          "answered": 40
+          "questions": 225,
+          "answered": 225
         },
         {
           "label": "NABARD Grade A 2023 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2023-PYQs-Book.pdf",
-          "questions": 40,
-          "answered": 40
+          "questions": 226,
+          "answered": 226
+        },
+        {
+          "label": "NABARD Grade A 2022 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2022-PYQs-Book.pdf",
+          "questions": 204,
+          "answered": 204
+        },
+        {
+          "label": "NABARD Grade A 2021 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2021-PYQs-Book.pdf",
+          "questions": 198,
+          "answered": 198
         },
         {
           "label": "NABARD Grade A 2021 English (BankersAdda)",
@@ -80,78 +110,216 @@
           "answered": 24
         }
       ],
-      "total_questions": 144
+      "total_questions": 1100
     },
     "SEBI_GRADEA": {
       "papers": [
         {
           "label": "SEBI Grade A Phase 1 PYQ Book (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-1-Previous-Year-Papers-Book.pdf",
-          "questions": 20,
-          "answered": 20
+          "questions": 495,
+          "answered": 495
         },
         {
           "label": "SEBI Grade A Phase 2 PYQ Book (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-2-Previous-Year-Papers-Book.pdf",
-          "questions": 10,
-          "answered": 10
+          "questions": 295,
+          "answered": 295
+        },
+        {
+          "label": "SEBI Grade A Phase 1 General Awareness 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-GA-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 77,
+          "answered": 77
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Quant 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Quant-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 17,
+          "answered": 17
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Reasoning 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Reasoning-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 77,
+          "answered": 77
+        },
+        {
+          "label": "SEBI Grade A Phase 1 English 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-English-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 74,
+          "answered": 74
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Economy 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Economy-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 25,
+          "answered": 25
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Finance 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Finance-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 46,
+          "answered": 46
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Management 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Management-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 0,
+          "answered": 0
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Commerce & Accounts 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Commerce-Accounts-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 37,
+          "answered": 37
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Costing 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Costing-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 0,
+          "answered": 0
+        },
+        {
+          "label": "SEBI Grade A Phase 1 Company Act 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Company-Act-Previous-Year-Papers-Phase-1-Book.pdf",
+          "questions": 29,
+          "answered": 29
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Economy 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Economy-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 43,
+          "answered": 43
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Finance 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Finance-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 65,
+          "answered": 65
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Management 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Management-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 52,
+          "answered": 52
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Commerce 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Commerce-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 45,
+          "answered": 45
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Costing 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Costing-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 3,
+          "answered": 3
+        },
+        {
+          "label": "SEBI Grade A Phase 2 Company Act 2020-2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Company-Act-Previous-Year-Papers-Phase-2-Book.pdf",
+          "questions": 45,
+          "answered": 45
         }
       ],
-      "total_questions": 30
+      "total_questions": 800
     },
     "LIC_AAO": {
       "papers": [
         {
           "label": "LIC AAO Mains 2019 Reasoning (BankersAdda)",
           "url": "https://www.bankersadda.com/wp-content/uploads/multisite/2023/02/21182142/LIC-AAO-Mains-Previous-Year-Paper-of-Reasoning-2019.pdf",
-          "questions": 22,
-          "answered": 22
+          "questions": 24,
+          "answered": 24
         },
         {
           "label": "LIC AAO Prelims 2019 (Adda247)",
           "url": "https://wpassets.adda247.com/wp-content/uploads/multisite/2023/01/02153424/LIC-AAO-Prelims-Previous-Year-Paper-2019.pdf",
-          "questions": 84,
-          "answered": 84
+          "questions": 89,
+          "answered": 89
         },
         {
           "label": "LIC AAO Prelims 2023 Memory-Based (Adda247)",
           "url": "https://wpassets.adda247.com/wp-content/uploads/multisite/2023/02/17182755/LIC-AAO-Prelims-Memory-Based-Paper-2023-Based-on-17-February.pdf",
-          "questions": 95,
-          "answered": 95
+          "questions": 98,
+          "answered": 98
         }
       ],
-      "total_questions": 201
+      "total_questions": 211
     },
     "UPSC_APFC": {
       "papers": [
         {
+          "label": "UPSC EPFO APFC 2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2025-PYQ-Book.pdf",
+          "questions": 119,
+          "answered": 119
+        },
+        {
           "label": "UPSC EPFO APFC 2023 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2023-PYQ-Book.pdf",
-          "questions": 99,
-          "answered": 99
+          "questions": 118,
+          "answered": 118
         },
         {
           "label": "UPSC EPFO APFC 2015 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2015-PYQ-Book.pdf",
-          "questions": 88,
-          "answered": 88
+          "questions": 118,
+          "answered": 118
         },
         {
-          "label": "UPSC EPFO APFC topic-wise solved paper (Disha)",
-          "url": "https://freedownloads.dishapublication.com/wp-content/uploads/2025/03/UPSC-EPFO-APFC-Previous-Year-Question-Paper-processedlightpdf.com-output-output-output-output-1.pdf",
+          "label": "UPSC EPFO APFC 2012 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/EPFO-EPFO-APFC-2012-PYQs-Book.pdf",
           "questions": 0,
           "answered": 0
+        },
+        {
+          "label": "UPSC EPFO APFC 2004 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2004-PYQs-Book.pdf",
+          "questions": 0,
+          "answered": 0
+        },
+        {
+          "label": "UPSC EPFO APFC 2002 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2002-PYQs-Book.pdf",
+          "questions": 0,
+          "answered": 0
+        },
+        {
+          "label": "UPSC EPFO EO/AO 2025 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2025-PYQ-Book.pdf",
+          "questions": 119,
+          "answered": 119
+        },
+        {
+          "label": "UPSC EPFO EO/AO 2023 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2023-PYQ-Book.pdf",
+          "questions": 117,
+          "answered": 117
+        },
+        {
+          "label": "UPSC EPFO EO/AO 2021 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2021-PYQ-Book.pdf",
+          "questions": 115,
+          "answered": 115
+        },
+        {
+          "label": "UPSC EPFO EO/AO 2017 (Edutap)",
+          "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2017-PYQ-Book.pdf",
+          "questions": 119,
+          "answered": 119
         }
       ],
-      "total_questions": 187
+      "total_questions": 707
     },
     "IRDA": {
       "papers": [
         {
           "label": "IRDA Assistant Manager Insurance PYQ 2023 (Adda247)",
           "url": "https://wpassets.adda247.com/wp-content/uploads/multisite/2023/04/17171403/Insurance-Questions-for-IRDA-Assistant-Manager-Exam-2023.pdf",
-          "questions": 196,
-          "answered": 196
+          "questions": 200,
+          "answered": 200
         },
         {
           "label": "IRDA Assistant Manager English memory-based (Adda247)",
@@ -160,7 +328,7 @@
           "answered": 85
         }
       ],
-      "total_questions": 281
+      "total_questions": 285
     }
   }
 }

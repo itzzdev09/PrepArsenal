@@ -91,11 +91,11 @@ export default function NcertSprintPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ chapterId: chapter.id }),
         });
-        if (!res.ok) throw new Error(`Failed to generate test (${res.status})`);
+        if (!res.ok) throw new Error(`Failed to build test (${res.status})`);
         const data = await res.json();
         questions = data.questions ?? [];
       }
-      if (questions.length === 0) throw new Error('No questions were generated.');
+      if (questions.length === 0) throw new Error('No questions are available for this chapter yet.');
       setTestQuestions(questions);
     } catch (err) {
       setTestError(err instanceof Error ? err.message : 'Could not load the chapter test.');
@@ -138,6 +138,7 @@ export default function NcertSprintPage() {
         .options { display: grid; gap: .6rem; } .option { text-align: left; border: 1px solid var(--border-subtle); background: var(--bg-input); color: var(--text-primary); padding: .75rem .9rem; border-radius: .6rem; cursor: pointer; }
         .option.selected { border-color: var(--accent-blue); } .option.correct { border-color: #22c55e; background: rgba(34,197,94,.12); } .option.wrong { border-color: #ef4444; background: rgba(239,68,68,.12); }
         .reveal { margin-top: 1rem; border: 0; border-radius: .6rem; padding: .65rem .9rem; cursor: pointer; font-weight: 700; background: var(--text-primary); color: var(--bg-primary); }
+        .revision-tag { font-size: .74rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary); margin: -.6rem 0 .9rem; }
         .explanation { color: var(--text-secondary); line-height: 1.55; margin: 1rem 0 0; } .pyq { margin-top: .9rem; font-size: .85rem; color: var(--text-secondary); } .pyq strong { color: var(--text-primary); }
         .read-panel { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 2px solid var(--border-subtle); }
         .mark-read-btn { border: 0; border-radius: .6rem; padding: .75rem 1.25rem; cursor: pointer; font-weight: 700; background: var(--accent-blue); color: white; }
@@ -152,7 +153,7 @@ export default function NcertSprintPage() {
 
       <div className="eyebrow">Ordered revision • original study notes • PYQ cross-reference</div>
       <h1>NCERT Sprint</h1>
-      <p className="intro">A chapter-led Static GK revision system. Work through each track in order, revise concise original notes, mark the chapter read, and take an AI-generated chapter test.</p>
+      <p className="intro">A chapter-led Static GK revision system. Work through each track in order, revise concise original notes, mark the chapter read, and take a chapter test drawn from hand-authored questions.</p>
       <div className="notice">This is an original revision layer linked to official NCERT textbooks—not a replacement or line-by-line reproduction. A “PYQ match” appears only when the exact question exists in your question database.</div>
 
       <ChapterTrackViewer
@@ -183,7 +184,7 @@ export default function NcertSprintPage() {
 
           {chapterProgress && !testQuestions && (
             <button className="test-cta" onClick={handleStartTest} disabled={testLoading}>
-              {testLoading ? 'Generating chapter test...' : <><ClipboardCheck size={17} />Take Chapter Test</>}
+              {testLoading ? 'Building chapter test...' : <><ClipboardCheck size={17} />Take Chapter Test</>}
             </button>
           )}
           {testError && <p className="test-error">{testError}</p>}
@@ -195,6 +196,9 @@ export default function NcertSprintPage() {
                 return (
                   <article className="question" key={q.id}>
                     <h3>Q{qi + 1}. {q.question_text}</h3>
+                    {q.origin === 'revision' && q.sourceChapterTitle && (
+                      <p className="revision-tag">Revision from &ldquo;{q.sourceChapterTitle}&rdquo;</p>
+                    )}
                     <div className="options">
                       {q.options.map((option, index) => {
                         const classNames = ['option'];

@@ -7,7 +7,7 @@ import {
   deleteTursoQuestion, 
   getTursoDatabaseMetrics 
 } from './turso';
-import type { Question } from './data';
+import { questions as seedQuestions, type Question } from './data';
 
 export interface UserProfile {
   id: string;
@@ -442,13 +442,18 @@ export async function getQuestions(
     query = query.contains('metadata', { tier: filters.tier });
   }
   
-  const { data, error } = await query.limit(100);
-  
-  if (error || !data) {
-    console.error('Error fetching questions from Supabase fallback:', error);
-    return [];
+  const { data, error } = await query.limit(filters?.limit || 100);
+
+  if (error || !data || data.length === 0) {
+    if (error) console.error('Error fetching questions from Supabase fallback:', error);
+    // Last resort only: the bundled demo set, filtered to what was asked for.
+    let seeded = [...seedQuestions];
+    if (filters?.examCode) seeded = seeded.filter(q => q.examCode === filters.examCode);
+    if (filters?.subject) seeded = seeded.filter(q => q.subject === filters.subject);
+    if (filters?.topic) seeded = seeded.filter(q => q.topic === filters.topic);
+    return seeded.slice(0, filters?.limit || 100);
   }
-  
+
   return data.map(q => ({
     id: q.id,
     examCode: q.exam_code,
@@ -683,6 +688,10 @@ export interface NcertGeneratedQuestion {
   options: string[];
   correct_option: number;
   explanation: string;
+  /** Set by /api/ncert/generate-questions when the item was pulled from a
+   * neighbouring chapter to fill out the test. Absent for curated rows. */
+  origin?: 'chapter' | 'revision';
+  sourceChapterTitle?: string;
 }
 
 export async function getNcertProgress(

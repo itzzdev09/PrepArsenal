@@ -11,7 +11,7 @@ Features:
 
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 import numpy as np
 from db_client import get_db_client
@@ -49,14 +49,25 @@ class PrepArsenalMLEngine:
         self.decay_rate = decay_rate
         self.current_year = datetime.now().year
 
-    def compute_prediction_score(self, yearly_counts: Dict[int, int]) -> Tuple[float, float, str, float]:
+    def compute_prediction_score(
+        self,
+        yearly_counts: Dict[int, int],
+        yearly_totals: Dict[int, int] | None = None,
+    ) -> Tuple[float, float, str, float]:
         """
         Computes predictive confidence score using exponential weighted moving average (EWMA)
         and momentum slope.
+
+        `yearly_totals` is the number of questions extracted for that exam in
+        each year. Scoring uses the topic's *share* of the paper rather than its
+        raw count, so the score means the same thing whether 40 or 400 questions
+        were extracted from a given year. Scoring on raw counts made the result
+        a function of extraction volume: once the pool grew, most topics pinned
+        at the 99 ceiling and the ranking carried no information.
         """
         years = sorted(yearly_counts.keys())
         if not years:
-            return 0.0, 0.0, "stable"
+            return 0.0, 0.0, "stable", 0.0
 
         counts = np.array([yearly_counts[y] for y in years], dtype=float)
         years_arr = np.array(years, dtype=float)
@@ -87,17 +98,30 @@ class PrepArsenalMLEngine:
             momentum = "stable"
 
         # 4. Normalized Prediction Score (0 - 100%)
-        # Base probability from occurrence consistency + weighted frequency + momentum boost
-        consistency = np.count_nonzero(counts) / len(counts) # Percentage of years it appeared
-        base_score = min(100.0, (weighted_avg * 18.0) * consistency)
-        
-        # Momentum adjustment (+- 10%)
-        if momentum == "rising":
-            base_score = min(99.0, base_score * 1.12)
-        elif momentum == "falling":
-            base_score = max(20.0, base_score * 0.88)
+        # Score the topic's recency-weighted share of the paper, so the value is
+        # independent of how many questions were extracted per year.
+        totals = yearly_totals or {}
+        shares = np.array(
+            [yearly_counts[y] / totals[y] if totals.get(y) else 0.0 for y in years],
+            dtype=float,
+        )
+        weighted_share = float(np.sum(shares * weights))
 
-        prediction_score = round(float(np.clip(base_score, 10.0, 99.0)), 1)
+        consistency = np.count_nonzero(counts) / len(counts)  # Fraction of years it appeared
+
+        # Saturating curve: a topic holding ~6% of a paper scores ~63 before the
+        # consistency factor, ~15% scores ~92. It approaches but never reaches
+        # 100, so strong topics stay separable instead of all clipping together.
+        SHARE_SCALE = 0.06
+        base_score = 99.0 * (1.0 - float(np.exp(-weighted_share / SHARE_SCALE))) * consistency
+
+        # Momentum adjustment (+- ~12%)
+        if momentum == "rising":
+            base_score *= 1.12
+        elif momentum == "falling":
+            base_score *= 0.88
+
+        prediction_score = round(float(np.clip(base_score, 1.0, 99.0)), 1)
 
         return avg_freq, weighted_avg, momentum, prediction_score
 
@@ -149,18 +173,40 @@ if __name__ == "__main__":
             print("No questions found in database. Run dataset_harvester.py first.")
             exit(0)
             
+        # A question counts towards trends when it was transcribed from a real
+        # paper with a confirmed answer key. `is_verified_pyq` already encodes
+        # that at import time, so it is the primary gate; the source_type
+        # exclusion list keeps recalled and editorially written items out even
+        # if a future importer sets the flag too generously.
+        #
+        # This deliberately does NOT test `source_type == 'pyq'`. Only the
+        # curated importer used that literal value — the PDF pipeline records
+        # the actual provenance ('third_party', 'official', 'memory_based'), so
+        # an equality check silently excluded every pipeline-imported question.
+        NON_PAPER_SOURCES = {'memory_based', 'expert_authored', 'benchmark', 'synthetic'}
         verified_pyqs = [
             question for question in questions
-            if (question.get('metadata') or {}).get('source_type') == 'pyq'
-            and (question.get('metadata') or {}).get('is_verified_pyq') is True
+            if (question.get('metadata') or {}).get('is_verified_pyq') is True
+            and (question.get('metadata') or {}).get('source_type') not in NON_PAPER_SOURCES
         ]
 
         print(f"Found {len(questions)} total questions and {len(verified_pyqs)} verified PYQs.")
 
-        # Clear obsolete predictions so benchmark/demo data can never appear as a PYQ trend.
-        db.table('trend_analytics').delete().not_.is_('id', 'null').execute()
+        # 'recollected' means an aggregator compiled a full paper from candidate
+        # recall and published it with an answer key. It is weaker evidence than
+        # an officially released paper, but it is whole-paper evidence, and topic
+        # frequency is robust to individual recall errors — so it counts here,
+        # unlike single-shift 'memory_based' dumps. Surface the mix so the split
+        # is visible rather than buried.
+        source_mix = Counter(
+            (question.get('metadata') or {}).get('source_type') for question in verified_pyqs
+        )
+        print(f"  provenance of counted questions: {dict(source_mix)}")
 
         if not verified_pyqs:
+            # Clear obsolete predictions so benchmark/demo data can never appear
+            # as a PYQ trend.
+            db.table('trend_analytics').delete().not_.is_('id', 'null').execute()
             print("No verified PYQs found. Trends were cleared; import verified PYQs before running predictions.")
             exit(0)
 
@@ -235,7 +281,11 @@ if __name__ == "__main__":
                 )
                 continue
 
-            avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts)
+            yearly_totals = {
+                year: verified_counts_by_exam_year[exam_code][year]
+                for year in eligible_exam_years[exam_code]
+            }
+            avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts, yearly_totals)
             diff_trend = engine.analyze_difficulty_trend(data['difficulties'])
             
             trend_record = {
@@ -250,12 +300,50 @@ if __name__ == "__main__":
             results.append(trend_record)
             
         print(f"Computed trends for {len(results)} verified PYQ topics. Updating database...")
-        
-        # Upsert trends
+
+        # Write the new predictions first, then prune whatever the previous run
+        # left behind. Deleting up front meant a failed upsert (e.g. a numeric
+        # overflow) wiped the table and left the app with no trends at all.
         if results:
-            db.table('trend_analytics').upsert(results, on_conflict='exam_code, topic_id').execute()
-        
+            try:
+                db.table('trend_analytics').upsert(results, on_conflict='exam_code, topic_id').execute()
+            except Exception as upsert_error:
+                # avg_questions_per_year / recency_weight_score are NUMERIC(4,2)
+                # in older deployments and overflow once an exam averages 100+
+                # questions per year for a topic. Neither column is read by the
+                # app, so fall back to writing the scores the UI actually uses
+                # rather than losing the whole run.
+                # Permanent fix: supabase/widen_trend_analytics_numerics.sql
+                if '22003' not in str(upsert_error) and 'overflow' not in str(upsert_error).lower():
+                    raise
+                print(
+                    'WARNING: trend_analytics numeric columns are too narrow for the current '
+                    'question volume. Writing prediction scores only.\n'
+                    '         Run supabase/widen_trend_analytics_numerics.sql to restore '
+                    'avg_questions_per_year / recency_weight_score.'
+                )
+                trimmed = [
+                    {k: v for k, v in r.items()
+                     if k not in ('avg_questions_per_year', 'recency_weight_score')}
+                    for r in results
+                ]
+                db.table('trend_analytics').upsert(trimmed, on_conflict='exam_code, topic_id').execute()
+
+            fresh_keys = {(r['exam_code'], r['topic_id']) for r in results}
+            existing = db.table('trend_analytics').select('id, exam_code, topic_id').execute().data or []
+            stale = [
+                row['id'] for row in existing
+                if (row['exam_code'], row['topic_id']) not in fresh_keys
+            ]
+            for i in range(0, len(stale), 100):
+                db.table('trend_analytics').delete().in_('id', stale[i:i + 100]).execute()
+            if stale:
+                print(f"Pruned {len(stale)} stale trend rows.")
+
         print("\n[SUCCESS] ML Trend Engine run completed successfully!")
-        
+
     except Exception as e:
+        # Exit non-zero: this runs unattended, and a swallowed failure previously
+        # looked identical to a clean run.
         print(f"ML Engine Error: {e}")
+        raise SystemExit(1)

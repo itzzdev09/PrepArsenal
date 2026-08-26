@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS public.trend_analytics (
     yearly_frequencies JSONB NOT NULL DEFAULT '{}'::jsonb, -- e.g. {"2019": 3, "2020": 4, "2021": 5, ...}
     prediction_score NUMERIC(5, 2) NOT NULL DEFAULT 50.00, -- 0-100% confidence
     difficulty_trend TEXT CHECK (difficulty_trend IN ('easier', 'stable', 'harder')) DEFAULT 'stable',
-    avg_questions_per_year NUMERIC(4, 2) NOT NULL DEFAULT 0.0,
-    recency_weight_score NUMERIC(5, 2) NOT NULL DEFAULT 50.0,
+    avg_questions_per_year NUMERIC(8, 2) NOT NULL DEFAULT 0.0,
+    recency_weight_score NUMERIC(8, 2) NOT NULL DEFAULT 50.0,
     last_computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(exam_code, topic_id)
 );

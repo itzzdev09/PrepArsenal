@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
-import { generateChapterMCQs } from '@/lib/llm';
 import { createClient } from '@/utils/supabase/server';
-import { NCERT_TRACKS } from '@/lib/ncert-booster';
+import { buildChapterTest } from '@/lib/ncert-test-builder';
 
-const CACHE_TARGET = 5;
+const TEST_SIZE = 5;
 
+/**
+ * Assembles a chapter test from hand-authored NCERT questions. No language
+ * model is involved: previously this route asked Gemini (falling back to Groq)
+ * to write five MCQs from the chapter notes, which cost a paid API call per
+ * uncached chapter and could introduce facts the notes never stated. Curated
+ * rows in `ncert_chapter_tests` still take precedence so an admin can override
+ * any chapter; the rest is filled deterministically from the chapter's own
+ * authored questions and its nearest neighbours in the same track.
+ */
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -19,45 +27,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'chapterId is required' }, { status: 400 });
   }
 
-  let chapter, track;
-  for (const t of NCERT_TRACKS) {
-    const c = t.chapters.find(ch => ch.id === chapterId);
-    if (c) { chapter = c; track = t; break; }
-  }
-  if (!chapter || !track) {
-    return NextResponse.json({ error: 'Unknown chapterId' }, { status: 404 });
-  }
-
-  const { data: existing } = await supabase
+  const { data: curated } = await supabase
     .from('ncert_chapter_tests')
     .select('id, question_text, options, correct_option, explanation')
     .eq('chapter_id', chapterId)
-    .limit(CACHE_TARGET);
+    .limit(TEST_SIZE);
 
-  if (existing && existing.length >= CACHE_TARGET) {
-    return NextResponse.json({ questions: existing });
+  if (curated && curated.length >= TEST_SIZE) {
+    return NextResponse.json({ questions: curated });
   }
 
-  const generated = await generateChapterMCQs(chapter.title, track.subject, chapter.notes);
-
-  const rows = generated.map(q => ({
-    chapter_id: chapterId,
-    subject: track.subject,
-    question_text: q.questionText,
-    options: q.options,
-    correct_option: q.correctOption,
-    explanation: q.explanation,
-  }));
-
-  const { data: inserted, error } = await supabase
-    .from('ncert_chapter_tests')
-    .insert(rows)
-    .select('id, question_text, options, correct_option, explanation');
-
-  if (error || !inserted) {
-    console.error('Error caching generated chapter test:', error);
-    return NextResponse.json({ questions: rows });
+  const built = buildChapterTest(chapterId, TEST_SIZE);
+  if (built.length === 0) {
+    return NextResponse.json({ error: 'Unknown chapterId' }, { status: 404 });
   }
 
-  return NextResponse.json({ questions: inserted });
+  const seen = new Set((curated ?? []).map(row => row.question_text));
+  const questions = [
+    ...(curated ?? []),
+    ...built.filter(question => !seen.has(question.question_text)),
+  ].slice(0, TEST_SIZE);
+
+  return NextResponse.json({ questions });
 }

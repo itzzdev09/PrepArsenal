@@ -32,7 +32,7 @@ from pathlib import Path
 import pymupdf
 import requests
 
-from pyq_parser import TOPICS, parse_paper
+from pyq_parser import TOPICS, is_recollected, parse_paper
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CACHE_DIR = Path(__file__).resolve().parent / 'pdf_cache'
@@ -64,16 +64,40 @@ PAPERS = {
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2025-Phase-12.pdf', 'year': 2025, 'label': 'RBI Grade B 2025 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2024-Phase-12.pdf', 'year': 2024, 'label': 'RBI Grade B 2024 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2023-Phase-12.pdf', 'year': 2023, 'label': 'RBI Grade B 2023 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2022-Phase-12.pdf', 'year': 2022, 'label': 'RBI Grade B 2022 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2021-Phase-12.pdf', 'year': 2021, 'label': 'RBI Grade B 2021 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2019-Phase-12.pdf', 'year': 2019, 'label': 'RBI Grade B 2019 Phase 1&2 (Edutap)', 'source_type': 'third_party'},
     ],
     'NABARD_GRADEA': [
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2025-PYQs-Book.pdf', 'year': 2025, 'label': 'NABARD Grade A 2025 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2024-PYQs-Book.pdf', 'year': 2024, 'label': 'NABARD Grade A 2024 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2023-PYQs-Book.pdf', 'year': 2023, 'label': 'NABARD Grade A 2023 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2022-PYQs-Book.pdf', 'year': 2022, 'label': 'NABARD Grade A 2022 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2021-PYQs-Book.pdf', 'year': 2021, 'label': 'NABARD Grade A 2021 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://www.bankersadda.com/wp-content/uploads/multisite/2022/07/13163733/Formatted-NABARD-Grade-A-Previous-Year-Question-Paper-2021-English-Language-.pdf', 'year': 2021, 'label': 'NABARD Grade A 2021 English (BankersAdda)', 'source_type': 'third_party'},
     ],
+    # SEBI publishes no year-wise PDFs. Edutap's subject-wise books each span
+    # 2020-2025 with the year in a running header, which the parser reads per
+    # question — so `year` here is only a fallback for unheaded pages.
     'SEBI_GRADEA': [
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-1-Previous-Year-Papers-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 PYQ Book (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-2-Previous-Year-Papers-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 PYQ Book (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-GA-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 General Awareness 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Quant-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Quant 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Reasoning-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Reasoning 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-English-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 English 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Economy-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Economy 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Finance-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Finance 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Management-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Management 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Commerce-Accounts-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Commerce & Accounts 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Costing-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Costing 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Company-Act-Previous-Year-Papers-Phase-1-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 1 Company Act 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Economy-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Economy 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Finance-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Finance 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Management-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Management 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Commerce-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Commerce 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Costing-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Costing 2020-2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Company-Act-Previous-Year-Papers-Phase-2-Book.pdf', 'year': 2024, 'label': 'SEBI Grade A Phase 2 Company Act 2020-2025 (Edutap)', 'source_type': 'third_party'},
     ],
     'LIC_AAO': [
         {'url': 'https://www.bankersadda.com/wp-content/uploads/multisite/2023/02/21182142/LIC-AAO-Mains-Previous-Year-Paper-of-Reasoning-2019.pdf', 'year': 2019, 'label': 'LIC AAO Mains 2019 Reasoning (BankersAdda)', 'source_type': 'third_party'},
@@ -81,9 +105,17 @@ PAPERS = {
         {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/02/17182755/LIC-AAO-Prelims-Memory-Based-Paper-2023-Based-on-17-February.pdf', 'year': 2023, 'label': 'LIC AAO Prelims 2023 Memory-Based (Adda247)', 'source_type': 'memory_based'},
     ],
     'UPSC_APFC': [
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2025-PYQ-Book.pdf', 'year': 2025, 'label': 'UPSC EPFO APFC 2025 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2023-PYQ-Book.pdf', 'year': 2023, 'label': 'UPSC EPFO APFC 2023 (Edutap)', 'source_type': 'third_party'},
         {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2015-PYQ-Book.pdf', 'year': 2015, 'label': 'UPSC EPFO APFC 2015 (Edutap)', 'source_type': 'third_party'},
-        {'url': 'https://freedownloads.dishapublication.com/wp-content/uploads/2025/03/UPSC-EPFO-APFC-Previous-Year-Question-Paper-processedlightpdf.com-output-output-output-output-1.pdf', 'year': 2015, 'label': 'UPSC EPFO APFC topic-wise solved paper (Disha)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/EPFO-EPFO-APFC-2012-PYQs-Book.pdf', 'year': 2012, 'label': 'UPSC EPFO APFC 2012 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2004-PYQs-Book.pdf', 'year': 2004, 'label': 'UPSC EPFO APFC 2004 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2002-PYQs-Book.pdf', 'year': 2002, 'label': 'UPSC EPFO APFC 2002 (Edutap)', 'source_type': 'third_party'},
+        # UPSC EPFO EO/AO shares the APFC syllabus and question pool.
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2025-PYQ-Book.pdf', 'year': 2025, 'label': 'UPSC EPFO EO/AO 2025 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2023-PYQ-Book.pdf', 'year': 2023, 'label': 'UPSC EPFO EO/AO 2023 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2021-PYQ-Book.pdf', 'year': 2021, 'label': 'UPSC EPFO EO/AO 2021 (Edutap)', 'source_type': 'third_party'},
+        {'url': 'https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-EO-AO-2017-PYQ-Book.pdf', 'year': 2017, 'label': 'UPSC EPFO EO/AO 2017 (Edutap)', 'source_type': 'third_party'},
     ],
     'IRDA': [
         {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/2023/04/17171403/Insurance-Questions-for-IRDA-Assistant-Manager-Exam-2023.pdf', 'year': 2023, 'label': 'IRDA Assistant Manager Insurance PYQ 2023 (Adda247)', 'source_type': 'third_party'},
@@ -124,6 +156,9 @@ def extract_text(pdf_path: Path) -> str:
 
 
 def to_row(parsed, exam_code: str, year: int, source: dict) -> dict:
+    # Multi-year compilations carry the real year in a running header; fall back
+    # to the source's nominal year only when no header was found.
+    year = parsed.year or year
     dedupe_key = re.sub(r'\s+', ' ', parsed.question_text.lower())
     qid = f'{exam_code}_{year}_{hashlib.md5(dedupe_key.encode()).hexdigest()[:12]}'
     return {
@@ -143,6 +178,7 @@ def to_row(parsed, exam_code: str, year: int, source: dict) -> dict:
         # Only a question whose answer we actually read from the paper counts as
         # a verified PYQ; those feed the ML trend engine.
         'is_verified_pyq': parsed.correct_option >= 0 and source['source_type'] != 'memory_based',
+        'year_from_header': parsed.year is not None,
         'import_batch': IMPORT_BATCH,
         '_dedupe_key': dedupe_key,
         '_has_answer': parsed.correct_option >= 0,
@@ -166,9 +202,18 @@ def process_paper(exam_code: str, source: dict, require_answers: bool) -> list[d
         return []
 
     parsed = parse_paper(text)
+
+    # Aggregator "PYQ books" are frequently candidate-recalled rather than
+    # official released papers. Detect that from the document's own wording so
+    # provenance is recorded accurately instead of trusting the config.
+    effective = dict(source)
+    if source['source_type'] != 'memory_based' and is_recollected(text):
+        effective['source_type'] = 'recollected'
+        print('  [note] document self-describes as recollected — labelling source_type=recollected')
+
     rows: dict[str, dict] = {}
     for item in parsed:
-        row = to_row(item, exam_code, source['year'], source)
+        row = to_row(item, exam_code, effective['year'], effective)
         if require_answers and not row['_has_answer']:
             continue
         rows[row['_dedupe_key']] = row

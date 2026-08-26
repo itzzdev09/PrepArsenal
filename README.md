@@ -167,7 +167,19 @@ The app uses a cohesive sketchbook-inspired learning interface:
    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
    ```
 
-   `GEMINI_API_KEY` and `GROQ_API_KEY` are optional unless the AI Tutor is being used. `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` are optional and default to an embedded local SQLite database when omitted.
+   `GEMINI_API_KEY` and `GROQ_API_KEY` are optional unless the AI Tutor is being used. Question ingestion, NCERT chapter tests and the GK harvester deliberately use no LLM — see "Question Ingestion" below.
+
+## Question Ingestion
+
+All question data is produced deterministically, without any LLM call:
+
+- `scripts/pyq_parser.py` — regex + keyword parser for PYQ paper PDFs. Extracts question stems, options, answer keys and explanations, and classifies subject/topic/difficulty. Handles the common answer-key layouts (numbered solutions, `S12. Ans. (c)` blocks, and column answer tables).
+- `scripts/pdf_pyq_pipeline.py` — downloads the configured papers per exam and writes parsed questions to Turso (`--target turso`, default) or Supabase (`--target supabase`). Questions whose answer key cannot be located are dropped unless `--allow-unanswered` is passed.
+- `scripts/import_curated_pyq_samples.py` and `scripts/import_curated_pyq_batch2.py` — hand-authored/transcribed questions, used for exams with no machine-readable paper source.
+- `app/api/ncert/generate-questions` — assembles NCERT chapter tests from hand-authored questions, topping up from neighbouring chapters in the same track.
+- `scripts/gk_harvester.py` — builds daily current-affairs cards extractively from official RSS feeds for admin review.
+
+Every imported question records `source_url`, `source_label` and `source_type`. Only questions with a confirmed answer key from a non-memory-based source are marked `is_verified_pyq`, and only those feed the ML trend engine. `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` are optional and default to an embedded local SQLite database when omitted.
 
 3. In the Supabase SQL Editor, run `supabase/schema.sql`. Run the feature scripts in `supabase/` when enabling NCERT/GK and admin features.
 

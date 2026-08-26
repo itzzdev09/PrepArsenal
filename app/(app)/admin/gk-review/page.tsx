@@ -91,7 +91,9 @@ export default function GkReviewPage() {
         .headline { font-size: 1.15rem; font-weight: 750; margin-bottom: .5rem; }
         .field-label { display: block; font-size: .78rem; font-weight: 700; color: var(--text-secondary); margin: .8rem 0 .3rem; }
         textarea, input { width: 100%; padding: .6rem .8rem; background: var(--bg-input); border: 1px solid var(--border-subtle); border-radius: .5rem; color: var(--text-primary); font-size: .88rem; font-family: inherit; }
-        .options-preview { font-size: .85rem; color: var(--text-secondary); margin-top: .4rem; line-height: 1.6; }
+        .option-row { display: flex; align-items: center; gap: .55rem; margin-top: .4rem; }
+        .option-row input[type="radio"] { width: auto; flex: 0 0 auto; accent-color: #22c55e; }
+        .option-letter { font-size: .8rem; font-weight: 700; color: var(--text-tertiary); width: 1rem; }
         .actions { display: flex; gap: .75rem; margin-top: 1.25rem; }
         .btn { border: 0; border-radius: .55rem; padding: .65rem 1.2rem; font-weight: 700; cursor: pointer; font-size: .88rem; }
         .btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -112,7 +114,14 @@ export default function GkReviewPage() {
       {items.length === 0 && <p className="empty">Nothing pending review right now.</p>}
 
       {items.map(item => {
-        const edit = edits[item.id] ?? { summary: item.summary, question_text: item.question_text, explanation: item.explanation };
+        const edit = edits[item.id] ?? {
+          summary: item.summary,
+          question_text: item.question_text,
+          explanation: item.explanation,
+          options: [...item.options],
+          correct_option: item.correct_option,
+        };
+        const update = (patch: Partial<GkEdit>) => setEdits(prev => ({ ...prev, [item.id]: { ...edit, ...patch } }));
         return (
           <div className="card" key={item.id}>
             <div className="meta">
@@ -123,18 +132,32 @@ export default function GkReviewPage() {
             <div className="headline">{item.headline}</div>
 
             <label className="field-label">Summary</label>
-            <textarea rows={3} value={edit.summary} onChange={e => setEdits(prev => ({ ...prev, [item.id]: { ...edit, summary: e.target.value } }))} />
+            <textarea rows={3} value={edit.summary} onChange={e => update({ summary: e.target.value })} />
 
             <label className="field-label">Drafted question</label>
-            <textarea rows={2} value={edit.question_text} onChange={e => setEdits(prev => ({ ...prev, [item.id]: { ...edit, question_text: e.target.value } }))} />
-            <div className="options-preview">
-              {item.options.map((opt, i) => (
-                <div key={i}>{String.fromCharCode(65 + i)}. {opt}{i === item.correct_option ? ' ✓' : ''}</div>
-              ))}
-            </div>
+            <textarea rows={2} value={edit.question_text} onChange={e => update({ question_text: e.target.value })} />
+
+            <label className="field-label">Options — select the radio button to set the correct answer</label>
+            {edit.options.map((opt, i) => (
+              <div className="option-row" key={i}>
+                <input
+                  type="radio"
+                  name={`correct-${item.id}`}
+                  checked={edit.correct_option === i}
+                  onChange={() => update({ correct_option: i })}
+                  aria-label={`Mark option ${String.fromCharCode(65 + i)} as correct`}
+                />
+                <span className="option-letter">{String.fromCharCode(65 + i)}</span>
+                <input
+                  type="text"
+                  value={opt}
+                  onChange={e => update({ options: edit.options.map((o, j) => (j === i ? e.target.value : o)) })}
+                />
+              </div>
+            ))}
 
             <label className="field-label">Explanation</label>
-            <textarea rows={2} value={edit.explanation} onChange={e => setEdits(prev => ({ ...prev, [item.id]: { ...edit, explanation: e.target.value } }))} />
+            <textarea rows={2} value={edit.explanation} onChange={e => update({ explanation: e.target.value })} />
 
             <div className="actions">
               <button className="btn btn-approve" onClick={() => handleApprove(item)} disabled={busyId === item.id}>

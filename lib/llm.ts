@@ -197,68 +197,6 @@ export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
   return localFallback(messages, citations);
 }
 
-export interface GeneratedMCQ {
-  questionText: string;
-  options: string[];
-  correctOption: number;
-  explanation: string;
-}
-
-function parseGeneratedMCQs(raw: string): GeneratedMCQ[] {
-  const cleaned = raw.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-  const parsed = JSON.parse(cleaned);
-  const list = Array.isArray(parsed) ? parsed : parsed.questions;
-  if (!Array.isArray(list)) throw new Error('Model did not return a question array');
-
-  return list.map((q: any) => {
-    if (
-      typeof q.questionText !== 'string' ||
-      !Array.isArray(q.options) || q.options.length !== 4 ||
-      typeof q.correctOption !== 'number' ||
-      typeof q.explanation !== 'string'
-    ) {
-      throw new Error('Malformed generated question');
-    }
-    return {
-      questionText: q.questionText,
-      options: q.options,
-      correctOption: q.correctOption,
-      explanation: q.explanation,
-    };
-  });
-}
-
-/**
- * Generates MCQs strictly grounded in the given chapter notes (no outside facts),
- * for the "mark chapter read -> take chapter test" NCERT Booster flow.
- */
-export async function generateChapterMCQs(
-  chapterTitle: string,
-  subject: string,
-  notes: string[]
-): Promise<GeneratedMCQ[]> {
-  const prompt = `You are writing a chapter test for the NCERT ${subject} chapter "${chapterTitle}", for Indian government exam aspirants (SSC/UPSC/Banking).
-
-Chapter notes (the ONLY source of truth — do not introduce facts not present here):
-${notes.map((n, i) => `${i + 1}. ${n}`).join('\n')}
-
-Write exactly 5 multiple-choice questions testing these notes. Respond with ONLY a JSON array, no markdown fences, no commentary, in this exact shape:
-[{"questionText": string, "options": [string, string, string, string], "correctOption": 0-3, "explanation": string}]`;
-
-  const messages: ChatMessage[] = [{ role: 'user', content: prompt }];
-  const systemPrompt = 'You output only valid JSON arrays of MCQs grounded strictly in the provided notes.';
-
-  try {
-    const res = await callGemini(messages, systemPrompt);
-    return parseGeneratedMCQs(res.content);
-  } catch (geminiError) {
-    console.warn('generateChapterMCQs: Gemini failed, falling back to Groq...', geminiError);
-  }
-
-  const res = await callGroq(messages, systemPrompt);
-  return parseGeneratedMCQs(res.content);
-}
-
 // Build context for a question
 export function buildQuestionContext(question: {
   questionText: string;

@@ -104,6 +104,51 @@ SECTION_HEADINGS: list[tuple[re.Pattern, str]] = [
 ]
 
 
+# Running headers such as "SEBI Grade A 2020 Phase 1 - Quant Recollected
+# Questions" or "ACIO Solved Paper-2021". Aggregator PYQ books bundle several
+# exam years into one PDF, so the year has to be read per question from the
+# nearest preceding header rather than assumed from the filename.
+PAPER_YEAR_HEADER = re.compile(
+    r'(?im)^[^\n]{0,70}\b(20[0-2]\d)\b[^\n]{0,70}$'
+)
+YEAR_HEADER_CONTEXT = re.compile(
+    r'(?i)phase|tier|shift|recollected|solved\s+paper|question\s+paper|prelims|mains|paper\s*-?\s*[12i]'
+)
+
+# Wording that marks a paper as reconstructed from candidate recall rather than
+# transcribed from an official released paper.
+RECOLLECTED_MARKERS = re.compile(r'(?i)recollected|memory[\s-]based|memory\s+based|recalled\s+questions')
+
+
+def find_paper_years(text: str) -> list[tuple[int, int]]:
+    """Offsets at which the paper switches exam year, in document order."""
+    positions = []
+    for match in PAPER_YEAR_HEADER.finditer(text):
+        line = match.group(0)
+        if not YEAR_HEADER_CONTEXT.search(line):
+            continue
+        # A line listing a span ("2020-2025") is a contents blurb, not a section.
+        if re.search(r'20[0-2]\d\s*[-–—]\s*20[0-2]\d', line):
+            continue
+        positions.append((match.start(), int(match.group(1))))
+    positions.sort()
+    return positions
+
+
+def year_at(positions: list[tuple[int, int]], offset: int) -> int | None:
+    current = None
+    for start, year in positions:
+        if start > offset:
+            break
+        current = year
+    return current
+
+
+def is_recollected(text: str) -> bool:
+    """True when the document describes itself as candidate-recalled."""
+    return len(RECOLLECTED_MARKERS.findall(text)) >= 3
+
+
 def _find_sections(text: str) -> list[tuple[int, str]]:
     """Offsets at which the paper switches subject section, in document order."""
     positions = [
@@ -152,6 +197,7 @@ class ParsedQuestion:
     subject: str
     topic_id: str
     difficulty: str
+    year: int | None = None
     explanation: str = ''
     warnings: list[str] = field(default_factory=list)
 
@@ -353,13 +399,23 @@ def _extract_options(block: str) -> tuple[str, list[str]]:
 
 def parse_paper(raw_text: str) -> list[ParsedQuestion]:
     text = clean_text(raw_text)
-    body, solutions = split_questions_and_solutions(text)
+    _, solutions = split_questions_and_solutions(text)
     answers, explanations = build_answer_map(solutions, text)
 
+    # Scan the whole document for questions, not just the part before the first
+    # solutions block. Aggregator PYQ books interleave questions and solutions
+    # once per exam year, so splitting on the first solutions run discarded
+    # every year after the first — two thirds of a typical book. Solution
+    # entries are filtered out below instead: "11. (c) Because…" has no stem
+    # before its first option, so the stem-length guard rejects it.
+    body = text
     section_positions = _find_sections(body)
+    year_positions = find_paper_years(body)
     starts = list(QUESTION_START.finditer(body))
     parsed: list[ParsedQuestion] = []
-    seen_numbers: set[int] = set()
+    # Question numbers restart in each year's section, so a number alone can no
+    # longer identify a duplicate — key on the stem as well.
+    seen: set[tuple[int, str]] = set()
 
     for i, m in enumerate(starts):
         number = int(m.group(1))
@@ -373,9 +429,10 @@ def parse_paper(raw_text: str) -> list[ParsedQuestion]:
 
         if len(stem) < 12 or len(options) < 2:
             continue
-        if number in seen_numbers:
+        key = (number, stem[:60].lower())
+        if key in seen:
             continue
-        seen_numbers.add(number)
+        seen.add(key)
 
         letter = None
         inline = INLINE_ANSWER.search(block)
@@ -398,6 +455,7 @@ def parse_paper(raw_text: str) -> list[ParsedQuestion]:
             subject=subject,
             topic_id=topic_id,
             difficulty=estimate_difficulty(stem, topic_id),
+            year=year_at(year_positions, m.start()),
             explanation=explanations.get(number, ''),
         )
         if correct == -1:

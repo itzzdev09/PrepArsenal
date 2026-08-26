@@ -158,13 +158,9 @@ export async function getTursoQuestions(filters: {
   limit?: number;
 } = {}): Promise<Question[]> {
   const client = getTursoClient();
-  if (!client) {
-    let filtered = [...seedQuestions];
-    if (filters.examCode) filtered = filtered.filter(q => q.examCode === filters.examCode);
-    if (filters.subject) filtered = filtered.filter(q => q.subject === filters.subject);
-    if (filters.topic) filtered = filtered.filter(q => q.topic === filters.topic);
-    return filtered.slice(0, filters.limit || 500);
-  }
+  // No Turso configured is not the same as "no questions exist" — return empty
+  // so the caller can fall through to Supabase and, only then, the seed set.
+  if (!client) return [];
 
   try {
     let query = 'SELECT * FROM questions WHERE 1=1';
@@ -188,8 +184,12 @@ export async function getTursoQuestions(filters: {
 
     const result = await client.execute({ sql: query, args });
 
+    // An empty result means Turso genuinely holds nothing matching these
+    // filters. Returning the unfiltered seed set here would both mask that and
+    // stop lib/db.ts ever reaching Supabase, so callers would only ever see the
+    // handful of demo questions in lib/data.ts.
     if (result.rows.length === 0) {
-      return seedQuestions;
+      return [];
     }
 
     return result.rows.map(row => {
@@ -214,8 +214,11 @@ export async function getTursoQuestions(filters: {
       };
     });
   } catch (error) {
-    console.warn('Turso getTursoQuestions fallback to local dataset:', error);
-    return seedQuestions;
+    // Rethrow so lib/db.ts treats this as "Turso unavailable" and queries
+    // Supabase. Swallowing it and returning the seed set silently hid an
+    // expired TURSO_AUTH_TOKEN behind a pool of demo questions.
+    console.warn('Turso getTursoQuestions failed, deferring to Supabase:', error);
+    throw error;
   }
 }
 
