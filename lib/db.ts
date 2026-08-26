@@ -525,11 +525,24 @@ export interface TrendAnalytics {
   id: string;
   topic_id: string;
   exam_code: string;
-  frequency_score: number;
-  recency_weight: number;
+  /** Questions seen per exam year, e.g. { "2021": 7, "2022": 4 }. */
+  yearly_frequencies: Record<string, number>;
   prediction_score: number;
-  difficulty_trend: 'easier' | 'harder' | 'stable';
   last_analyzed_at: string;
+}
+
+/** Mean questions per year, derived from the yearly breakdown. */
+export function averagePerYear(trend: TrendAnalytics): number {
+  const counts = Object.values(trend.yearly_frequencies || {});
+  if (counts.length === 0) return 0;
+  return counts.reduce((sum, n) => sum + n, 0) / counts.length;
+}
+
+/** Exam years covered by a set of trends, ascending. */
+export function trendYears(trends: TrendAnalytics[]): number[] {
+  const years = new Set<number>();
+  trends.forEach(t => Object.keys(t.yearly_frequencies || {}).forEach(y => years.add(Number(y))));
+  return [...years].sort((a, b) => a - b);
 }
 
 export async function getTrends(supabase: SupabaseClient, examCodes?: string[]): Promise<TrendAnalytics[]> {

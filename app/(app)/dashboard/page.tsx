@@ -17,6 +17,7 @@ import {
   getStudyPlan,
   updateStudyPlan,
   updateTargetExams,
+  averagePerYear,
   type UserProfile,
   type TrendAnalytics,
   type StudyPlanItem,
@@ -685,7 +686,7 @@ export default function DashboardPage() {
                       </span>
                       <span>{topic.name}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                        {trend.difficulty_trend === 'harder' ? <TrendingUp size={16} /> : trend.difficulty_trend === 'easier' ? <TrendingDown size={16} /> : <span style={{ fontWeight: 800 }}>-</span>}
+                        {averagePerYear(trend).toFixed(1)}/yr
                       </span>
                     </div>
                     <button 

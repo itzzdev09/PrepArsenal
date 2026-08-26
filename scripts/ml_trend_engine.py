@@ -129,6 +129,18 @@ class PrepArsenalMLEngine:
         """
         Computes if question difficulty is drifting easier/harder over time.
         historical_difficulties: [{'year': 2019, 'difficulty': 'easy'}, ...]
+
+        NOT WRITTEN TO trend_analytics, and not surfaced in the UI. The
+        per-question `difficulty` this reads is assigned by
+        pyq_parser.estimate_difficulty, which only looks at question text length
+        plus a hardcoded topic list — it measures verbosity, not difficulty. A
+        drift-over-time claim built on that is not defensible to a student, so
+        the "Getting Harder" card was replaced by a Rising Topics card computed
+        from real question counts.
+
+        Kept for reference: it becomes meaningful once difficulty comes from
+        observed student accuracy (the IRT/adaptive path) rather than a text
+        heuristic. Wire it back in then.
         """
         diff_map = {'easy': 1, 'medium': 2, 'hard': 3}
         if not historical_difficulties:
@@ -286,14 +298,15 @@ if __name__ == "__main__":
                 for year in eligible_exam_years[exam_code]
             }
             avg, w_avg, momentum, score = engine.compute_prediction_score(yearly_counts, yearly_totals)
-            diff_trend = engine.analyze_difficulty_trend(data['difficulties'])
-            
+
+            # difficulty_trend is deliberately not written — see
+            # analyze_difficulty_trend's docstring. The column keeps its
+            # 'stable' default until difficulty comes from real student data.
             trend_record = {
                 'exam_code': exam_code,
                 'topic_id': topic_id,
                 'yearly_frequencies': yearly_counts,
                 'prediction_score': score,
-                'difficulty_trend': diff_trend,
                 'avg_questions_per_year': round(avg, 2),
                 'recency_weight_score': round(w_avg, 2)
             }

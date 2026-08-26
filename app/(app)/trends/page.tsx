@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { BrainCircuit, ChartNoAxesCombined, Target, TrendingDown, TrendingUp } from 'lucide-react';
+import { BrainCircuit, ChartNoAxesCombined, Target, TrendingUp } from 'lucide-react';
 import { exams } from '@/lib/data';
-import { getTrends, getTopics, type TrendAnalytics } from '@/lib/db';
+import { getTrends, getTopics, averagePerYear, trendYears, type TrendAnalytics } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 import { getExamLogo } from '@/lib/exam-logos';
 
@@ -45,7 +45,7 @@ export default function TrendsPage() {
     if (sortBy === 'prediction') {
       trends.sort((a, b) => b.prediction_score - a.prediction_score);
     } else if (sortBy === 'frequency') {
-      trends.sort((a, b) => b.frequency_score - a.frequency_score);
+      trends.sort((a, b) => averagePerYear(b) - averagePerYear(a));
     } else {
       trends.sort((a, b) => {
         const ta = dbTopics.find(top => top.id === a.topic_id)?.name || '';
@@ -61,7 +61,23 @@ export default function TrendsPage() {
 
   // Compute top predictions
   const topPredictions = [...examTrends].sort((a, b) => b.prediction_score - a.prediction_score).slice(0, 5);
-  const gettingHarder = examTrends.filter(t => t.difficulty_trend === 'harder');
+
+  // Topics whose share of the paper is growing: compare the most recent year
+  // against the mean of the earlier ones. This is measured from real question
+  // counts, unlike the old "Getting Harder" card, which read a difficulty label
+  // inferred from question text length.
+  const rising = [...examTrends]
+    .map(t => {
+      const years = Object.keys(t.yearly_frequencies || {}).map(Number).sort((a, b) => a - b);
+      if (years.length < 2) return null;
+      const latest = t.yearly_frequencies[String(years[years.length - 1])] ?? 0;
+      const earlier = years.slice(0, -1).map(y => t.yearly_frequencies[String(y)] ?? 0);
+      const earlierAvg = earlier.reduce((s, n) => s + n, 0) / earlier.length;
+      if (earlierAvg <= 0 || latest <= earlierAvg) return null;
+      return { trend: t, latest, earlierAvg, growth: (latest - earlierAvg) / earlierAvg };
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .sort((a, b) => b.growth - a.growth);
 
   const getHeatLevel = (score: number): string => {
     if (score >= 95) return 'heat-5';
@@ -72,7 +88,12 @@ export default function TrendsPage() {
     return 'heat-0';
   };
 
-  const years = [2019, 2020, 2021, 2022, 2023];
+  // Years actually present in this exam's data, rather than a fixed window.
+  const years = trendYears(examTrends);
+  const maxFreq = Math.max(
+    1,
+    ...examTrends.flatMap(t => Object.values(t.yearly_frequencies || {}))
+  );
 
   if (loading) {
     return (
@@ -297,17 +318,25 @@ export default function TrendsPage() {
             </div>
           </div>
           <div className="insight-card">
-            <div className="insight-title"><TrendingUp size={18} />Getting Harder</div>
+            <div className="insight-title"><TrendingUp size={18} />Rising Topics</div>
             <div className="insight-list">
-              {gettingHarder.length === 0 ? (
-                <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>No difficulty increase detected</div>
+              {rising.length === 0 ? (
+                <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+                  No topic is growing against its own history yet
+                </div>
               ) : (
-                gettingHarder.slice(0, 5).map(t => {
-                  const topic = dbTopics.find(top => top.id === t.topic_id);
+                rising.slice(0, 5).map(({ trend, latest, earlierAvg }) => {
+                  const topic = dbTopics.find(top => top.id === trend.topic_id);
                   return (
-                    <div key={t.topic_id} className="insight-item">
-                      <span className="insight-item-name">{topic?.name || t.topic_id}</span>
-                      <span className="insight-item-val" style={{ color: 'var(--error)' }}>↗ Harder</span>
+                    <div key={trend.topic_id} className="insight-item">
+                      <span className="insight-item-name">{topic?.name || trend.topic_id}</span>
+                      <span
+                        className="insight-item-val"
+                        style={{ color: 'var(--success)' }}
+                        title={`Latest year: ${latest} questions vs ${earlierAvg.toFixed(1)} average previously`}
+                      >
+                        ↗ {earlierAvg.toFixed(1)} → {latest}
+                      </span>
                     </div>
                   );
                 })
@@ -356,16 +385,17 @@ export default function TrendsPage() {
                 <tr>
                   <th>Topic</th>
                   <th>Prediction</th>
-                  <th>Yearly Frequency (2019–2023)</th>
+                  <th>
+                    {years.length > 0
+                      ? `Yearly Frequency (${years[0]}–${years[years.length - 1]})`
+                      : 'Yearly Frequency'}
+                  </th>
                   <th>Avg / Year</th>
-                  <th>Difficulty</th>
                 </tr>
               </thead>
               <tbody>
                 {examTrends.map(t => {
                   const topic = dbTopics.find(top => top.id === t.topic_id);
-                  // Mock max frequency for bars since we don't store yearly breakdown yet
-                  const maxFreq = 10;
                   return (
                     <tr key={t.topic_id}>
                       <td>
@@ -379,11 +409,9 @@ export default function TrendsPage() {
                       </td>
                       <td>
                         <div className="freq-bar-container">
-                          {years.map((year, yIdx) => {
-                            // Deterministic frequency calculation based on topic ID and year index
-                            const charCode = (t.topic_id || 'topic').charCodeAt(0) || 65;
-                            const freq = ((charCode * 7 + year * 13 + yIdx * 5) % Math.max(1, maxFreq)) + 1;
-                            const height = maxFreq > 0 ? (freq / maxFreq) * 24 + 4 : 4;
+                          {years.map(year => {
+                            const freq = t.yearly_frequencies?.[String(year)] ?? 0;
+                            const height = (freq / maxFreq) * 24 + 4;
                             return (
                               <div
                                 key={year}
@@ -392,21 +420,14 @@ export default function TrendsPage() {
                                   height: `${height}px`,
                                   background: freq > 0 ? `rgba(59, 130, 246, ${0.3 + (freq / maxFreq) * 0.7})` : 'rgba(255,255,255,0.05)',
                                 }}
-                                title={`${year}: ${freq} questions`}
+                                title={`${year}: ${freq} question${freq === 1 ? '' : 's'}`}
                               />
                             );
                           })}
                         </div>
                       </td>
                       <td>
-                        <span className="avg-freq">{Number(t.frequency_score).toFixed(1)}</span>
-                      </td>
-                      <td>
-                        <span className="difficulty-trend">
-                          {t.difficulty_trend === 'harder' && <><TrendingUp size={15} style={{ color: 'var(--error)' }} /> Harder</>}
-                          {t.difficulty_trend === 'easier' && <><TrendingDown size={15} style={{ color: 'var(--success)' }} /> Easier</>}
-                          {t.difficulty_trend === 'stable' && <><span style={{ color: 'var(--text-tertiary)' }}>➡️</span> Stable</>}
-                        </span>
+                        <span className="avg-freq">{averagePerYear(t).toFixed(1)}</span>
                       </td>
                     </tr>
                   );
