@@ -7,7 +7,7 @@ import {
   deleteTursoQuestion, 
   getTursoDatabaseMetrics 
 } from './turso';
-import { questions as seedQuestions, type Question } from './data';
+import { questions as seedQuestions, exams as seedExams, type Question } from './data';
 
 export interface UserProfile {
   id: string;
@@ -497,15 +497,26 @@ export async function getQuestionMatchesByText(
 }
 
 export async function getExamQuestionCounts(supabase: SupabaseClient): Promise<Record<string, number>> {
-  // Using an aggregate query or fetching everything if small enough
-  const { data, error } = await supabase.from('questions').select('exam_code');
-  if (error || !data) return {};
-  
-  const counts: Record<string, number> = {};
-  data.forEach(q => {
-    counts[q.exam_code] = (counts[q.exam_code] || 0) + 1;
-  });
-  return counts;
+  // Count server-side, one exact HEAD query per exam. Fetching every row and
+  // counting client-side silently undercounted: PostgREST caps a response at
+  // 1000 rows, so once the pool grew past that only the exams appearing in the
+  // first page were counted at all — the rest reported zero questions.
+  const entries = await Promise.all(
+    seedExams.map(async exam => {
+      const { count, error } = await supabase
+        .from('questions')
+        .select('*', { count: 'exact', head: true })
+        .eq('exam_code', exam.code);
+
+      if (error) {
+        console.error(`Error counting questions for ${exam.code}:`, error);
+        return [exam.code, 0] as const;
+      }
+      return [exam.code, count || 0] as const;
+    })
+  );
+
+  return Object.fromEntries(entries);
 }
 
 // ===== PHASE 5: TRENDS & STUDY PLANNER =====
