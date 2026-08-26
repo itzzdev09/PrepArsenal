@@ -179,7 +179,27 @@ All question data is produced deterministically, without any LLM call:
 - `app/api/ncert/generate-questions` — assembles NCERT chapter tests from hand-authored questions, topping up from neighbouring chapters in the same track.
 - `scripts/gk_harvester.py` — builds daily current-affairs cards extractively from official RSS feeds for admin review.
 
-Every imported question records `source_url`, `source_label` and `source_type`. Only questions with a confirmed answer key from a non-memory-based source are marked `is_verified_pyq`, and only those feed the ML trend engine. `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` are optional and default to an embedded local SQLite database when omitted.
+Every imported question records `source_url`, `source_label` and `source_type`. Only questions with a confirmed answer key from a non-memory-based source are marked `is_verified_pyq`, and only those feed the ML trend engine.
+
+`source_type` values, weakest evidence last:
+
+- `pyq` / `official` — transcribed from an officially released paper.
+- `third_party` — a reputable aggregator's reproduction of a real paper.
+- `recollected` — an aggregator's full-paper compilation reconstructed from candidate recall, published with an answer key. Detected from the document's own wording, not the config. Counted in trends: it is whole-paper evidence, and topic frequency is robust to individual recall errors.
+- `memory_based` — single-shift crowd recall. Excluded from trends.
+- `expert_authored` — written for practice depth, not from any paper. Excluded from trends.
+
+## Trend Analysis
+
+`scripts/ml_trend_engine.py` computes per-`(exam, topic)` prediction scores into `trend_analytics`. An exam only qualifies once it has at least 3 distinct years with 15+ verified questions each and 50+ verified questions total, so a thin import cannot masquerade as a trend.
+
+Scores are based on the topic's recency-weighted **share of the paper**, not its raw question count, so a score means the same thing whether 40 or 400 questions were extracted from a given year.
+
+Re-run it after any import:
+
+```bash
+python scripts/ml_trend_engine.py
+``` `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` are optional and default to an embedded local SQLite database when omitted.
 
 3. In the Supabase SQL Editor, run `supabase/schema.sql`. Run the feature scripts in `supabase/` when enabling NCERT/GK and admin features.
 
