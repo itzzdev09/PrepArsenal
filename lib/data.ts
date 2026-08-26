@@ -157,6 +157,45 @@ export const exams: Exam[] = [
     negativeMark: 0.25,
     icon: '📑',
     color: '#a855f7'
+  },
+  {
+    code: 'UPSC_CSE',
+    name: 'UPSC CSE',
+    fullName: 'Union Public Service Commission - Civil Services Examination (Prelims GS-I)',
+    category: 'UPSC',
+    subjects: ['History', 'Indian Polity', 'Geography', 'Economy', 'General Science', 'Environment & Ecology', 'Current Affairs'],
+    totalQuestions: 100,
+    totalTime: 120,
+    marksPerCorrect: 2,
+    negativeMark: 0.66,
+    icon: '🏛️',
+    color: '#dc2626'
+  },
+  {
+    code: 'SBI_PO',
+    name: 'SBI PO',
+    fullName: 'State Bank of India - Probationary Officer (Prelims)',
+    category: 'Banking',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English'],
+    totalQuestions: 100,
+    totalTime: 60,
+    marksPerCorrect: 1,
+    negativeMark: 0.25,
+    icon: '🏦',
+    color: '#1d4ed8'
+  },
+  {
+    code: 'IBPS_PO',
+    name: 'IBPS PO',
+    fullName: 'Institute of Banking Personnel Selection - Probationary Officer (Prelims)',
+    category: 'Banking',
+    subjects: ['Quantitative Aptitude', 'Reasoning', 'English'],
+    totalQuestions: 100,
+    totalTime: 60,
+    marksPerCorrect: 1,
+    negativeMark: 0.25,
+    icon: '🏛️',
+    color: '#0369a1'
   }
 ];
 
