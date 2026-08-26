@@ -1637,6 +1637,369 @@ export const questions: Question[] = [
     explanation: '"Insolvent" means unable to pay one\'s debts / bankrupt. Its direct antonym is "solvent", meaning having assets in excess of liabilities and able to pay all debts.',
     difficulty: 'easy'
   },
+
+  // ===== SSC CGL (Additional) =====
+  {
+    id: 'q142', examCode: 'SSC_CGL', year: 2023, shift: 'Shift 1',
+    subject: 'Quantitative Aptitude', topic: 'Algebra',
+    questionText: 'If x + y + z = 0, then what is the value of (x³ + y³ + z³) / (3xyz)?',
+    options: ['1', '3', '0', '-1'],
+    correctOption: 0,
+    explanation: 'From algebraic identities, if x + y + z = 0, then x³ + y³ + z³ = 3xyz. Therefore, (x³ + y³ + z³) / (3xyz) = 3xyz / 3xyz = 1.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q143', examCode: 'SSC_CGL', year: 2023, shift: 'Shift 2',
+    subject: 'Quantitative Aptitude', topic: 'Geometry',
+    questionText: 'The length of the chord of a circle is 8 cm and the perpendicular distance from the center to the chord is 3 cm. What is the radius of the circle?',
+    options: ['4 cm', '5 cm', '6 cm', '7 cm'],
+    correctOption: 1,
+    explanation: 'The perpendicular from the center bisects the chord into two 4 cm segments. Using Pythagoras Theorem in the right-angled triangle formed: r² = 3² + 4² = 9 + 16 = 25 ⇒ r = 5 cm.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q144', examCode: 'SSC_CGL', year: 2022,
+    subject: 'General Awareness', topic: 'Indian Polity',
+    questionText: 'Which Constitutional Amendment Act reduced the voting age in India from 21 years to 18 years for Lok Sabha and Legislative Assembly elections?',
+    options: ['42nd Amendment Act', '44th Amendment Act', '61st Amendment Act', '73rd Amendment Act'],
+    correctOption: 2,
+    explanation: 'The 61st Constitutional Amendment Act, 1988 (which came into force in 1989) amended Article 326 of the Constitution to reduce the voting age from 21 to 18 years.',
+    difficulty: 'easy'
+  },
+
+  // ===== ACIO-II (Intelligence Bureau) =====
+  {
+    id: 'q145', examCode: 'ACIO2', year: 2021, shift: 'Shift 1',
+    subject: 'General Awareness', topic: 'National Security & Defense',
+    questionText: 'The National Investigation Agency (NIA) was constituted under the NIA Act in which year following the 26/11 Mumbai terror attacks?',
+    options: ['2007', '2008', '2009', '2010'],
+    correctOption: 1,
+    explanation: 'The NIA was constituted by an Act of Parliament (National Investigation Agency Act, 2008) in December 2008 in the aftermath of the 26/11 Mumbai terror attacks to investigate offenses affecting the sovereignty, security, and integrity of India.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q146', examCode: 'ACIO2', year: 2021, shift: 'Shift 2',
+    subject: 'Reasoning', topic: 'Puzzles',
+    questionText: 'In a secret code, the letters of the word "DEFENCE" are rearranged according to their alphabetical order, and each letter is replaced by its reverse alphabet counterpart (A↔Z, B↔Y). What is the resulting code?',
+    options: ['WWVUMXW', 'WWVTRXW', 'WWVURNX', 'WVWUMXW'],
+    correctOption: 0,
+    explanation: 'DEFENCE in alphabetical order: C, D, E, E, E, F, N. Reversing each (A↔Z, B↔Y, C↔X, D↔W, E↔V, F↔U, N↔M): C→X, D→W, E→V, E→V, E→V, F→U, N→M. The transformed string contains W, W, V, U, M, X, W (WWVUMXW).',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q147', examCode: 'ACIO2', year: 2021,
+    subject: 'Quantitative Aptitude', topic: 'Number System',
+    questionText: 'What is the unit digit in the expansion of (7⁹⁵ - 3⁵⁸)?',
+    options: ['0', '4', '6', '7'],
+    correctOption: 1,
+    explanation: 'Cyclicity of 7 is 4: 95 mod 4 = 3, so unit digit of 7⁹⁵ is unit digit of 7³ = 3. Cyclicity of 3 is 4: 58 mod 4 = 2, so unit digit of 3⁵⁸ is unit digit of 3² = 9. Unit digit of (..3 - ..9) = (13 - 9) = 4.',
+    difficulty: 'medium'
+  },
+
+  // ===== RRB NTPC =====
+  {
+    id: 'q148', examCode: 'RRB_NTPC', year: 2021, shift: 'Shift 1',
+    subject: 'General Science', topic: 'Physics',
+    questionText: 'What is the escape velocity from the surface of the Earth for any body?',
+    options: ['9.8 km/s', '11.2 km/s', '8.4 km/s', '15.6 km/s'],
+    correctOption: 1,
+    explanation: 'Escape velocity from the surface of Earth is v_e = √(2gR) ≈ √(2 × 9.8 × 6.4 × 10⁶) ≈ 11.2 km/s.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q149', examCode: 'RRB_NTPC', year: 2021, shift: 'Shift 2',
+    subject: 'General Awareness', topic: 'Indian Railways',
+    questionText: 'Where is the National Rail and Transportation Institute (now Gati Shakti Vishwavidyalaya) situated?',
+    options: ['Varanasi', 'Vadodara', 'Secunderabad', 'Kharagpur'],
+    correctOption: 1,
+    explanation: 'India\'s first railway university, Gati Shakti Vishwavidyalaya (formerly NRTI), was established in Vadodara, Gujarat in 2018.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q150', examCode: 'RRB_NTPC', year: 2022,
+    subject: 'Mathematics', topic: 'Mensuration',
+    questionText: 'The perimeter of a rectangular field is 120 meters and the difference between two adjacent sides is 20 meters. What is the area of the field?',
+    options: ['800 m²', '700 m²', '900 m²', '600 m²'],
+    correctOption: 0,
+    explanation: '2(L + B) = 120 ⇒ L + B = 60. Given L - B = 20. Adding both: 2L = 80 ⇒ L = 40 m, B = 20 m. Area = L × B = 40 × 20 = 800 m².',
+    difficulty: 'easy'
+  },
+
+  // ===== RBI GRADE B =====
+  {
+    id: 'q151', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Finance & Economics', topic: 'Banking & Financial Markets',
+    questionText: 'Under the Basel III framework, what is the minimum Common Equity Tier 1 (CET1) capital ratio requirement for banks in India as prescribed by the RBI?',
+    options: ['4.5%', '5.5%', '7.0%', '8.0%'],
+    correctOption: 1,
+    explanation: 'RBI mandates a minimum Common Equity Tier 1 (CET1) ratio of 5.5% of risk-weighted assets (which is 1% higher than the Basel Committee minimum of 4.5%), plus a Capital Conservation Buffer of 2.5%.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q152', examCode: 'RBI_GRADEB', year: 2023,
+    subject: 'Finance & Economics', topic: 'Economics & Social Issues',
+    questionText: 'Which curve illustrates the theoretical relationship between rates of taxation and the resulting levels of government revenue?',
+    options: ['Phillips Curve', 'Lorenz Curve', 'Laffer Curve', 'Kuznets Curve'],
+    correctOption: 2,
+    explanation: 'The Laffer Curve represents the relationship between tax rates and tax revenue, suggesting that beyond an optimal tax rate, higher tax rates discourage economic activity and reduce total revenue.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q153', examCode: 'RBI_GRADEB', year: 2022,
+    subject: 'General Awareness', topic: 'Monetary Policy',
+    questionText: 'The Standing Deposit Facility (SDF) introduced by the RBI in 2022 serves what primary operational role?',
+    options: [
+      'To absorb liquidity from commercial banks without requiring government collateral',
+      'To provide emergency liquidity against foreign currency assets',
+      'To set lending rates for priority sector infrastructure projects',
+      'To replace the overnight Call Money market'
+    ],
+    correctOption: 0,
+    explanation: 'The Standing Deposit Facility (SDF) allows the RBI to absorb surplus liquidity from the banking system at an uncollateralized rate (without having to pledge government securities).',
+    difficulty: 'medium'
+  },
+
+  // ===== NABARD GRADE A =====
+  {
+    id: 'q154', examCode: 'NABARD_GRADEA', year: 2023,
+    subject: 'Agriculture & Rural Dev', topic: 'Soil Science & Agronomy',
+    questionText: 'Which essential plant macronutrient is primarily responsible for energy transfer (ATP synthesis) and root development in crops?',
+    options: ['Nitrogen (N)', 'Phosphorus (P)', 'Potassium (K)', 'Calcium (Ca)'],
+    correctOption: 1,
+    explanation: 'Phosphorus (P) is vital for plant energy storage and transfer (ATP/ADP molecules), root development, flowering, and seed formation.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q155', examCode: 'NABARD_GRADEA', year: 2023,
+    subject: 'Agriculture & Rural Dev', topic: 'Rural Finance & Schemes',
+    questionText: 'Under the Kisan Credit Card (KCC) scheme, what is the maximum loan limit available with interest subvention for working capital in agriculture and allied activities?',
+    options: ['₹1.5 Lakh', '₹2.0 Lakh', '₹3.0 Lakh', '₹5.0 Lakh'],
+    correctOption: 2,
+    explanation: 'Under KCC, short-term crop loans up to ₹3 lakh are eligible for a 2% interest subvention and a 3% prompt repayment incentive, reducing the effective interest rate to 4% per annum.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q156', examCode: 'NABARD_GRADEA', year: 2022,
+    subject: 'Finance & Economics', topic: 'Microfinance & SHG',
+    questionText: 'The SHG-Bank Linkage Programme (SBLP), the world\'s largest microfinance initiative, was launched by NABARD in which year?',
+    options: ['1982', '1992', '1998', '2005'],
+    correctOption: 1,
+    explanation: 'NABARD launched the Self Help Group–Bank Linkage Programme (SHG-BLP) as a pilot project in 1992, which has evolved into a cornerstone of financial inclusion in rural India.',
+    difficulty: 'hard'
+  },
+
+  // ===== SEBI GRADE A =====
+  {
+    id: 'q157', examCode: 'SEBI_GRADEA', year: 2023,
+    subject: 'Securities Markets', topic: 'Securities Laws',
+    questionText: 'According to SEBI (Prohibition of Insider Trading) Regulations, a "Connected Person" includes any person who has been associated with the company in any capacity during which period prior to the concerned act?',
+    options: ['3 months', '6 months', '1 year', '2 years'],
+    correctOption: 1,
+    explanation: 'Under SEBI (PIT) Regulations, 2015, a connected person is someone associated with the company in the 6 months prior to the concerned act of insider trading.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q158', examCode: 'SEBI_GRADEA', year: 2023,
+    subject: 'Securities Markets', topic: 'Capital Market Instruments',
+    questionText: 'What is the settlement cycle currently followed for equity trades in India on major stock exchanges (NSE/BSE)?',
+    options: ['T+3', 'T+2', 'T+1', 'T+0 for select scrips and T+1 standard'],
+    correctOption: 3,
+    explanation: 'India transitioned fully to the T+1 settlement cycle in January 2023, and SEBI introduced an optional beta version of T+0 (same-day) settlement for a limited set of liquid scrips in March 2024.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q159', examCode: 'SEBI_GRADEA', year: 2022,
+    subject: 'Finance & Economics', topic: 'Corporate Governance',
+    questionText: 'Under SEBI LODR Regulations, at least what percentage of the Board of Directors of a top listed company must comprise Independent Directors if the Chairperson is an executive director?',
+    options: ['One-third (33%)', 'Half (50%)', 'Two-thirds (66%)', 'One-fourth (25%)'],
+    correctOption: 1,
+    explanation: 'Under Regulation 17 of SEBI (Listing Obligations and Disclosure Requirements), if the Chairperson is an executive director or a promoter, at least 50% (half) of the Board must consist of Independent Directors.',
+    difficulty: 'hard'
+  },
+
+  // ===== LIC AAO =====
+  {
+    id: 'q160', examCode: 'LIC_AAO', year: 2023,
+    subject: 'Insurance', topic: 'Insurance Principles',
+    questionText: 'Which insurance principle states that in the event of a loss, the insured should be restored to approximately the same financial position as existed immediately before the loss occurred?',
+    options: ['Principle of Subrogation', 'Principle of Indemnity', 'Principle of Insurable Interest', 'Principle of Contribution'],
+    correctOption: 1,
+    explanation: 'The Principle of Indemnity ensures that an insurance policy compensates the policyholder for the actual loss suffered, without providing a profit or financial gain from the loss.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q161', examCode: 'LIC_AAO', year: 2023,
+    subject: 'Insurance', topic: 'Life Insurance Products',
+    questionText: 'A life insurance policy that pays the sum assured only upon the death of the life assured within a specified term (with no maturity payout if the policyholder survives) is known as:',
+    options: ['Endowment Policy', 'Money-Back Policy', 'Term Insurance Policy', 'Whole Life Policy'],
+    correctOption: 2,
+    explanation: 'A Term Insurance Policy is a pure risk cover product that provides death benefit payout to the nominees only if the insured dies during the policy term, with no survival/maturity returns.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q162', examCode: 'LIC_AAO', year: 2022,
+    subject: 'Quantitative Aptitude', topic: 'Probability',
+    questionText: 'The mortality rate for a particular age bracket is 0.004. What is the probability that an individual in this bracket survives the year?',
+    options: ['0.996', '0.960', '0.006', '0.994'],
+    correctOption: 0,
+    explanation: 'Survival Probability = 1 - Mortality Probability = 1 - 0.004 = 0.996 (or 99.6%).',
+    difficulty: 'easy'
+  },
+
+  // ===== UPSC APFC =====
+  {
+    id: 'q163', examCode: 'UPSC_APFC', year: 2023,
+    subject: 'General Studies', topic: 'Labour Laws & Industrial Relations',
+    questionText: 'Under the Employees\' Provident Funds and Miscellaneous Provisions Act, 1952, what is the standard statutory rate of employee contribution to the EPF for covered establishments?',
+    options: ['8.33% of basic wage + DA', '10% of basic wage + DA', '12% of basic wage + DA', '15% of basic wage + DA'],
+    correctOption: 2,
+    explanation: 'Under the EPF Act, 1952, both the employee and employer contribute 12% of the basic wages, dearness allowance (DA), and retaining allowance to the provident fund account.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q164', examCode: 'UPSC_APFC', year: 2023,
+    subject: 'Accounts', topic: 'Accounting Principles',
+    questionText: 'Which accounting convention states that revenue should only be recorded when it is earned, and expenses recognized when they are incurred, regardless of when cash is received or paid?',
+    options: ['Cash Basis Accounting', 'Accrual Accounting', 'Conservatism Principle', 'Full Disclosure Principle'],
+    correctOption: 1,
+    explanation: 'Accrual Accounting recognizes economic events by matching revenues to the period in which they are earned and expenses to the period in which they are incurred (matching principle).',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q165', examCode: 'UPSC_APFC', year: 2023,
+    subject: 'General Studies', topic: 'Social Security in India',
+    questionText: 'Under the Payment of Gratuity Act, 1972, what is the minimum continuous service period required for an employee to become eligible for gratuity on resignation or retirement?',
+    options: ['3 years', '5 years', '7 years', '10 years'],
+    correctOption: 1,
+    explanation: 'Section 4(1) of the Payment of Gratuity Act, 1972 mandates that an employee must have rendered continuous service for not less than 5 years in an establishment to be eligible for gratuity (except in cases of death or disablement).',
+    difficulty: 'medium'
+  },
+
+  // ===== IRDA =====
+  {
+    id: 'q166', examCode: 'IRDA', year: 2023,
+    subject: 'General Awareness', topic: 'Insurance Regulations',
+    questionText: 'The Insurance Regulatory and Development Authority of India (IRDAI) is headquartered in which city?',
+    options: ['Mumbai', 'New Delhi', 'Hyderabad', 'Kolkata'],
+    correctOption: 2,
+    explanation: 'IRDAI was established following the Malhotra Committee recommendations and was relocated from New Delhi to Hyderabad, Telangana in 2001.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q167', examCode: 'IRDA', year: 2023,
+    subject: 'General Awareness', topic: 'Solvency & Actuarial Norms',
+    questionText: 'What is the minimum Solvency Margin (Solvency Ratio) that insurance companies in India are mandatorily required to maintain as per IRDAI regulations?',
+    options: ['100%', '125%', '150%', '200%'],
+    correctOption: 2,
+    explanation: 'IRDAI mandates a minimum Required Solvency Margin ratio of 1.5 (or 150%) for both life and general insurers to ensure they hold adequate financial buffer above liabilities.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q168', examCode: 'IRDA', year: 2022,
+    subject: 'English', topic: 'Error Spotting',
+    questionText: 'Find the error in the sentence:\n"The ombudsman has directed (A) / the insurance firm to settle (B) / the claim in thirty days (C) / of receiving the document (D)."',
+    options: ['A', 'B', 'C', 'D'],
+    correctOption: 2,
+    explanation: 'The standard idiomatic prepositional phrase for time limit is "within thirty days" rather than "in thirty days". Section C contains the error.',
+    difficulty: 'medium'
+  },
+
+  // ===== UPSC CSE (Extended) =====
+  {
+    id: 'q169', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'History', topic: 'Ancient & Medieval India',
+    questionText: 'With reference to the Vijayanagara Empire, which king composed the famous Telugu treatise on statecraft titled "Amuktamalyada"?',
+    options: ['Harihara I', 'Bukkaraya I', 'Krishnadevaraya', 'Devaraya II'],
+    correctOption: 2,
+    explanation: 'Sri Krishnadevaraya (ruled 1509–1529 CE), the illustrious emperor of the Tuluva dynasty of Vijayanagara, composed the epic poem "Amuktamalyada" detailing administration, warfare, and devotion to Lord Vishnu.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q170', examCode: 'UPSC_CSE', year: 2023,
+    subject: 'Indian Polity', topic: 'Emergency Provisions',
+    questionText: 'Which Fundamental Rights guaranteed under the Indian Constitution CANNOT be suspended even during a National Emergency proclaimed under Article 352?',
+    options: [
+      'Article 14 and Article 19',
+      'Article 20 and Article 21',
+      'Article 21 and Article 22',
+      'Article 19 and Article 20'
+    ],
+    correctOption: 1,
+    explanation: 'The 44th Amendment Act, 1978 amended Article 359 to stipulate that the right to move the court for the enforcement of fundamental rights under Article 20 (protection in respect of conviction for offenses) and Article 21 (protection of life and personal liberty) cannot be suspended during an Emergency.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q171', examCode: 'UPSC_CSE', year: 2022,
+    subject: 'Environment & Ecology', topic: 'Conservation',
+    questionText: 'Which of the following wetland sites in India was designated as the first Ramsar Site in the country in 1981 alongside Keoladeo National Park?',
+    options: ['Chilika Lake', 'Wular Lake', 'Loktak Lake', 'Vembanad Lake'],
+    correctOption: 0,
+    explanation: 'Chilika Lake in Odisha and Keoladeo National Park in Rajasthan were designated as the first Indian wetlands of international importance under the Ramsar Convention in October 1981.',
+    difficulty: 'medium'
+  },
+
+  // ===== SBI PO (Extended) =====
+  {
+    id: 'q172', examCode: 'SBI_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Number Series',
+    questionText: 'Find the next term in the series: 7, 9, 19, 59, 239, ?',
+    options: ['1199', '1189', '1209', '1195'],
+    correctOption: 0,
+    explanation: 'Pattern: (7 × 1) + 2 = 9; (9 × 2) + 1 = 19; (19 × 3) + 2 = 59; (59 × 4) + 1 = 239; (239 × 5) + 2 = 1195 + 2 = 1199.',
+    difficulty: 'hard'
+  },
+  {
+    id: 'q173', examCode: 'SBI_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Seating Arrangement',
+    questionText: 'Seven people J, K, L, M, N, O, P sit in a straight line facing North. L sits 3rd to the right of J. Neither J nor L sits at the extreme ends. How many people sit between K and M if K sits at an extreme left end?',
+    options: ['2', '3', '4', 'Cannot be determined without additional conditions'],
+    correctOption: 3,
+    explanation: 'With positions 1 to 7: J can be at position 2 or 3 (so L is at position 5 or 6). With K at position 1, M\'s position is not uniquely fixed by the given data alone.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q174', examCode: 'SBI_PO', year: 2022,
+    subject: 'English', topic: 'Para Jumbles',
+    questionText: 'Which of the following phrases is grammatically correct and best substitutes the bracketed part:\n"The inflation rate has surged [on account of escalating] crude oil prices in global markets."',
+    options: [
+      'on account with escalating',
+      'due to escalating (No improvement needed)',
+      'in consequence to escalating',
+      'owing for escalating'
+    ],
+    correctOption: 1,
+    explanation: '"On account of escalating" or "due to escalating" are both grammatically sound; the original expression is correct and requires no mandatory alteration.',
+    difficulty: 'easy'
+  },
+
+  // ===== IBPS PO (Extended) =====
+  {
+    id: 'q175', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Quantitative Aptitude', topic: 'Compound Interest',
+    questionText: 'A sum of ₹12,000 is invested at 20% per annum compound interest for 1.5 years, compounded semi-annually. What is the total compound interest earned?',
+    options: ['₹3,972', '₹3,840', '₹4,120', '₹3,750'],
+    correctOption: 0,
+    explanation: 'Rate per half-year = 20/2 = 10%. Number of half-years = 1.5 × 2 = 3 periods. Amount = 12000 × (1.10)³ = 12000 × 1.331 = ₹15,972. Compound Interest = 15972 - 12000 = ₹3,972.',
+    difficulty: 'medium'
+  },
+  {
+    id: 'q176', examCode: 'IBPS_PO', year: 2023,
+    subject: 'Reasoning', topic: 'Inequality',
+    questionText: 'Statements: X ≤ Y < Z; W ≥ V > Z; U = V\nConclusions:\nI. U > X\nII. W > Y',
+    options: ['Only conclusion I is true', 'Only conclusion II is true', 'Both conclusions I and II are true', 'Neither conclusion is true'],
+    correctOption: 2,
+    explanation: 'Combining relations: U = V < W and W ≥ V > Z > Y ≥ X. Comparing U and X: U = V > Z > X ⇒ U > X (I is true). Comparing W and Y: W ≥ V > Z > Y ⇒ W > Y (II is true). Both are true.',
+    difficulty: 'easy'
+  },
+  {
+    id: 'q177', examCode: 'IBPS_PO', year: 2022,
+    subject: 'English', topic: 'Reading Comprehension',
+    questionText: 'What is the term for financial technology companies that facilitate automated, digital algorithmic lending with minimal human intervention?',
+    options: ['Neo-banks', 'Peer-to-Peer (P2P) Lending & Robo-Advisors', 'Clearing Corporations', 'Asset Reconstruction Companies'],
+    correctOption: 1,
+    explanation: 'Algorithmic lending and automated portfolio rebalancing platforms are categorized under digital fintech Robo-Advisors and automated P2P credit scoring systems.',
+    difficulty: 'easy'
+  },
 ];
 
 // ========== TREND DATA (Pre-computed) ==========
