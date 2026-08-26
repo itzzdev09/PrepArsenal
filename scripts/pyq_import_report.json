@@ -2,78 +2,19 @@
   "batch": "pdf_pyq_2026_08_26",
   "extractor": "deterministic (scripts/pyq_parser.py)",
   "exams": {
-    "SSC_CGL": {
-      "papers": [
-        {
-          "label": "SSC CGL 2017 General Awareness (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2017 English (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2017 Quantitative Aptitude (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2019/10/Quantitative-Aptitude-2017-SSC-CGL-Previous-Year-Question-Paper.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2017 Reasoning (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2019/10/Reasoning-2017-SSC-CGL-Previous-Year-Question-Paper.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2018 Reasoning Ability (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2018 General Awareness (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-General-Awareness.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2018 Quantitative Aptitude (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Quantitative-Aptitude.pdf",
-          "questions": 0,
-          "answered": 0
-        },
-        {
-          "label": "SSC CGL 2018 English Comprehension (BYJU'S)",
-          "url": "https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-English-Comprehension.pdf",
-          "questions": 0,
-          "answered": 0
-        }
-      ],
-      "total_questions": 0
-    },
     "ACIO2": {
       "papers": [
         {
           "label": "IB ACIO Grade-II Executive Tier I 2021 (Disha)",
           "url": "https://freedownloads.dishapublication.com/wp-content/uploads/2024/01/IB-ACIO-Solved-Paper-2021_interior.pdf",
-          "questions": 77,
+          "questions": 76,
           "answered": 76
         }
       ],
-      "total_questions": 77
+      "total_questions": 76
     },
     "RRB_NTPC": {
       "papers": [
-        {
-          "label": "RRB NTPC 2016 CBT1 (Adda247)",
-          "url": "https://wpassets.adda247.com/wp-content/uploads/multisite/sites/2/2020/12/15111519/RRB-NTPC-Previous-Year-Paper-07-Hindi.pdf",
-          "questions": 91,
-          "answered": 0
-        },
         {
           "label": "RRB NTPC Mock Solutions Compilation (SSCAdda)",
           "url": "https://www.sscadda.com/wp-content/uploads/multisite/sites/2/2020/10/31140026/Formatted-RRB-NTPC-Previous-Year-Question-Paper-Mock-Solutions-2.pdf",
@@ -87,7 +28,7 @@
           "answered": 0
         }
       ],
-      "total_questions": 93
+      "total_questions": 2
     },
     "RBI_GRADEB": {
       "papers": [
@@ -106,24 +47,24 @@
         {
           "label": "RBI Grade B 2023 Phase 1&2 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/RBI-Grade-B-PYQ-2023-Phase-12.pdf",
-          "questions": 181,
+          "questions": 180,
           "answered": 180
         }
       ],
-      "total_questions": 545
+      "total_questions": 544
     },
     "NABARD_GRADEA": {
       "papers": [
         {
           "label": "NABARD Grade A 2025 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2025-PYQs-Book.pdf",
-          "questions": 41,
+          "questions": 40,
           "answered": 40
         },
         {
           "label": "NABARD Grade A 2024 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/NABARD-Grade-A-Phase-1-2-2024-PYQs-Book.pdf",
-          "questions": 41,
+          "questions": 40,
           "answered": 40
         },
         {
@@ -139,14 +80,14 @@
           "answered": 24
         }
       ],
-      "total_questions": 146
+      "total_questions": 144
     },
     "SEBI_GRADEA": {
       "papers": [
         {
           "label": "SEBI Grade A Phase 1 PYQ Book (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/06/SEBI-Grade-A-Phase-1-Previous-Year-Papers-Book.pdf",
-          "questions": 21,
+          "questions": 20,
           "answered": 20
         },
         {
@@ -156,7 +97,7 @@
           "answered": 10
         }
       ],
-      "total_questions": 31
+      "total_questions": 30
     },
     "LIC_AAO": {
       "papers": [
@@ -186,7 +127,7 @@
         {
           "label": "UPSC EPFO APFC 2023 (Edutap)",
           "url": "https://edutap.in/wp-content/uploads/2026/05/UPSC-EPFO-APFC-2023-PYQ-Book.pdf",
-          "questions": 100,
+          "questions": 99,
           "answered": 99
         },
         {
@@ -198,18 +139,18 @@
         {
           "label": "UPSC EPFO APFC topic-wise solved paper (Disha)",
           "url": "https://freedownloads.dishapublication.com/wp-content/uploads/2025/03/UPSC-EPFO-APFC-Previous-Year-Question-Paper-processedlightpdf.com-output-output-output-output-1.pdf",
-          "questions": 90,
+          "questions": 0,
           "answered": 0
         }
       ],
-      "total_questions": 232
+      "total_questions": 187
     },
     "IRDA": {
       "papers": [
         {
           "label": "IRDA Assistant Manager Insurance PYQ 2023 (Adda247)",
           "url": "https://wpassets.adda247.com/wp-content/uploads/multisite/2023/04/17171403/Insurance-Questions-for-IRDA-Assistant-Manager-Exam-2023.pdf",
-          "questions": 198,
+          "questions": 196,
           "answered": 196
         },
         {
@@ -219,7 +160,7 @@
           "answered": 85
         }
       ],
-      "total_questions": 283
+      "total_questions": 281
     }
   }
 }

@@ -10,7 +10,8 @@ export default function GkReviewPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [items, setItems] = useState<GkDailyItem[]>([]);
-  const [edits, setEdits] = useState<Record<string, { summary: string; question_text: string; explanation: string }>>({});
+  type GkEdit = { summary: string; question_text: string; explanation: string; options: string[]; correct_option: number };
+  const [edits, setEdits] = useState<Record<string, GkEdit>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const supabase = createClient();
@@ -33,6 +34,8 @@ export default function GkReviewPage() {
         summary: item.summary,
         question_text: item.question_text,
         explanation: item.explanation,
+        options: [...item.options],
+        correct_option: item.correct_option,
       }])));
     }
     init();

@@ -16,7 +16,10 @@ Usage:
     python scripts/pdf_pyq_pipeline.py --exam SSC_CGL       # just one exam
     python scripts/pdf_pyq_pipeline.py --dry-run            # parse + report, no writes
     python scripts/pdf_pyq_pipeline.py --target supabase    # write to Supabase instead
-    python scripts/pdf_pyq_pipeline.py --require-answers    # skip questions with no answer key
+    python scripts/pdf_pyq_pipeline.py --allow-unanswered   # keep key-less questions too
+
+Questions whose answer key could not be located are dropped by default — they
+cannot be practised or scored, so importing them only inflates counts.
 """
 
 import argparse
@@ -42,21 +45,18 @@ IMPORT_BATCH = f"pdf_pyq_{time.strftime('%Y_%m_%d')}"
 # (ssc.nic.in) and reputable third-party aggregators — provenance is recorded on
 # every imported question via source_url / source_label / source_type.
 PAPERS = {
-    'SSC_CGL': [
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/General-Awareness-2017-SSC-CGL-Previous-Year-Question-Paper-.pdf', 'year': 2017, 'label': "SSC CGL 2017 General Awareness (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/English-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 English (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/Quantitative-Aptitude-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 Quantitative Aptitude (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2019/10/Reasoning-2017-SSC-CGL-Previous-Year-Question-Paper.pdf', 'year': 2017, 'label': "SSC CGL 2017 Reasoning (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Reasoning-Ability.pdf', 'year': 2018, 'label': "SSC CGL 2018 Reasoning Ability (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-General-Awareness.pdf', 'year': 2018, 'label': "SSC CGL 2018 General Awareness (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-Quantitative-Aptitude.pdf', 'year': 2018, 'label': "SSC CGL 2018 Quantitative Aptitude (BYJU'S)", 'source_type': 'third_party'},
-        {'url': 'https://cdn1.byjus.com/wp-content/uploads/2020/09/SSC-CGL-Question-Paper-2018-English-Comprehension.pdf', 'year': 2018, 'label': "SSC CGL 2018 English Comprehension (BYJU'S)", 'source_type': 'third_party'},
-    ],
+    # SSC CGL has no automatable source. Every surveyed PDF is either a scanned
+    # image with no text layer (BYJU'S, Oswaal) or an SSC/Prepp candidate response
+    # sheet, which records "Chosen Option" — what a candidate picked — but never
+    # the official key. Both are unusable without OCR plus a separate key source.
+    # SSC CGL questions therefore come from the curated importers instead:
+    # scripts/import_curated_pyq_samples.py and import_curated_pyq_batch2.py.
     'ACIO2': [
         {'url': 'https://freedownloads.dishapublication.com/wp-content/uploads/2024/01/IB-ACIO-Solved-Paper-2021_interior.pdf', 'year': 2021, 'label': 'IB ACIO Grade-II Executive Tier I 2021 (Disha)', 'source_type': 'third_party'},
     ],
     'RRB_NTPC': [
-        {'url': 'https://wpassets.adda247.com/wp-content/uploads/multisite/sites/2/2020/12/15111519/RRB-NTPC-Previous-Year-Paper-07-Hindi.pdf', 'year': 2016, 'label': 'RRB NTPC 2016 CBT1 (Adda247)', 'source_type': 'third_party'},
+        # The Adda247 "RRB-NTPC-Previous-Year-Paper-07-Hindi.pdf" parses cleanly
+        # but is Hindi-medium and carries no key; the app is English-only.
         {'url': 'https://www.sscadda.com/wp-content/uploads/multisite/sites/2/2020/10/31140026/Formatted-RRB-NTPC-Previous-Year-Question-Paper-Mock-Solutions-2.pdf', 'year': 2019, 'label': 'RRB NTPC Mock Solutions Compilation (SSCAdda)', 'source_type': 'third_party'},
         {'url': 'https://www.oswaal360.com/pluginfile.php/10939/mod_folder/content/0/RRB%20-%20NTPC/RRB%20-%20NTPC%20SOLVED%20PAPER%20FEB.%202021.pdf', 'year': 2021, 'label': 'RRB NTPC Feb 2021 Solved Paper (Oswaal)', 'source_type': 'third_party'},
     ],
@@ -183,8 +183,10 @@ def main():
     parser.add_argument('--exam', help='Only process this exam code (e.g. SSC_CGL)')
     parser.add_argument('--dry-run', action='store_true', help='Parse and report only, skip writes')
     parser.add_argument('--target', choices=['turso', 'supabase'], default='turso', help='Where to write questions')
-    parser.add_argument('--require-answers', action='store_true', help='Drop questions whose answer key could not be found')
+    parser.add_argument('--allow-unanswered', action='store_true',
+                        help='Keep questions whose answer key could not be found (unpractisable; off by default)')
     args = parser.parse_args()
+    require_answers = not args.allow_unanswered
 
     exam_codes = [args.exam] if args.exam else list(PAPERS.keys())
 
@@ -204,7 +206,7 @@ def main():
         exam_rows: dict[str, dict] = {}
         paper_reports = []
         for source in papers:
-            rows = process_paper(exam_code, source, args.require_answers)
+            rows = process_paper(exam_code, source, require_answers)
             for row in rows:
                 exam_rows.setdefault(row['_dedupe_key'], row)
             paper_reports.append({
@@ -250,6 +252,10 @@ def _open_writer(target: str):
     db = get_db_client()
     for topic_id, (name, subject) in TOPICS.items():
         db.table('topics').upsert({'id': topic_id, 'name': name, 'subject': subject}).execute()
+
+    # Supabase question ids are generated server-side, so a re-run cannot upsert
+    # over its own previous output. Clear this batch first to keep runs idempotent.
+    db.table('questions').delete().contains('metadata', {'import_batch': IMPORT_BATCH}).execute()
 
     def write(rows: list[dict]) -> int:
         payload = [

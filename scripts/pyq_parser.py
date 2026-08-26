@@ -60,7 +60,7 @@ TOPIC_KEYWORDS: dict[str, list[tuple[str, int]]] = {
     'qa_profit_loss': [('profit', 3), ('loss', 2), ('cost price', 4), ('selling price', 4), ('marked price', 4), ('discount', 3), ('shopkeeper', 3)],
     'qa_interest': [('compound interest', 5), ('simple interest', 5), ('per annum', 2), ('instalment', 3), ('principal', 2), ('compounded', 3)],
     'qa_tsd': [('speed', 3), ('km/h', 4), ('kmph', 4), ('upstream', 4), ('downstream', 4), ('train', 2), ('boat', 3), ('distance', 2), ('overtake', 3)],
-    'qa_time_work': [('days can', 3), ('time and work', 5), ('pipe', 3), ('cistern', 4), ('work together', 4), ('complete the work', 5), ('finish the work', 5)],
+    'qa_time_work': [('days can', 3), ('time and work', 5), ('pipe', 3), ('cistern', 4), ('work together', 4), ('complete the work', 5), ('finish the work', 5), ('piece of work', 5), ('same work in', 4), ('men or', 3), ('women can', 3), ('efficiency', 3)],
     'qa_average': [('average', 4), ('mean of', 3)],
     'qa_percentage': [('percent', 3), ('%', 1), ('increase by', 2), ('decrease by', 2)],
     'qa_trigonometry': [('sin', 3), ('cos', 3), ('tan', 3), ('cot', 3), ('sec', 2), ('cosec', 3), ('theta', 3), ('trigonometric', 5)],
@@ -247,11 +247,26 @@ def build_answer_map(solutions_text: str, whole_text: str) -> tuple[dict[int, st
     return answers, explanations
 
 
+def _compile_keyword(keyword: str) -> re.Pattern:
+    """Match a keyword on word boundaries. Plain substring matching silently
+    misfires on short maths tokens — 'sin' inside "using", 'sec' inside
+    "second", 'tan' inside "distance" — which mislabels whole papers."""
+    escaped = re.escape(keyword)
+    left = r'\b' if keyword[0].isalnum() else ''
+    right = r'\b' if keyword[-1].isalnum() else ''
+    return re.compile(left + escaped + right, re.I)
+
+
+_KEYWORD_PATTERNS: dict[str, list[tuple[re.Pattern, int]]] = {
+    topic_id: [(_compile_keyword(kw), weight) for kw, weight in keywords]
+    for topic_id, keywords in TOPIC_KEYWORDS.items()
+}
+
+
 def _score_topic(text: str) -> tuple[str, int]:
-    lowered = text.lower()
     best_topic, best_score = '', 0
-    for topic_id, keywords in TOPIC_KEYWORDS.items():
-        score = sum(weight for kw, weight in keywords if kw in lowered)
+    for topic_id, patterns in _KEYWORD_PATTERNS.items():
+        score = sum(weight for pattern, weight in patterns if pattern.search(text))
         if score > best_score:
             best_topic, best_score = topic_id, score
     return best_topic, best_score
