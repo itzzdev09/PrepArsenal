@@ -18,6 +18,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { exams } from '@/lib/data';
+import { getExamLogo } from '@/lib/exam-logos';
 
 type Feature = {
   icon: ElementType;
@@ -93,16 +94,6 @@ const steps = [
 const rotations = ['-1.2deg', '1deg', '-0.6deg', '1.3deg', '-1deg', '0.8deg'];
 const wobbly = '255px 18px 225px 22px / 20px 225px 24px 255px';
 const wobblySoft = '32px 18px 38px 20px / 20px 34px 18px 36px';
-const examLogos: Record<string, string> = {
-  SSC_CGL: '/ssclogo.jpg',
-  RRB_NTPC: '/rrbntpclogo.jpg',
-  RBI_GRADEB: '/rbilogo.jpg',
-  NABARD_GRADEA: '/nabardlogo.jpg',
-  SEBI_GRADEA: '/sebilogo.jpg',
-  LIC_AAO: '/liclogo.jpg',
-  UPSC_APFC: '/upsclogo.jpg',
-  IRDA: '/irdailogo.jpg',
-};
 
 export default function LandingPage() {
   return (
@@ -858,9 +849,9 @@ export default function LandingPage() {
                   } as SketchStyle}
                   title={`${exam.fullName}: ${exam.totalQuestions} questions in ${exam.totalTime} minutes`}
                 >
-                  <span className={`exam-icon ${examLogos[exam.code] ? '' : 'fallback'}`}>
-                    {examLogos[exam.code] && (
-                      <Image src={examLogos[exam.code]} alt="" width={22} height={22} />
+                  <span className={`exam-icon ${getExamLogo(exam.code) ? '' : 'fallback'}`}>
+                    {getExamLogo(exam.code) && (
+                      <Image src={getExamLogo(exam.code)!} alt="" width={22} height={22} />
                     )}
                   </span>
                   <span>{exam.name}</span>
