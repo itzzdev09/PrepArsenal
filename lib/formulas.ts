@@ -20,7 +20,7 @@ export interface Formula {
 
 export const FORMULA_DB: Formula[] = [
   // =========================================================================
-  // 1. SPEED, TIME & MOTION (Boats & Streams, Trains, Races, Work & Pipes)
+  // 1. SPEED, TIME & MOTION (Boats, Trains, Motion, Races, Work, Pipes)
   // =========================================================================
   {
     id: 'stm-boat-1',
@@ -31,10 +31,10 @@ export const FORMULA_DB: Formula[] = [
     variables: {
       u: 'Speed of boat in still water (km/h or m/s)',
       v: 'Speed of stream / water current (km/h or m/s)',
-      v_downstream: 'Speed with stream direction',
-      v_upstream: 'Speed against stream direction'
+      v_downstream: 'Effective speed when moving with current',
+      v_upstream: 'Effective speed when moving against current'
     },
-    tip: 'Downstream is always faster because the current aids motion; upstream is slower as the current opposes.',
+    tip: 'Downstream speed is always greater than upstream speed by 2v.',
     example: 'Boat speed = 12 km/h, Stream speed = 3 km/h. Downstream = 15 km/h, Upstream = 9 km/h.'
   },
   {
@@ -65,7 +65,7 @@ export const FORMULA_DB: Formula[] = [
       v: 'Speed of stream'
     },
     tip: 'Directly saves solving quadratic equations in time-distance round-trip problems.',
-    example: 'If boat speed = 9 km/h, stream = 3 km/h, round trip takes 3 hrs: D = 3 × (81 - 9) / (2 × 9) = 3 × 72 / 18 = 12 km.'
+    example: 'Boat = 9 km/h, stream = 3 km/h, round trip takes 3 hrs: D = 3 × (81 - 9) / (2 × 9) = 3 × 72 / 18 = 12 km.'
   },
   {
     id: 'stm-boat-4',
@@ -79,7 +79,7 @@ export const FORMULA_DB: Formula[] = [
       v: 'Speed of stream'
     },
     tip: 'Super high-yield shortcut for CAT, SSC CGL & Banking exams.',
-    example: 'If a boat takes 3 times as long to row upstream as downstream: u/v = (3+1)/(3-1) = 4/2 = 2/1. Ratio is 2:1.'
+    example: 'Takes 3 times as long upstream as downstream: u/v = (3+1)/(3-1) = 4/2 = 2/1. Ratio is 2:1.'
   },
   {
     id: 'stm-boat-5',
@@ -93,11 +93,41 @@ export const FORMULA_DB: Formula[] = [
       t_up: 'Time taken by motorboat upstream'
     },
     tip: 'A floating raft has no engine; it moves purely at stream speed v = D/T_drift.',
-    example: 'If boat takes 2 hrs downstream and 6 hrs upstream: T_drift = (2 × 2 × 6) / (6 - 2) = 24 / 4 = 6 hours.'
+    example: 'Boat takes 2 hrs downstream and 6 hrs upstream: T_drift = (2 × 2 × 6) / (6 - 2) = 24 / 4 = 6 hours.'
+  },
+  {
+    id: 'stm-boat-6',
+    name: 'Boats & Streams: Swimmer Crossing River (Shortest Path vs Shortest Time)',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Boats & Streams',
+    content: 'Shortest Time: T_min = Width / u (Aim 90° to bank) | Shortest Path: sin(θ) = v / u (Aim upstream)',
+    variables: {
+      Width: 'Perpendicular width of river',
+      u: 'Swimmer / Boat speed in still water (must be > v for shortest path)',
+      v: 'River current velocity',
+      'θ': 'Angle with upstream normal direction'
+    },
+    tip: 'To reach directly opposite point (zero drift), row at an angle upstream such that net downstream drift is cancelled.',
+    example: 'River width = 400m, swimmer = 5 m/s, stream = 3 m/s. Shortest crossing time = 400 / 5 = 80 seconds.'
+  },
+  {
+    id: 'stm-boat-7',
+    name: 'Boats & Streams: Constant Distance Speed-Time Relation',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Boats & Streams',
+    content: '(u + v) × t_down = (u - v) × t_up  ==>  u × (t_up - t_down) = v × (t_up + t_down)',
+    variables: {
+      u: 'Speed in still water',
+      v: 'Speed of stream',
+      t_down: 'Time taken downstream',
+      t_up: 'Time taken upstream'
+    },
+    tip: 'Equating the distance travelled in both directions provides the fastest solution in variable-ratio problems.',
+    example: 'If t_down = 4 hrs and t_up = 6 hrs: u × (6 - 4) = v × (6 + 4) ==> 2u = 10v ==> u/v = 5/1.'
   },
   {
     id: 'stm-train-1',
-    name: 'Trains: Passing a Stationary Point / Pole / Man',
+    name: 'Trains: Passing a Stationary Point / Pole / Standing Person',
     category: 'Speed, Time & Motion',
     subcategory: 'Trains & Relative Speed',
     content: 'Time = Length_train / Speed_train',
@@ -105,7 +135,7 @@ export const FORMULA_DB: Formula[] = [
       Length_train: 'Length of the train (meters)',
       Speed_train: 'Speed of train (m/s) [Multiply km/h by 5/18]'
     },
-    tip: 'Poles, standing persons, and milestones have negligible width; distance to cover is simply the train’s own length.',
+    tip: 'Poles, trees, and standing persons have negligible width; distance to cover is simply train’s own length.',
     example: 'A 180m train moving at 54 km/h (15 m/s) crosses a lamp post in 180 / 15 = 12 seconds.'
   },
   {
@@ -116,7 +146,7 @@ export const FORMULA_DB: Formula[] = [
     content: 'Time = (Length_train + Length_platform) / Speed_train',
     variables: {
       Length_train: 'Length of train',
-      Length_platform: 'Length of platform/bridge/tunnel',
+      Length_platform: 'Length of platform / bridge / tunnel',
       Speed_train: 'Speed of train in m/s'
     },
     tip: 'Total distance = length of train + length of the stationary obstacle.',
@@ -139,10 +169,10 @@ export const FORMULA_DB: Formula[] = [
   },
   {
     id: 'stm-train-4',
-    name: 'Trains: Crossing & Time to Reach Destination',
+    name: 'Trains: Crossing & Time to Reach Destination After Meeting',
     category: 'Speed, Time & Motion',
     subcategory: 'Trains & Relative Speed',
-    content: 'S1 / S2 = √(T2 / T1)',
+    content: 'S1 / S2 = √(T2 / T1)  |  Distance between stations D = (S1 + S2) × √(T1 × T2)',
     variables: {
       S1: 'Speed of Train 1',
       S2: 'Speed of Train 2',
@@ -153,38 +183,81 @@ export const FORMULA_DB: Formula[] = [
     example: 'Train A takes 4 hrs and Train B takes 9 hrs to reach opposite stations after crossing: S_A / S_B = √(9/4) = 3/2.'
   },
   {
+    id: 'stm-train-5',
+    name: 'Trains: Train Passing a Person Moving in Same / Opposite Direction',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Trains & Relative Speed',
+    content: 'Opposite: Time = L_train / (S_train + S_man)  |  Same Dir: Time = L_train / (S_train - S_man)',
+    variables: {
+      L_train: 'Length of the train',
+      S_train: 'Speed of train in m/s',
+      S_man: 'Speed of walking / running person in m/s'
+    },
+    tip: 'The distance is only the length of the train because the person has no significant length.',
+    example: '150m train at 68 km/h passes a man running at 8 km/h in same direction: Rel speed = 60 km/h = 50/3 m/s. Time = 150/(50/3) = 9s.'
+  },
+  {
+    id: 'stm-train-6',
+    name: 'Trains: Finding Train Length & Speed from Two Platforms',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Trains & Relative Speed',
+    content: 'Speed = (L_plat2 - L_plat1) / (T2 - T1)  |  Length_train = Speed × T1 - L_plat1',
+    variables: {
+      L_plat1: 'Length of platform 1',
+      T1: 'Time taken to cross platform 1',
+      L_plat2: 'Length of platform 2',
+      T2: 'Time taken to cross platform 2'
+    },
+    tip: 'Difference in crossing times is purely due to the difference in platform lengths.',
+    example: 'Train crosses 100m platform in 10s and 200m platform in 15s: Speed = (200-100)/(15-10) = 20 m/s. L_train = 20(10)-100 = 100m.'
+  },
+  {
     id: 'stm-std-1',
     name: 'Speed Conversion Factor (km/h <-> m/s)',
     category: 'Speed, Time & Motion',
     subcategory: 'Speed, Time & Distance',
-    content: '1 km/h = 5/18 m/s  |  1 m/s = 18/5 km/h',
+    content: '1 km/h = 5/18 m/s  |  1 m/s = 18/5 km/h = 3.6 km/h',
     variables: {
       '5/18': '1000m / 3600s = 5/18',
       '18/5': 'Reciprocal conversion factor'
     },
-    tip: 'To remember: km/h is bigger unit -> multiply by smaller fraction 5/18 to get m/s.',
+    tip: 'To remember: km/h is larger unit -> multiply by smaller fraction 5/18 to get m/s.',
     example: '90 km/h = 90 × (5/18) = 25 m/s. 20 m/s = 20 × (18/5) = 72 km/h.'
   },
   {
     id: 'stm-std-2',
-    name: 'Average Speed for Equal Distances',
+    name: 'Average Speed for Equal Distances (Harmonic Mean)',
     category: 'Speed, Time & Motion',
     subcategory: 'Speed, Time & Distance',
-    content: '2 Speeds: Avg = (2 × x × y) / (x + y)  |  3 Speeds: Avg = (3xyz) / (xy + yz + zx)',
+    content: '2 Speeds: Avg = (2xy) / (x + y)  |  3 Speeds: Avg = (3xyz) / (xy + yz + zx)',
     variables: {
-      x: 'Speed for first segment',
-      y: 'Speed for second segment',
-      z: 'Speed for third segment'
+      x: 'Speed for first equal segment',
+      y: 'Speed for second equal segment',
+      z: 'Speed for third equal segment'
     },
     tip: 'Do NOT take simple arithmetic mean (x+y)/2 unless time spent at each speed is identical.',
     example: 'Go at 60 km/h and return at 40 km/h: Avg Speed = (2 × 60 × 40) / (60 + 40) = 4800 / 100 = 48 km/h.'
   },
   {
     id: 'stm-std-3',
+    name: 'Average Speed for Equal Travel Times',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Speed, Time & Distance',
+    content: 'Avg Speed = (S1 + S2 + ... + Sn) / n',
+    variables: {
+      S1: 'Speed during first time interval t',
+      S2: 'Speed during second time interval t',
+      n: 'Number of equal time intervals'
+    },
+    tip: 'When travel times are equal, average speed is the standard arithmetic mean.',
+    example: 'Travels for 2 hrs at 40 km/h and next 2 hrs at 60 km/h: Avg Speed = (40 + 60) / 2 = 50 km/h.'
+  },
+  {
+    id: 'stm-std-4',
     name: 'Early and Late Arrival Distance Shortcut',
     category: 'Speed, Time & Motion',
     subcategory: 'Speed, Time & Distance',
-    content: 'Distance = (S1 × S2) / |S1 - S2| × (ΔTime)',
+    content: 'Distance = [ (S1 × S2) / |S1 - S2| ] × (ΔTime)',
     variables: {
       S1: 'Speed in first instance',
       S2: 'Speed in second instance',
@@ -194,8 +267,35 @@ export const FORMULA_DB: Formula[] = [
     example: 'At 4 km/h late by 15 min, at 6 km/h early by 5 min. Total diff = 20 min = 1/3 hr. D = (4 × 6)/2 × (1/3) = 12 × 1/3 = 4 km.'
   },
   {
+    id: 'stm-std-5',
+    name: 'Stoppage Time per Hour for Trains / Buses',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Speed, Time & Distance',
+    content: 'Stoppage Time per Hour = [ (Speed_without_stops - Speed_with_stops) / Speed_without_stops ] × 60 min',
+    variables: {
+      Speed_without_stops: 'Speed excluding stoppages',
+      Speed_with_stops: 'Average speed including stoppages'
+    },
+    tip: 'Numerator is the distance lost due to stops; dividing by continuous speed gives idle time.',
+    example: 'Bus speed without stops = 54 km/h, with stops = 45 km/h. Stoppage = [(54 - 45)/54] × 60 = (9/54) × 60 = 10 min/hr.'
+  },
+  {
+    id: 'stm-std-6',
+    name: 'Police and Thief Chase / Relative Catching Time',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Speed, Time & Distance',
+    content: 'Time to Catch = Initial_Lead_Distance / (Speed_police - Speed_thief)',
+    variables: {
+      Initial_Lead_Distance: 'Initial gap between thief and policeman',
+      Speed_police: 'Speed of pursuing officer (must be > Speed_thief)',
+      Speed_thief: 'Speed of escaping thief'
+    },
+    tip: 'Distance covered by thief before being caught = Speed_thief × Time to Catch.',
+    example: 'Thief has 200m lead at 10 km/h, police chases at 12 km/h (rel speed = 2 km/h = 5/9 m/s). Time = 200 / (5/9) = 360 sec (6 min).'
+  },
+  {
     id: 'stm-race-1',
-    name: 'Circular Track: First Meeting & Distinct Points',
+    name: 'Circular Track: First Meeting & Distinct Meeting Points',
     category: 'Speed, Time & Motion',
     subcategory: 'Races & Circular Motion',
     content: 'Meeting time = Track_Length / (S1 ± S2)  |  Distinct points = (a ± b) / HCF(a, b)',
@@ -205,11 +305,26 @@ export const FORMULA_DB: Formula[] = [
       S2: 'Speed of runner 2',
       'a : b': 'Speed ratio S1 : S2 in lowest terms'
     },
-    tip: 'Use (+) for opposite directions and (-) for same direction. Meeting at starting point = LCM(L/S1, L/S2).',
+    tip: 'Use (+) for opposite directions and (-) for same direction. First meeting at start point = LCM(L/S1, L/S2).',
     example: 'Speeds ratio 5:3 in opposite directions -> distinct meeting points = (5+3)/1 = 8 points.'
   },
   {
     id: 'stm-race-2',
+    name: 'Linear Races: Head Start in Distance vs Head Start in Time',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Races & Circular Motion',
+    content: 'Head start of x meters: A runs D, B runs (D - x) | Head start of t sec: Time_B = Time_A + t',
+    variables: {
+      D: 'Total length of race track',
+      x: 'Distance head start granted to slower runner',
+      t: 'Time start delay given to faster runner',
+      'Dead Heat': 'Both runners reach finish line at the exact same instant'
+    },
+    tip: 'If A beats B by x meters and t seconds, then Speed of B = x / t.',
+    example: 'In a 100m race, A beats B by 20m or 4 seconds: Speed of B = 20 / 4 = 5 m/s. Time taken by B = 100/5 = 20s, by A = 16s.'
+  },
+  {
+    id: 'stm-race-3',
     name: 'Escalator / Moving Walkway Formula',
     category: 'Speed, Time & Motion',
     subcategory: 'Races & Circular Motion',
@@ -220,8 +335,8 @@ export const FORMULA_DB: Formula[] = [
       v_escalator: 'Escalator mechanical speed (steps/sec)',
       Time: 'Time taken to cover escalator'
     },
-    tip: 'Walking in the direction of escalator motion adds steps (+); walking against subtracts (-).',
-    example: 'If A takes 30 steps in 20s and B takes 40 steps in 15s in direction of motion: solve for N using speed of escalator.'
+    tip: 'Walking in direction of escalator motion adds steps (+); walking against subtracts (-).',
+    example: 'Person A takes 30 steps in 20s, Person B takes 40 steps in 15s in moving direction. Equate N = 30 + 20v = 40 + 15v -> v = 2 -> N = 70.'
   },
   {
     id: 'stm-work-1',
@@ -251,11 +366,11 @@ export const FORMULA_DB: Formula[] = [
       W: 'Amount of work or quantity produced'
     },
     tip: 'Keep all work units (e.g. walls built, length dug, books bound) in the denominator.',
-    example: '12 men working 8 hrs/day dig a trench in 10 days. 16 men working 6 hrs/day will take D2 = (12×8×10)/(16×6) = 10 days.'
+    example: '12 men working 8 hrs/day dig a trench in 10 days. 16 men working 6 hrs/day take D2 = (12×8×10)/(16×6) = 10 days.'
   },
   {
     id: 'stm-work-3',
-    name: 'Efficiency to Time Ratio Inversion',
+    name: 'Work Efficiency to Time Ratio Inversion',
     category: 'Speed, Time & Motion',
     subcategory: 'Time & Work',
     content: 'Efficiency Ratio (E1 : E2) = Time Ratio (T2 : T1)',
@@ -267,6 +382,46 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'If A is 50% more efficient than B, E_A : E_B = 3 : 2, so Time_A : Time_B = 2 : 3.',
     example: 'If A takes 20 days and is 1.5x as efficient as B, then B takes 20 × 1.5 = 30 days.'
+  },
+  {
+    id: 'stm-work-4',
+    name: 'Work on Alternate Days (A on Day 1, B on Day 2)',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Time & Work',
+    content: 'Cycle Work in 2 days = (1/A + 1/B)  |  Total Time = 2 × (Full Cycles) + Remainder Work / Rate_next',
+    variables: {
+      A: 'Days taken by A alone',
+      B: 'Days taken by B alone',
+      'Cycle Work': 'Work completed in 2 consecutive days by alternating workers'
+    },
+    tip: 'Find LCM of days to assign total work units; complete integer multiples of 2-day cycles first.',
+    example: 'A takes 12 days (5 units/day), B takes 15 days (4 units/day) for 60 units. In 2 days = 9 units. 6 cycles (12 days) = 54 units. Day 13: A does 5 units (59 total). Day 14: B does 1/4 unit. Total = 13 1/4 days.'
+  },
+  {
+    id: 'stm-work-5',
+    name: 'Worker Leaving Before Completion of Work Shortcut',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Time & Work',
+    content: 'Total Days T = (Total_Work + Work_left_worker_would_have_done) / Total_Combined_Efficiency',
+    variables: {
+      Total_Work: 'LCM of individual completion times (in units)',
+      Work_left: 'Efficiency of leaving person × number of days before completion they left'
+    },
+    tip: 'Adding the phantom work of the person who left allows you to divide by the combined team efficiency.',
+    example: 'A (10 days, 6 u/d), B (15 days, 4 u/d), total 60 u. A leaves 2 days before completion: T = (60 + 2×6) / (6 + 4) = 72 / 10 = 7.2 days.'
+  },
+  {
+    id: 'stm-work-6',
+    name: 'Wages and Bonus Sharing in Proportion to Work Done',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Time & Work',
+    content: 'Wage Share = Total_Wage × (Individual_Work_Done / Total_Work) = Total_Wage × (Efficiency × Days)',
+    variables: {
+      Individual_Work_Done: 'Fraction or units of work performed by the specific worker',
+      Total_Wage: 'Total monetary compensation for the job'
+    },
+    tip: 'Wages are distributed in ratio of efficiency ONLY if all workers worked for the same number of days.',
+    example: 'A and B do a work for $300. A does in 6 days, B in 8 days (efficiencies 4:3). A’s share = 300 × (4/7) = $171.43.'
   },
   {
     id: 'stm-pipe-1',
@@ -281,11 +436,25 @@ export const FORMULA_DB: Formula[] = [
       T_outlet: 'Outlet pipe emptying time'
     },
     tip: 'Treat filling pipes as positive work (+) and draining pipes/leaks as negative work (-).',
-    example: 'A pipe fills a tank in 6 hrs, but takes 8 hrs due to a leak. Leak alone empties full tank in (6 × 8) / (8 - 6) = 24 hours.'
+    example: 'A pipe fills in 6 hrs, but takes 8 hrs due to leak. Leak alone empties full tank in (6 × 8) / (8 - 6) = 24 hours.'
+  },
+  {
+    id: 'stm-pipe-2',
+    name: 'Pipes Flow Rate & Pipe Radius Proportionality',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Pipes & Cisterns',
+    content: 'Flow Rate Q ∝ Area of Cross-Section ∝ r² ∝ d²',
+    variables: {
+      r: 'Internal radius of pipe',
+      d: 'Internal diameter of pipe',
+      Q: 'Volumetric discharge rate (L/min or m³/s)'
+    },
+    tip: 'Doubling pipe diameter quadruples (4x) the flow rate and cuts filling time to 1/4th.',
+    example: 'Pipes of diameter 1cm, 2cm, 4cm: Flow rates are in ratio 1² : 2² : 4² = 1 : 4 : 16.'
   },
 
   // =========================================================================
-  // 2. LOGICAL REASONING (Clocks, Calendars, Syllogisms, Blood Rel, Dice, etc.)
+  // 2. LOGICAL REASONING & ANALYTICAL APTITUDE
   // =========================================================================
   {
     id: 'lr-clock-1',
@@ -313,10 +482,23 @@ export const FORMULA_DB: Formula[] = [
       '90° perpendicular': 'Occurs 22 times in 12 hours'
     },
     tip: 'Between 11:00 and 1:00, hands coincide only once (at 12:00). Between 5:00 and 7:00, they are opposite once (at 6:00).',
-    example: 'How many times do hands make a right angle in 24 hours? Exactly 44 times.'
+    example: 'How many times do hands make a straight line (0° or 180°) in 24 hours? Exactly 22 + 22 = 44 times.'
   },
   {
     id: 'lr-clock-3',
+    name: 'Clocks: Exact Time of Coincidence / Right Angle / Opposite',
+    category: 'Logical Reasoning',
+    subcategory: 'Clocks & Angles',
+    content: 'Coincide: M = (60/11) × H  |  Right Angle: M = (60/11) × (H ± 3)  |  Opposite: M = (60/11) × (H ± 6)',
+    variables: {
+      H: 'Starting hour (between H and H+1)',
+      M: 'Minutes past the hour H'
+    },
+    tip: 'If (H ± k) < 0, add 12; if > 12, subtract 12.',
+    example: 'Between 4 and 5 o’clock, hands coincide at M = (60/11) × 4 = 240/11 = 21 9/11 min past 4.'
+  },
+  {
+    id: 'lr-clock-4',
     name: 'Clocks: Mirror & Water Image Times',
     category: 'Logical Reasoning',
     subcategory: 'Clocks & Angles',
@@ -330,7 +512,7 @@ export const FORMULA_DB: Formula[] = [
     example: 'Mirror image of 8:40 = 11:60 - 8:40 = 3:20. Water image of 2:40 = 17:90 - 2:40 = 15:50 (3:50).'
   },
   {
-    id: 'lr-clock-4',
+    id: 'lr-clock-5',
     name: 'Clocks: Faulty Clock Gain / Loss',
     category: 'Logical Reasoning',
     subcategory: 'Clocks & Angles',
@@ -345,17 +527,16 @@ export const FORMULA_DB: Formula[] = [
   },
   {
     id: 'lr-cal-1',
-    name: 'Calendars: Odd Days Breakdown',
+    name: 'Calendars: Odd Days Breakdown & Century Codes',
     category: 'Logical Reasoning',
     subcategory: 'Calendars & Dates',
-    content: 'Ordinary Year = 1 Odd Day (365 % 7)  |  Leap Year = 2 Odd Days (366 % 7)',
+    content: 'Ord Year = 1 Odd Day | Leap Year = 2 Odd Days | 100yr = 5, 200yr = 3, 300yr = 1, 400yr = 0',
     variables: {
-      '100 Years': '5 Odd days',
-      '200 Years': '3 Odd days',
-      '300 Years': '1 Odd day',
-      '400 Years': '0 Odd days (Century leap years: 1600, 2000, 2400)'
+      'Day Codes': '0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat',
+      'Century Codes': '1600s=6, 1700s=4, 1800s=2, 1900s=0, 2000s=6 (Pattern: 6,4,2,0)',
+      'Leap Century': 'Century years divisible by 400 (e.g. 1600, 2000, 2400)'
     },
-    tip: 'Days of week codes: 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat.',
+    tip: 'Last day of a century CANNOT be Tuesday, Thursday, or Saturday.',
     example: 'Year 2024 is a leap year (2 odd days). If Jan 1 2024 was Monday, Jan 1 2025 was Wednesday (+2 days).'
   },
   {
@@ -383,12 +564,12 @@ export const FORMULA_DB: Formula[] = [
       Rank_Right: 'Position from right/bottom end (1-indexed)',
       Total: 'Total number of people in the row'
     },
-    tip: 'We subtract 1 because the single person is counted twice (once from left, once from right).',
+    tip: 'Subtract 1 because the single person is counted twice (once from left, once from right).',
     example: 'Aman is 14th from left and 23rd from right: Total = 14 + 23 - 1 = 36 persons.'
   },
   {
     id: 'lr-rank-2',
-    name: 'Order & Ranking: Overlapping (Minimum) vs Non-Overlapping',
+    name: 'Order & Ranking: Overlapping (Minimum) vs Non-Overlapping Case',
     category: 'Logical Reasoning',
     subcategory: 'Order & Ranking',
     content: 'Standard: Total = R1 + R2 + In_Between  |  Overlapping (Min): Total = R1 + R2 - In_Between - 2',
@@ -429,7 +610,7 @@ export const FORMULA_DB: Formula[] = [
   },
   {
     id: 'lr-syl-2',
-    name: 'Syllogisms: Only a Few & Definite Negative',
+    name: 'Syllogisms: "Only a Few" & "Few" Rules',
     category: 'Logical Reasoning',
     subcategory: 'Syllogisms & Deductive Logic',
     content: '"Only a few A are B" <==> (Some A are B) AND (Some A are NOT B)',
@@ -440,6 +621,19 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Crucial for modern Banking & SSC exams: "Only a few" is always dual-nature.',
     example: 'Statement: "Only a few pens are books." -> Concl: "Some pens are not books" is DEFINITIVELY TRUE.'
+  },
+  {
+    id: 'lr-syl-3',
+    name: 'Syllogisms: Universal Conversion & Possibility Rules',
+    category: 'Logical Reasoning',
+    subcategory: 'Syllogisms & Deductive Logic',
+    content: 'All A are B -> Some B are A | No A is B -> No B is A | Some A are B -> Some B are A',
+    variables: {
+      'Some A are not B': 'CANNOT be converted directly into "Some B are not A"',
+      'Possibility Rule': 'If definite relation exists, possibility is FALSE; if no definite relation exists, possibility is TRUE'
+    },
+    tip: 'When all statements are positive, no definite negative conclusion can ever follow.',
+    example: 'Statement: "All apples are red." Conversion: "Some red things are apples" is valid.'
   },
   {
     id: 'lr-cube-1',
@@ -471,6 +665,19 @@ export const FORMULA_DB: Formula[] = [
     example: 'Pos 1: (3, 5, 2) and Pos 2: (3, 1, 6). Clockwise from 3: (3->5->2) & (3->1->6) ==> 5 is opposite 1, 2 is opposite 6, 3 is opposite 4.'
   },
   {
+    id: 'lr-dice-2',
+    name: 'Open Dice Net Folding: Opposite Face Pattern',
+    category: 'Logical Reasoning',
+    subcategory: 'Cubes & Dice',
+    content: 'Alternate faces in a straight row / column are opposite each other (1 face gap)',
+    variables: {
+      'Rule 1': 'Faces with a single face between them in the same row/col are opposite',
+      'Rule 2': 'Opposite faces can NEVER touch each other (no shared vertex or edge)'
+    },
+    tip: 'Check folded cube options by verifying that no pair of opposite faces appears simultaneously in the same 3-face view.',
+    example: 'In a strip 1 - 2 - 3 - 4: 1 is opposite 3, 2 is opposite 4.'
+  },
+  {
     id: 'lr-dir-1',
     name: 'Direction Sense: Sunrise & Sunset Shadow Rules',
     category: 'Logical Reasoning',
@@ -500,7 +707,7 @@ export const FORMULA_DB: Formula[] = [
   },
   {
     id: 'lr-fig-1',
-    name: 'Figure Counting: Triangles in Divided Figures',
+    name: 'Figure Counting: Triangles in Apex-Sliced & Diagonal Grids',
     category: 'Logical Reasoning',
     subcategory: 'Figure Counting',
     content: 'Apex sliced into n parts: n(n+1)/2  |  Square diagonals with n sectors: 2n  |  Nested triangles: 4n + 1',
@@ -510,7 +717,49 @@ export const FORMULA_DB: Formula[] = [
       'Nested triangles': 'n = number of internal inverted triangles'
     },
     tip: 'For a triangle with horizontal floors/lines h, total triangles = h × [n(n+1)/2].',
-    example: 'A triangle divided into 4 base segments has 4(5)/2 = 10 triangles.'
+    example: 'A triangle divided into 4 base segments with 3 horizontal lines has 3 × [4(5)/2] = 30 triangles.'
+  },
+  {
+    id: 'lr-fig-2',
+    name: 'Figure Counting: Squares & Rectangles in an m x n Grid',
+    category: 'Logical Reasoning',
+    subcategory: 'Figure Counting',
+    content: 'Squares = Σ (m × n)  |  Rectangles = [ m(m+1)/2 ] × [ n(n+1)/2 ]',
+    variables: {
+      'm, n': 'Number of rows and columns in grid (decrement each step down to 1 for squares)',
+      'Σ(m × n)': 'm·n + (m-1)(n-1) + (m-2)(n-2) + ...'
+    },
+    tip: 'For an n x n square grid: Total squares = n(n+1)(2n+1)/6. Total rectangles (incl squares) = [n(n+1)/2]².',
+    example: 'In a 4 x 3 grid: Squares = 4(3) + 3(2) + 2(1) = 12 + 6 + 2 = 20. Rectangles = [4(5)/2] × [3(4)/2] = 10 × 6 = 60.'
+  },
+  {
+    id: 'lr-blood-1',
+    name: 'Blood Relations: Generational Tree & Standard Notation',
+    category: 'Logical Reasoning',
+    subcategory: 'Blood Relations',
+    content: '+2: Grandparents | +1: Parents/Uncle/Aunt | 0: Siblings/Spouse | -1: Children | -2: Grandchildren',
+    variables: {
+      'Male (+)': 'Denoted with plus or square box',
+      'Female (-)': 'Denoted with minus or circle',
+      'Spouse (=)': 'Double horizontal line',
+      'Siblings (-)': 'Single horizontal line',
+      'Generational step ( | )': 'Vertical downward line'
+    },
+    tip: 'In coded blood relations (e.g. A + B * C - D), decode from right to left to avoid multiple assumptions.',
+    example: '"Pointing to a man, a woman said: He is the only son of my mother’s husband." Mother’s husband = Father -> Only son = Brother.'
+  },
+  {
+    id: 'lr-crit-1',
+    name: 'Critical Reasoning: Statement & Assumption Negation Test',
+    category: 'Logical Reasoning',
+    subcategory: 'Critical & Analytical Logic',
+    content: 'Negate the Assumption: If Negated Assumption INVALIDATES the conclusion, the assumption is IMPLICIT',
+    variables: {
+      'Implicit Assumption': 'An unstated premise absolutely necessary for the argument to hold',
+      'Negation Test': 'Assume "NOT [Assumption]". If argument collapses, it is a valid assumption.'
+    },
+    tip: 'Assumptions can never exceed the scope of the statement. Avoid extreme words (Only, Always, All, Never).',
+    example: 'Statement: "Take flight X to arrive on time." Assumption: "Flight X is reliable." Negate: "Flight X is not reliable" -> Statement collapses -> Assumption is IMPLICIT.'
   },
 
   // =========================================================================
@@ -542,6 +791,33 @@ export const FORMULA_DB: Formula[] = [
     example: 'Length +20%, Breadth -10% of rectangle -> Area change = 20 - 10 + (20 × -10)/100 = 10 - 2 = +8% increase.'
   },
   {
+    id: 'arith-pct-3',
+    name: 'Percentage: Population Growth & Machine Depreciation',
+    category: 'Arithmetic',
+    subcategory: 'Percentages',
+    content: 'After n years: P_n = P_0 × (1 ± R/100)ⁿ  |  n years ago: P_ago = P_0 / (1 ± R/100)ⁿ',
+    variables: {
+      P_0: 'Current present population or value',
+      R: 'Annual rate of increase (+) or depreciation (-)',
+      n: 'Number of years'
+    },
+    tip: 'Use (+) for population growth and (-) for machine depreciation.',
+    example: 'Machine value $10,000 depreciates at 10%/yr. After 2 yrs = 10000(1 - 0.1)² = 10000(0.81) = $8,100.'
+  },
+  {
+    id: 'arith-pct-4',
+    name: 'Percentage: Passing Marks & Maximum Marks Shortcut',
+    category: 'Arithmetic',
+    subcategory: 'Percentages',
+    content: 'Max Marks = [ (Marks_failed_by + Marks_excess_passed) / (P2% - P1%) ] × 100',
+    variables: {
+      P1: 'Percentage scored by candidate 1 (who failed by marks_failed_by)',
+      P2: 'Percentage scored by candidate 2 (who scored marks_excess_passed above pass mark)'
+    },
+    tip: 'Add the deficit and excess marks, divide by the percentage point gap, and multiply by 100.',
+    example: 'A scores 30% and fails by 15 marks. B scores 40% and gets 35 marks more than pass mark: Max = [(15 + 35) / (40 - 30)] × 100 = (50/10) × 100 = 500.'
+  },
+  {
     id: 'arith-pl-1',
     name: 'Profit & Loss: Cost Price, Marked Price & Discount Relation',
     category: 'Arithmetic',
@@ -567,7 +843,7 @@ export const FORMULA_DB: Formula[] = [
       SP: 'Selling price of each of the two articles (must be identical)'
     },
     tip: 'When SP is same and profit% equals loss%, there is ALWAYS an overall loss. (If CP were same, net is 0%).',
-    example: 'Two cars sold for $40,000 each: one at 20% profit, other at 20% loss. Overall loss = 20² / 100 = 4% loss.'
+    example: 'Two articles sold for $990 each: one at 10% profit, other at 10% loss. Overall loss = 10² / 100 = 1% loss.'
   },
   {
     id: 'arith-pl-3',
@@ -582,6 +858,21 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Dealer gains because his actual cost is only for the lower weight he hands over.',
     example: 'Uses 800g instead of 1kg: Gain% = (200 / 800) × 100 = 25% profit.'
+  },
+  {
+    id: 'arith-pl-4',
+    name: 'Profit & Loss: Successive Discounts & "Buy X Get Y Free"',
+    category: 'Arithmetic',
+    subcategory: 'Profit & Loss',
+    content: 'Equiv Discount = d1 + d2 - (d1 × d2)/100  |  "Buy x get y free" Discount% = [ y / (x + y) ] × 100',
+    variables: {
+      d1: 'First trade discount %',
+      d2: 'Second trade discount %',
+      x: 'Number of articles paid for',
+      y: 'Number of free articles received'
+    },
+    tip: 'In "Buy x get y free", the total articles received is (x + y), which forms the base denominator.',
+    example: '"Buy 3 Get 1 Free": Discount% = [1 / (3 + 1)] × 100 = 1/4 × 100 = 25% discount.'
   },
   {
     id: 'arith-int-1',
@@ -599,22 +890,23 @@ export const FORMULA_DB: Formula[] = [
   },
   {
     id: 'arith-int-2',
-    name: 'Compound Interest: Compounding Frequencies',
+    name: 'Compound Interest: Compounding Frequencies & Growth',
     category: 'Arithmetic',
     subcategory: 'Simple & Compound Interest',
-    content: 'Half-Yearly: A = P(1 + R/200)^(2T)  |  Quarterly: A = P(1 + R/400)^(4T)',
+    content: 'Half-Yearly: A = P(1 + R/200)^(2T)  |  Quarterly: A = P(1 + R/400)^(4T)  |  Rule of 72: T ≈ 72/R',
     variables: {
       A: 'Final amount',
       P: 'Principal',
       R: 'Nominal annual rate (%)',
-      T: 'Time in years'
+      T: 'Time in years',
+      'Rule of 72': 'Approximate years required to double the money at compound rate R%'
     },
-    tip: 'Half-yearly: Rate becomes R/2 and periods become 2T. Quarterly: Rate is R/4 and periods are 4T.',
+    tip: 'If sum becomes n times in T years in CI, it becomes n^k times in (k × T) years.',
     example: '$10,000 at 20% compounded half-yearly for 1 yr: A = 10000(1 + 10/100)² = 10000(1.21) = $12,100.'
   },
   {
     id: 'arith-int-3',
-    name: 'Simple Interest Equal Installment Formula',
+    name: 'Simple Interest: Equal Annual Installment Formula',
     category: 'Arithmetic',
     subcategory: 'Simple & Compound Interest',
     content: 'Annual Installment x = (100 × Debt) / [ 100T + (R × T × (T - 1)) / 2 ]',
@@ -626,6 +918,21 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Applies to clear a debt due at the end of T years through T equal annual payments.',
     example: 'Debt of $6450 due in 4 years at 5% SI: x = (100 × 6450) / [400 + (5 × 4 × 3)/2] = 645000 / 430 = $1500/year.'
+  },
+  {
+    id: 'arith-int-4',
+    name: 'Compound Interest: Equal Annual Installment Formula',
+    category: 'Arithmetic',
+    subcategory: 'Simple & Compound Interest',
+    content: 'Loan Principal P = x / (1 + R/100) + x / (1 + R/100)² + ... + x / (1 + R/100)ⁿ',
+    variables: {
+      P: 'Loan borrowed',
+      x: 'Equal annual installment amount',
+      R: 'Annual interest rate',
+      n: 'Number of installments'
+    },
+    tip: 'For 2 equal annual installments: P = x / (1 + R/100) × [ 1 + 1/(1 + R/100) ].',
+    example: 'Borrow $2100 at 10% CI in 2 equal annual installments: 2100 = x(10/11) + x(100/121) = x(210/121) -> x = $1210/year.'
   },
   {
     id: 'arith-mix-1',
@@ -671,8 +978,20 @@ export const FORMULA_DB: Formula[] = [
     example: 'A person weighing 60kg is replaced; average of 10 people increases by 1.5kg: New weight = 60 + (10 × 1.5) = 75 kg.'
   },
   {
+    id: 'arith-avg-2',
+    name: 'Averages: Consecutive Numbers & AP Average Rules',
+    category: 'Arithmetic',
+    subcategory: 'Averages & Ratios',
+    content: 'AP Avg = (First + Last)/2 | 1st n Natural: (n+1)/2 | 1st n Even: (n+1) | 1st n Odd: n',
+    variables: {
+      n: 'Number of consecutive terms'
+    },
+    tip: 'For any symmetric or AP sequence, the average equals the median (exact middle value).',
+    example: 'Average of first 50 odd numbers is exactly 50. Average of first 50 natural numbers is (50+1)/2 = 25.5.'
+  },
+  {
     id: 'arith-rat-1',
-    name: 'Ratio & Proportion: Proportional Values & C&D',
+    name: 'Ratio & Proportion: Proportional Values & Componendo-Dividendo',
     category: 'Arithmetic',
     subcategory: 'Averages & Ratios',
     content: 'Mean Prop = √(ab)  |  3rd Prop = b²/a  |  4th Prop = bc/a  |  C&D: (a+b)/(a-b) = (c+d)/(c-d)',
@@ -685,6 +1004,19 @@ export const FORMULA_DB: Formula[] = [
     tip: 'Componendo & Dividendo simplifies rational fractions instantly in algebra and trigonometry.',
     example: 'Third proportional to 4 and 6 = 6² / 4 = 36 / 4 = 9. Mean proportional of 4 and 16 = √(64) = 8.'
   },
+  {
+    id: 'arith-part-1',
+    name: 'Partnership: Profit Distribution & Active Partner Salary',
+    category: 'Arithmetic',
+    subcategory: 'Averages & Ratios',
+    content: 'Profit Ratio = (C1 × T1) : (C2 × T2) : (C3 × T3)',
+    variables: {
+      C: 'Capital invested by each partner',
+      T: 'Time period for which capital remained invested'
+    },
+    tip: 'For active/working partners, deduct management salary first from total profit before splitting remaining profit in capital-time ratio.',
+    example: 'A invests $5000 for 12 mos, B invests $6000 for 8 mos: Ratio = (5000×12) : (6000×8) = 60000 : 48000 = 5 : 4.'
+  },
 
   // =========================================================================
   // 4. ALGEBRA & NUMBER SYSTEMS (Identities, Quadratics, AP/GP, Remainders)
@@ -694,7 +1026,7 @@ export const FORMULA_DB: Formula[] = [
     name: 'Algebra: Symmetric Reciprocal Powers (x + 1/x = k)',
     category: 'Algebra & Numbers',
     subcategory: 'Algebraic Identities',
-    content: 'x² + 1/x² = k² - 2  |  x³ + 1/x³ = k³ - 3k  |  x⁴ + 1/x⁴ = (k² - 2)² - 2',
+    content: 'x² + 1/x² = k² - 2  |  x³ + 1/x³ = k³ - 3k  |  x⁴ + 1/x⁴ = (k² - 2)² - 2  |  x⁶ + 1/x⁶ = (k³ - 3k)² - 2',
     variables: {
       k: 'Value of (x + 1/x)',
       'If x - 1/x = m': 'x² + 1/x² = m² + 2  and  x³ - 1/x³ = m³ + 3m'
@@ -715,6 +1047,18 @@ export const FORMULA_DB: Formula[] = [
     example: 'If a = 25, b = -15, c = -10 (sum = 0): 25³ + (-15)³ + (-10)³ = 3(25)(-15)(-10) = 11,250.'
   },
   {
+    id: 'alg-id-3',
+    name: 'Algebra: Difference of Squares & Higher Binomial Expansions',
+    category: 'Algebra & Numbers',
+    subcategory: 'Algebraic Identities',
+    content: '(a+b)² + (a-b)² = 2(a² + b²)  |  (a+b)² - (a-b)² = 4ab  |  (a+b+c)² = a²+b²+c² + 2(ab+bc+ca)',
+    variables: {
+      'a, b, c': 'Algebraic terms'
+    },
+    tip: 'Used for instant cancellation in numerical fractions.',
+    example: '(105 + 95)² - (105 - 95)² = 4(105)(95) = 39,900.'
+  },
+  {
     id: 'alg-quad-1',
     name: 'Quadratic Equations: Roots, Discriminant & Vertex Extrema',
     category: 'Algebra & Numbers',
@@ -730,6 +1074,19 @@ export const FORMULA_DB: Formula[] = [
     example: 'For 2x² - 8x + 5 (a=2>0): Minimum occurs at x = 8/(2×2) = 2. Min value = 2(4) - 8(2) + 5 = -3.'
   },
   {
+    id: 'alg-quad-2',
+    name: 'Quadratic Equations: Symmetric Root Relations',
+    category: 'Algebra & Numbers',
+    subcategory: 'Quadratic Equations',
+    content: '|α - β| = √D / |a|  |  α² + β² = (b² - 2ac)/a²  |  1/α + 1/β = -b/c',
+    variables: {
+      'α, β': 'Roots of ax² + bx + c = 0',
+      D: 'Discriminant b² - 4ac'
+    },
+    tip: 'Reciprocal roots occur when c = a. Roots of equal magnitude but opposite signs occur when b = 0.',
+    example: 'For x² - 5x + 6 = 0: α+β = 5, αβ = 6 -> |α - β| = √(25 - 24) = 1. α² + β² = 25 - 12 = 13.'
+  },
+  {
     id: 'alg-prog-1',
     name: 'Progressions: Arithmetic Progression (AP) & Sum',
     category: 'Algebra & Numbers',
@@ -743,7 +1100,7 @@ export const FORMULA_DB: Formula[] = [
       Sn: 'Sum of first n terms'
     },
     tip: 'Average of an AP series = (First term + Last term) / 2.',
-    example: 'Sum of first 20 odd numbers (a=1, d=2, n=20): Sn = 20² = 400 (or (20/2)[2 + 38] = 400).'
+    example: 'Sum of first 20 odd numbers (a=1, d=2, n=20): Sn = 20² = 400.'
   },
   {
     id: 'alg-prog-2',
@@ -804,7 +1161,7 @@ export const FORMULA_DB: Formula[] = [
     name: 'Number Systems: Divisibility Rules Master Summary',
     category: 'Algebra & Numbers',
     subcategory: 'Number Systems & Factors',
-    content: '3 & 9: Sum of digits  |  4 & 8: Last 2 & 3 digits  |  7 & 13: Group by 3s from right  |  11: Odd-Even digit sum diff',
+    content: '3 & 9: Sum of digits | 4 & 8: Last 2 & 3 digits | 7 & 13: Group by 3s from right | 11: Odd-Even digit sum diff',
     variables: {
       'Rule for 7 & 13': 'Alternating sum of 3-digit blocks from right must be divisible by 7 or 13',
       'Rule for 11': '(Sum of digits at odd places) - (Sum of digits at even places) = 0 or multiple of 11'
@@ -812,9 +1169,74 @@ export const FORMULA_DB: Formula[] = [
     tip: 'If a number is divisible by both co-prime numbers a and b, it is divisible by (a × b). (e.g. 72 = 8 × 9).',
     example: 'Check 121: (1+1) - 2 = 0 -> Divisible by 11. Check 735: 73 - 2(5) = 63 (divisible by 7) -> Divisible by 7.'
   },
+  {
+    id: 'alg-num-4',
+    name: 'Number Systems: Remainder Theorems (Fermat & Wilson)',
+    category: 'Algebra & Numbers',
+    subcategory: 'Number Systems & Factors',
+    content: 'Fermat: a^(p-1) ≡ 1 (mod p) [for prime p]  |  Wilson: (p-1)! ≡ -1 (mod p)  |  (a±1)ⁿ / a Remainder',
+    variables: {
+      p: 'Prime divisor',
+      a: 'Integer co-prime to p'
+    },
+    tip: 'For (a+1)ⁿ / a, remainder is always 1. For (a-1)ⁿ / a, remainder is 1 (if n is even) or (a-1) (if n is odd).',
+    example: 'Remainder of 2¹⁰⁰ / 101 (101 is prime): By Fermat’s Little Theorem, 2¹⁰⁰ ≡ 1 (mod 101). Remainder is 1.'
+  },
+  {
+    id: 'alg-num-5',
+    name: 'Number Systems: Unit Digit Cyclicity Rules',
+    category: 'Algebra & Numbers',
+    subcategory: 'Number Systems & Factors',
+    content: 'Cyclicity 4: (2, 3, 7, 8) | Cyclicity 2: (4, 9) | Cyclicity 1: (0, 1, 5, 6)',
+    variables: {
+      'Periodicity 4': 'Divide exponent by 4: remainder r gives power (if r=0, use power 4)',
+      'Periodicity 2': '4^(odd)=4, 4^(even)=6  |  9^(odd)=9, 9^(even)=1'
+    },
+    tip: 'Only the unit digit of base and reduced power (mod 4) determine the final unit digit.',
+    example: 'Unit digit of 7⁹⁵: 95 % 4 = 3 -> 7³ = 343 -> Unit digit is 3.'
+  },
+  {
+    id: 'alg-num-6',
+    name: 'Number Systems: HCF & LCM Fractions & Divisor Rules',
+    category: 'Algebra & Numbers',
+    subcategory: 'Number Systems & Factors',
+    content: 'HCF(Fractions) = HCF(Num) / LCM(Den)  |  LCM(Fractions) = LCM(Num) / HCF(Den)  |  HCF × LCM = A × B',
+    variables: {
+      Num: 'Numerators of fractions',
+      Den: 'Denominators of fractions',
+      'A, B': 'Two positive integers'
+    },
+    tip: 'Largest number dividing x, y, z leaving same remainder = HCF(|x-y|, |y-z|, |z-x|).',
+    example: 'HCF of 2/3 and 8/9 = HCF(2,8) / LCM(3,9) = 2 / 9.'
+  },
+  {
+    id: 'alg-log-1',
+    name: 'Logarithms: Fundamental Properties & Number of Digits',
+    category: 'Algebra & Numbers',
+    subcategory: 'Surds & Logarithms',
+    content: 'log(ab) = log a + log b  |  log(a/b) = log a - log b  |  log_b a = (log a)/(log b)  |  Digits in aⁿ = ⌊n log10(a)⌋ + 1',
+    variables: {
+      'log_b a': 'Logarithm of a to base b',
+      'Digits in aⁿ': 'Number of digits in large power expressions'
+    },
+    tip: 'log(1) = 0 for any base. log_a a = 1. a^(log_a x) = x.',
+    example: 'Number of digits in 2⁶⁴ (log10(2) ≈ 0.3010): Digits = ⌊64 × 0.3010⌋ + 1 = ⌊19.264⌋ + 1 = 20 digits.'
+  },
+  {
+    id: 'alg-surd-1',
+    name: 'Surds: Infinite Nested Radical Shortcuts',
+    category: 'Algebra & Numbers',
+    subcategory: 'Surds & Logarithms',
+    content: '√(x + √(x + ...)) = (1 + √(1+4x)) / 2  |  √(x - √(x - ...)) = (-1 + √(1+4x)) / 2  |  √(x √(x ...)) = x',
+    variables: {
+      x: 'Positive constant under repeated root'
+    },
+    tip: 'If x factors as n(n+1), then √(x + √(x + ...)) = (n+1) and √(x - √(x - ...)) = n directly.',
+    example: '√(12 + √(12 + √(12...))) = 4 (since 12 = 3 × 4). √(6 - √(6 - √(6...))) = 2 (since 6 = 2 × 3).'
+  },
 
   // =========================================================================
-  // 5. GEOMETRY & MENSURATION (Triangles, Circles, Solids, Trigonometry)
+  // 5. GEOMETRY, MENSURATION & TRIGONOMETRY
   // =========================================================================
   {
     id: 'geo-tri-1',
@@ -861,6 +1283,32 @@ export const FORMULA_DB: Formula[] = [
     example: 'AB = 7, AC = 9, BC = 8 (so BD = 4): 7² + 9² = 2(AD² + 16) ==> 49 + 81 = 130 = 2(AD² + 16) ==> AD² = 49 ==> AD = 7.'
   },
   {
+    id: 'geo-tri-4',
+    name: 'Triangles: Sine Rule & Cosine Rule',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Triangles & Polygons',
+    content: 'Sine Rule: a/sin(A) = b/sin(B) = c/sin(C) = 2R  |  Cosine: cos(A) = (b² + c² - a²) / (2bc)',
+    variables: {
+      'a, b, c': 'Sides opposite to angles A, B, C',
+      R: 'Circumradius of triangle'
+    },
+    tip: 'Use Cosine rule to find angles given 3 sides, or to find 3rd side given 2 sides and included angle.',
+    example: 'In triangle with b=3, c=5, A=60°: a² = 3² + 5² - 2(3)(5)cos(60°) = 9 + 25 - 15 = 19 -> a = √19.'
+  },
+  {
+    id: 'geo-tri-5',
+    name: 'Triangles: Angle Bisector Theorem & Centroid',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Triangles & Polygons',
+    content: 'Angle Bisector: AB / AC = BD / DC  |  Centroid G divides median in 2 : 1 ratio',
+    variables: {
+      AD: 'Internal angle bisector from vertex A meeting BC at D',
+      G: 'Centroid (intersection of all 3 medians)'
+    },
+    tip: 'Area of triangle formed by medians = (4/3) × Area of original triangle.',
+    example: 'In triangle ABC, AB=6, AC=8, BC=7. Bisector AD divides BC into BD and DC: BD/DC = 6/8 = 3/4 -> BD = 3, DC = 4.'
+  },
+  {
     id: 'geo-cir-1',
     name: 'Circles: Tangent-Secant & Intersecting Chords',
     category: 'Geometry & Mensuration',
@@ -891,6 +1339,20 @@ export const FORMULA_DB: Formula[] = [
     example: 'd = 13, r1 = 8, r2 = 3: DCT = √[169 - 25] = √144 = 12. TCT = √[169 - 121] = √48 = 4√3.'
   },
   {
+    id: 'geo-cir-3',
+    name: 'Circles: Cyclic Quadrilateral (Brahmagupta & Ptolemy)',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Circles & Tangents',
+    content: 'Area = √[(s-a)(s-b)(s-c)(s-d)]  |  Ptolemy: d1 × d2 = (a × c) + (b × d)',
+    variables: {
+      'a, b, c, d': 'Sides of cyclic quadrilateral in order',
+      s: 'Semi-perimeter = (a + b + c + d) / 2',
+      'd1, d2': 'Lengths of the two diagonals'
+    },
+    tip: 'Opposite angles of a cyclic quadrilateral always sum to 180°.',
+    example: 'Cyclic quadrilateral with sides 1, 2, 3, 4: s = 5. Area = √[(4)(3)(2)(1)] = √24 = 2√6.'
+  },
+  {
     id: 'geo-poly-1',
     name: 'Polygons: Interior Angles, Exterior Angles & Diagonals',
     category: 'Geometry & Mensuration',
@@ -903,6 +1365,20 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Interior angle + Exterior angle at any vertex = 180° (linear pair).',
     example: 'For an Octagon (n = 8): Sum of interior angles = 6 × 180° = 1080°. Diagonals = 8(5)/2 = 20.'
+  },
+  {
+    id: 'geo-quad-1',
+    name: 'Quadrilaterals: Rhombus, Trapezium & Parallelogram Areas',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Triangles & Polygons',
+    content: 'Rhombus: Area = 1/2 × d1 × d2, Side a = 1/2√(d1² + d2²) | Trapezium: 1/2 × (a + b) × h',
+    variables: {
+      'd1, d2': 'Diagonals of rhombus (intersect at 90°)',
+      'a, b': 'Parallel sides of trapezium',
+      h: 'Perpendicular distance between parallel sides'
+    },
+    tip: '4 × a² = d1² + d2² for any rhombus.',
+    example: 'Rhombus diagonals 12cm and 16cm: Area = 1/2(12)(16) = 96 cm². Side = 1/2√(144+256) = 1/2(20) = 10 cm.'
   },
   {
     id: 'geo-sol-1',
@@ -936,6 +1412,19 @@ export const FORMULA_DB: Formula[] = [
     example: 'Frustum with R = 6, r = 3, h = 4: L = √[16 + 9] = 5. CSA = π(6+3)(5) = 45π.'
   },
   {
+    id: 'geo-sol-3',
+    name: '3D Mensuration: Cuboid, Cube & Diagonal Formula',
+    category: 'Geometry & Mensuration',
+    subcategory: '3D Solids & Mensuration',
+    content: 'Cuboid: V = lbh, TSA = 2(lb + bh + hl), Diag = √(l² + b² + h²) | Cube: V = a³, Diag = a√3',
+    variables: {
+      'l, b, h': 'Length, breadth, height of room / cuboid',
+      Diag: 'Longest rod that can be placed inside the room'
+    },
+    tip: 'Longest rod in a room is the 3D space diagonal = √(l² + b² + h²).',
+    example: 'Room of 10m × 10m × 5m: Longest rod = √(100 + 100 + 25) = √225 = 15 meters.'
+  },
+  {
     id: 'geo-trig-1',
     name: 'Trigonometry: Heights & Distances Complementary Angles',
     category: 'Geometry & Mensuration',
@@ -949,6 +1438,18 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Instant shortcut that avoids setting up tan(θ) and tan(90-θ) equations.',
     example: 'Angles of elevation of tower top from 4m and 9m are complementary: Height H = √(4 × 9) = √36 = 6 meters.'
+  },
+  {
+    id: 'geo-trig-2',
+    name: 'Trigonometry: Maximum and Minimum Value of a sin(θ) + b cos(θ)',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Trigonometry & Heights',
+    content: 'Max = +√(a² + b²)  |  Min = -√(a² + b²)',
+    variables: {
+      'a, b': 'Coefficients of sin(θ) and cos(θ)'
+    },
+    tip: 'For a sin²(θ) + b csc²(θ) or a tan²(θ) + b cot²(θ), minimum value is 2√(ab).',
+    example: 'For 3 sin(θ) + 4 cos(θ): Maximum value = +√(9 + 16) = 5. Minimum value = -5.'
   },
   {
     id: 'geo-coord-1',
@@ -1010,6 +1511,18 @@ export const FORMULA_DB: Formula[] = [
     example: '4 letters placed in 4 envelopes such that none goes into correct envelope: D4 = 9 ways.'
   },
   {
+    id: 'mod-pc-4',
+    name: 'Combinatorics: Lines, Handshakes & Diagonals from n Points',
+    category: 'Modern Math & Stats',
+    subcategory: 'Permutations & Combinations',
+    content: 'Handshakes / Lines = nC2 = n(n-1)/2  |  Triangles = nC3  |  Diagonals = n(n-3)/2',
+    variables: {
+      n: 'Total number of people or non-collinear vertices'
+    },
+    tip: 'If m points out of n are collinear, triangles formed = nC3 - mC3.',
+    example: '12 people shake hands with each other once: Total handshakes = 12(11)/2 = 66.'
+  },
+  {
     id: 'mod-prob-1',
     name: 'Probability: Addition Rule, Conditional & Bayes’ Theorem',
     category: 'Modern Math & Stats',
@@ -1024,8 +1537,22 @@ export const FORMULA_DB: Formula[] = [
     example: 'Toss 3 coins. P(at least 1 head) = 1 - P(no heads) = 1 - (1/2)³ = 1 - 1/8 = 7/8.'
   },
   {
+    id: 'mod-prob-2',
+    name: 'Probability: Binomial Distribution (Successes in n Trials)',
+    category: 'Modern Math & Stats',
+    subcategory: 'Probability & Bayes',
+    content: 'P(X = k) = nCk × p^k × (1-p)^(n-k)  |  Mean = np  |  Variance = np(1-p)',
+    variables: {
+      n: 'Number of independent repeated trials',
+      k: 'Exact number of successful outcomes desired',
+      p: 'Probability of success in a single trial'
+    },
+    tip: 'Variance is always strictly less than the mean in a Binomial distribution.',
+    example: 'Rolling a 6 in 5 dice tosses: n=5, p=1/6, k=2 -> P(X=2) = 5C2 × (1/6)² × (5/6)³ = 10 × (1/36) × (125/216).'
+  },
+  {
     id: 'mod-venn-1',
-    name: 'Set Theory & Venn Diagrams: 3-Set Union',
+    name: 'Set Theory & Venn Diagrams: 3-Set Union & Intersection',
     category: 'Modern Math & Stats',
     subcategory: 'Set Theory & Venn Diagrams',
     content: 'n(A U B U C) = Σn(A) - Σn(A ∩ B) + n(A ∩ B ∩ C)',
@@ -1052,6 +1579,20 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Empirical mode relation: 3(Median) = Mode + 2(Mean). If every observation is multiplied by k, standard deviation becomes k×σ.',
     example: 'If Mean = 15 and Median = 18: Mode = 3(18) - 2(15) = 54 - 30 = 24.'
+  },
+  {
+    id: 'mod-cagr-1',
+    name: 'Data Interpretation: Compound Annual Growth Rate (CAGR)',
+    category: 'Modern Math & Stats',
+    subcategory: 'Statistics',
+    content: 'CAGR = [ (Ending_Value / Beginning_Value)^(1 / n) - 1 ] × 100%',
+    variables: {
+      Ending_Value: 'Value at final year',
+      Beginning_Value: 'Value at base year',
+      n: 'Number of compounding periods / years'
+    },
+    tip: 'CAGR smoothens out annual fluctuations to provide annualized constant growth percentage.',
+    example: 'Revenue grows from $100M to $144M in 2 years: CAGR = √(144/100) - 1 = 1.2 - 1 = 20% annual growth.'
   },
 
   // =========================================================================
@@ -1097,6 +1638,19 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Left side is simply Number + deviation; right side is square of deviation.',
     example: '106²: x = +6 -> LHS = 106 + 6 = 112, RHS = 6² = 36 -> 11236. 93²: x = -7 -> LHS = 93 - 7 = 86, RHS = (-7)² = 49 -> 8649.'
+  },
+  {
+    id: 'trk-sq-4',
+    name: 'Squaring Repeated 1s and Repeated 9s',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: '(11..1)² = 123..k..321  |  (99..9)² = (9..9 8 0..0 1)',
+    variables: {
+      k: 'Number of digits of 1s',
+      '(999)²': '998001 (Number of 9s minus 1, followed by 8, equal count of 0s, ends in 1)'
+    },
+    tip: 'Saves time in competitive quantitative aptitude simplification questions.',
+    example: '1111² = 1234321. 9999² = 99980001.'
   },
   {
     id: 'trk-mult-1',
@@ -1151,6 +1705,19 @@ export const FORMULA_DB: Formula[] = [
     example: '74 × 76 = (7 × 8) || (4 × 6) = 5624. 93 × 97 = (9 × 10) || (3 × 7) = 9021.'
   },
   {
+    id: 'trk-root-1',
+    name: 'Fast Square Root Estimation for Non-Perfect Squares',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: '√(N) ≈ √(A) + (N - A) / [ 2√(A) ]',
+    variables: {
+      N: 'Target non-perfect square number',
+      A: 'Nearest known perfect square to N'
+    },
+    tip: 'Derived from first-order Taylor expansion; accurate to 2 decimal places.',
+    example: '√67: Nearest square A=64 (√64=8). √67 ≈ 8 + (67 - 64)/(2 × 8) = 8 + 3/16 = 8 + 0.1875 = 8.1875 (Actual ≈ 8.185).'
+  },
+  {
     id: 'trk-digit-1',
     name: 'Digit Sum (Casting Out 9s) for MCQ Verification',
     category: 'Tricks & Shortcuts',
@@ -1168,7 +1735,7 @@ export const FORMULA_DB: Formula[] = [
     name: 'Fraction to Percentage Quick Conversion Table',
     category: 'Tricks & Shortcuts',
     subcategory: 'Fraction-Percentage Chart',
-    content: '1/2=50% | 1/3=33.33% | 1/4=25% | 1/5=20% | 1/6=16.67% | 1/7=14.28% | 1/8=12.5% | 1/9=11.11% | 1/11=9.09% | 1/12=8.33% | 1/15=6.67% | 1/16=6.25%',
+    content: '1/2=50% | 1/3=33.33% | 1/4=25% | 1/5=20% | 1/6=16.67% | 1/7=14.28% | 1/8=12.5% | 1/9=11.11% | 1/11=9.09% | 1/12=8.33% | 1/15=6.67% | 1/16=6.25% | 1/20=5% | 1/25=4%',
     variables: {
       '1/6': '16.67% (or 16 2/3%)',
       '1/7': '14.28% (or 14 2/8%)',
