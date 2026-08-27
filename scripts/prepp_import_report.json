@@ -5,6 +5,21 @@
       "papers": 100,
       "hindi_skipped": 0,
       "questions": 10503
+    },
+    "SSC_CGL": {
+      "papers": 50,
+      "hindi_skipped": 0,
+      "questions": 7258
+    },
+    "ACIO2": {
+      "papers": 16,
+      "hindi_skipped": 0,
+      "questions": 1841
+    },
+    "UPSC_APFC": {
+      "papers": 6,
+      "hindi_skipped": 0,
+      "questions": 717
     }
   }
 }
