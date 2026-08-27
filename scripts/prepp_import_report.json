@@ -1,0 +1,10 @@
+{
+  "batch": "prepp_shiftwise_2026_08_27",
+  "exams": {
+    "UPSC_APFC": {
+      "papers": 6,
+      "hindi_skipped": 0,
+      "questions": 717
+    }
+  }
+}

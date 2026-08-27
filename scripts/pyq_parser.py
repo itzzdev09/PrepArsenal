@@ -180,6 +180,16 @@ ADDA_SOLUTION = re.compile(
 # Two-column answer tables that flatten to "<number>\n<letter>" pairs.
 ANSWER_TABLE_PAIR = re.compile(r'(?m)^[ \t]*(\d{1,3})[ \t]*\n[ \t]*([A-Ea-e])[ \t]*$')
 
+# Companion answer-key documents (Prepp publishes the paper and its key as two
+# separate PDFs) use a couple of further shapes:
+#   "1. Ans. A" / "12. Answer: C"  — no brackets around the letter.
+NUMBERED_ANSWER_LINE = re.compile(
+    r'(?m)^[ \t]*(\d{1,3})[\.\)]\s*Ans(?:wer)?[\s\.:\-]*[\(\[]?\s*([a-eA-E])\s*[\)\]]?'
+)
+#   A "Question No / Option" grid whose options are digits: 1-4 rather than a-d.
+ANSWER_TABLE_NUMERIC = re.compile(r'(?m)^[ \t]*(\d{1,3})[ \t]*\n[ \t]*([1-5])[ \t]*$')
+NUMERIC_GRID_HEADER = re.compile(r'(?i)question\s*no.{0,40}option')
+
 # Lines that are page furniture rather than content.
 NOISE_LINE = re.compile(
     r'^\s*(?:page\s*\d+|\d+\s*\|\s*page|www\.[^\s]+|https?://\S+|[-—_=\s]{3,})\s*$'
@@ -271,24 +281,46 @@ def build_answer_map(solutions_text: str, whole_text: str) -> tuple[dict[int, st
             if body and num not in explanations:
                 explanations[num] = body[:2000]
 
+    # Order matters: `setdefault` means the first pattern to claim a question
+    # number wins, so these run strictly most-explicit first. Getting this
+    # backwards silently records wrong answers — an ambiguous bare
+    # "<number>\n<letter>" pair used to outrank an explicit "1. Ans. A".
+
+    # 1. "1. Ans. A" — an unambiguous statement of the answer. Used by
+    #    standalone answer-key documents.
     if solutions_text:
+        absorb_numbered(solutions_text, NUMBERED_ANSWER_LINE, None)
+
+        # 2. "1. (b) <explanation>" numbered solutions.
         absorb_numbered(solutions_text, SOLUTION_LINE, 3)
-        # Dense answer-key grids ("1. (b) 2. (c) 3. (a) …") have no explanations.
+
+    # 3. Adda247-style "S12. Ans. (c) / Sol. …" blocks are usually interleaved
+    #    with the questions rather than sitting behind a SOLUTIONS heading. The
+    #    "S" prefix makes them unambiguous, so scanning the whole document is safe.
+    absorb_numbered(whole_text, ADDA_SOLUTION, None)
+
+    if solutions_text:
+        # 4. Dense answer-key grids ("1. (b) 2. (c) 3. (a) …"), no explanations.
         for m in ANSWER_KEY_PAIR.finditer(solutions_text):
             answers.setdefault(int(m.group(1)), m.group(2).lower())
 
-    # Adda247-style "S12. Ans. (c) / Sol. …" blocks are usually interleaved with
-    # the questions rather than sitting behind a SOLUTIONS heading. Their "S"
-    # prefix makes them unambiguous, so scanning the whole document is safe.
-    absorb_numbered(whole_text, ADDA_SOLUTION, None)
+        # 5. "Question No | Option" grids number their options 1-4 instead of
+        #    a-d. Gated on the grid header so a bare "<number>\n<digit>" in a
+        #    question body (a number series, say) is never read as an answer.
+        if NUMERIC_GRID_HEADER.search(solutions_text):
+            for num, digit in ANSWER_TABLE_NUMERIC.findall(solutions_text):
+                index = int(digit) - 1
+                if 0 <= index < len(OPTION_LETTERS):
+                    answers.setdefault(int(num), OPTION_LETTERS[index])
 
-    # Column answer tables flatten to alternating number/letter lines. A bare
-    # "<number>\n<letter>" is only meaningful inside a dedicated answer section —
-    # in the question body it would match a question number above its option (a).
-    table_pairs = ANSWER_TABLE_PAIR.findall(solutions_text)
-    if len(table_pairs) >= 10:
-        for num, letter in table_pairs:
-            answers.setdefault(int(num), letter.lower())
+        # 6. Weakest signal, so it goes last: column answer tables that flatten
+        #    to alternating number/letter lines. A bare "<number>\n<letter>" is
+        #    only meaningful inside a dedicated answer section — in a question
+        #    body it matches a question number sitting above its option (a).
+        table_pairs = ANSWER_TABLE_PAIR.findall(solutions_text)
+        if len(table_pairs) >= 10:
+            for num, letter in table_pairs:
+                answers.setdefault(int(num), letter.lower())
 
     return answers, explanations
 
@@ -397,10 +429,24 @@ def _extract_options(block: str) -> tuple[str, list[str]]:
     return stem, options
 
 
-def parse_paper(raw_text: str) -> list[ParsedQuestion]:
+def parse_paper(raw_text: str, answer_text: str | None = None) -> list[ParsedQuestion]:
+    """Parse a paper. `answer_text` is the raw text of a companion answer-key
+    PDF, for sources that publish the paper and its key as two documents."""
     text = clean_text(raw_text)
     _, solutions = split_questions_and_solutions(text)
-    answers, explanations = build_answer_map(solutions, text)
+
+    if answer_text:
+        # Prefer the dedicated key document, then still fall back to anything
+        # the paper itself carries.
+        key_text = clean_text(answer_text)
+        answers, explanations = build_answer_map(key_text, key_text)
+        own_answers, own_explanations = build_answer_map(solutions, text)
+        for num, letter in own_answers.items():
+            answers.setdefault(num, letter)
+        for num, body in own_explanations.items():
+            explanations.setdefault(num, body)
+    else:
+        answers, explanations = build_answer_map(solutions, text)
 
     # Scan the whole document for questions, not just the part before the first
     # solutions block. Aggregator PYQ books interleave questions and solutions
