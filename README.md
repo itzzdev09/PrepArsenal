@@ -7,7 +7,9 @@ Built with **Next.js**, **Supabase**, and **Turso/libSQL**.
 [![Next.js](https://img.shields.io/badge/Next.js-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![License](https://img.shields.io/badge/license-Private-lightgrey)](#license)
+[![Discussions](https://img.shields.io/badge/Discussions-Join%20Community-7928CA?logo=github)](https://github.com/itzzdev09/PrepArsenal/discussions)
+[![Stars](https://img.shields.io/github/stars/itzzdev09/PrepArsenal?style=social)](https://github.com/itzzdev09/PrepArsenal)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/itzzdev09/PrepArsenal/pulls)
 
 ---
 
