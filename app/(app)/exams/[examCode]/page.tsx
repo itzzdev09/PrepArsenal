@@ -19,6 +19,10 @@ import {
   TrendingUp,
   Users,
   Zap,
+  Database,
+  Layers,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 import { exams } from '@/lib/data';
 import { getExamLogo } from '@/lib/exam-logos';
@@ -165,6 +169,82 @@ export default function ExamDetailPage({ params }: { params: Promise<{ examCode:
         /* Sections */
         .section {
           margin-bottom: 2.5rem;
+        }
+        .pyq-intel-card {
+          background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(139,92,246,0.06) 100%);
+          border: 1px solid rgba(59,130,246,0.25);
+          border-radius: 1rem;
+          padding: 1.5rem;
+          margin-bottom: 2.5rem;
+          position: relative;
+          overflow: hidden;
+        }
+        .pyq-intel-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.25rem;
+          flex-wrap: wrap;
+          gap: 0.75rem;
+        }
+        .pyq-intel-title {
+          font-size: 1.15rem;
+          font-weight: 800;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: var(--text-primary);
+        }
+        .pyq-badge-verified {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          background: rgba(34,197,94,0.15);
+          border: 1px solid rgba(34,197,94,0.3);
+          color: #22c55e;
+          font-size: 0.75rem;
+          font-weight: 700;
+          padding: 0.3rem 0.75rem;
+          border-radius: 9999px;
+        }
+        .pyq-metrics-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 1rem;
+          margin-bottom: 1.25rem;
+        }
+        .pyq-metric-box {
+          background: var(--bg-card);
+          border: 1px solid var(--border-subtle);
+          border-radius: 0.75rem;
+          padding: 1rem;
+        }
+        .pyq-metric-val {
+          font-size: 1.4rem;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          color: var(--accent-blue);
+          margin-bottom: 0.25rem;
+        }
+        .pyq-metric-sub {
+          font-size: 0.75rem;
+          color: var(--text-tertiary);
+          font-weight: 600;
+        }
+        .pyq-provenance-info {
+          font-size: 0.82rem;
+          color: var(--text-secondary);
+          line-height: 1.5;
+          margin-bottom: 1.25rem;
+          padding: 0.75rem 1rem;
+          background: rgba(0,0,0,0.15);
+          border-radius: 0.5rem;
+          border-left: 3px solid var(--accent-blue);
+        }
+        .pyq-actions {
+          display: flex;
+          gap: 0.75rem;
+          flex-wrap: wrap;
         }
         .section-title {
           font-size: 1.25rem;
@@ -507,6 +587,52 @@ export default function ExamDetailPage({ params }: { params: Promise<{ examCode:
           <div className="stat-label">Subjects</div>
         </div>
       </div>
+
+      {/* PYQ Shift & Question Pool Intelligence */}
+      {detail?.pyqMetrics && (
+        <div className="pyq-intel-card">
+          <div className="pyq-intel-header">
+            <div className="pyq-intel-title">
+              <Database size={20} color="var(--accent-blue)" />
+              Verified Question Bank & Shift Intelligence
+            </div>
+            <div className="pyq-badge-verified">
+              <CheckCircle2 size={14} />
+              {detail.pyqMetrics.verifiedPercentage}% Real PYQs • Zero AI Drift
+            </div>
+          </div>
+
+          <div className="pyq-metrics-grid">
+            <div className="pyq-metric-box">
+              <div className="pyq-metric-val">{detail.pyqMetrics.totalQuestions.toLocaleString()}</div>
+              <div className="pyq-metric-sub">Questions In Vault</div>
+            </div>
+            <div className="pyq-metric-box">
+              <div className="pyq-metric-val" style={{ color: '#8b5cf6' }}>{detail.pyqMetrics.totalShifts}</div>
+              <div className="pyq-metric-sub">Shifts / Annual Papers</div>
+            </div>
+            <div className="pyq-metric-box">
+              <div className="pyq-metric-val" style={{ color: '#10b981' }}>{detail.pyqMetrics.coverageYears}</div>
+              <div className="pyq-metric-sub">Exam Cycles Covered</div>
+            </div>
+          </div>
+
+          <div className="pyq-provenance-info">
+            <strong>Data Provenance:</strong> {detail.pyqMetrics.provenance}. All question stems, multi-tier options, answer keys, and worked solutions are mapped directly into PrepArsenal’s practice engine.
+          </div>
+
+          <div className="pyq-actions">
+            <Link href={`/practice?exam=${exam.code}`} className="btn btn-primary btn-sm">
+              <Target size={14} style={{ verticalAlign: '-1px', marginRight: '0.35rem' }} />
+              Practice {detail.pyqMetrics.totalQuestions.toLocaleString()} {exam.name} Questions
+            </Link>
+            <Link href={`/mock?exam=${exam.code}`} className="btn btn-secondary btn-sm">
+              <Layers size={14} style={{ verticalAlign: '-1px', marginRight: '0.35rem' }} />
+              Attempt Shift-wise Mock Test
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Exam Structure */}
       {detail && detail.stages.length > 0 && (
