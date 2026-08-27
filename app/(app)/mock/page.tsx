@@ -17,6 +17,13 @@ export default function MockTestConfigPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const examParam = params.get('exam');
+      if (examParam) {
+        setSelectedExam(examParam);
+      }
+    }
     const fetchCounts = async () => {
       const supabase = createClient();
       const dbCounts = await getExamQuestionCounts(supabase);
