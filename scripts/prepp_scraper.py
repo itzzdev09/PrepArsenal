@@ -48,14 +48,17 @@ MONTHS = {m: i for i, m in enumerate(
     ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'], 1
 )}
 
-# Prepp's section/subject labels -> the five subjects this project uses.
+# Prepp's section/subject labels -> the project subjects.
 SECTION_SUBJECT = [
     (re.compile(r'(?i)quant|numerical|mathemat|aptitude'), 'Quantitative Aptitude'),
     (re.compile(r'(?i)reason|intelligence|logical|mental'), 'Reasoning'),
     (re.compile(r'(?i)english|verbal|comprehension'), 'English'),
+    (re.compile(r'(?i)insurance|actuarial'), 'Insurance'),
+    (re.compile(r'(?i)agri|rural'), 'Agriculture & Rural Dev'),
+    (re.compile(r'(?i)computer|it\b|information tech'), 'Computer Knowledge'),
     (re.compile(r'(?i)finance|economic|commerce|account|banking|management|costing'),
      'Finance & Economics'),
-    (re.compile(r'(?i)awareness|general\s*knowledge|current|static|science|polity'),
+    (re.compile(r'(?i)awareness|general\s*knowledge|current|static|science|polity|history|geography'),
      'General Awareness'),
 ]
 
@@ -99,6 +102,8 @@ def strip_html(raw: str) -> str:
     if not raw:
         return ''
     text = re.sub(r'(?is)<(script|style).*?</\1>', ' ', raw)
+    text = re.sub(r'(?i)<sup>(.*?)</sup>', r'^\1', text)
+    text = re.sub(r'(?i)<sub>(.*?)</sub>', r'_\1', text)
     text = re.sub(r'(?i)<br\s*/?>|</p>|</div>|</li>', '\n', text)
     text = re.sub(r'<[^>]+>', ' ', text)
     text = html.unescape(text)
