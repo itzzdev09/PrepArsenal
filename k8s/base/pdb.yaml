@@ -2,7 +2,6 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: preparsenal-pdb
-  namespace: preparsenal
   labels:
     app.kubernetes.io/name: preparsenal
 spec:

@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: preparsenal-web
-  namespace: preparsenal
   labels:
     app.kubernetes.io/name: preparsenal
     app.kubernetes.io/component: web

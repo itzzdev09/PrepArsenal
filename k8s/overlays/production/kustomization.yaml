@@ -5,33 +5,44 @@ namespace: preparsenal-prod
 
 namePrefix: prod-
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
       name: preparsenal-web
-    spec:
-      replicas: 4
-      template:
-        spec:
-          containers:
-            - name: web
-              resources:
-                requests:
-                  cpu: 500m
-                  memory: 512Mi
-                limits:
-                  cpu: 2000m
-                  memory: 1536Mi
-  - |-
-    apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: preparsenal-web
+      spec:
+        replicas: 4
+        template:
+          spec:
+            containers:
+              - name: web
+                resources:
+                  requests:
+                    cpu: 500m
+                    memory: 512Mi
+                  limits:
+                    cpu: 2000m
+                    memory: 1536Mi
+  - target:
+      group: autoscaling
+      version: v2
+      kind: HorizontalPodAutoscaler
       name: preparsenal-hpa
-    spec:
-      minReplicas: 3
-      maxReplicas: 25
+    patch: |-
+      apiVersion: autoscaling/v2
+      kind: HorizontalPodAutoscaler
+      metadata:
+        name: preparsenal-hpa
+      spec:
+        minReplicas: 3
+        maxReplicas: 25
+

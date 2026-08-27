@@ -2,7 +2,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: ml-trend-engine-daily
-  namespace: preparsenal
   labels:
     app.kubernetes.io/name: preparsenal
     app.kubernetes.io/component: ml-worker

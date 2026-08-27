@@ -5,35 +5,46 @@ namespace: preparsenal-staging
 
 namePrefix: staging-
 
-bases:
+resources:
   - ../../base
 
-patchesStrategicMerge:
-  - |-
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
       name: preparsenal-web
-    spec:
-      replicas: 1
-  - |-
-    apiVersion: networking.k8s.io/v1
-    kind: Ingress
-    metadata:
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: preparsenal-web
+      spec:
+        replicas: 1
+  - target:
+      group: networking.k8s.io
+      version: v1
+      kind: Ingress
       name: preparsenal-ingress
-    spec:
-      tls:
-        - hosts:
-            - staging.preparsenal.com
-          secretName: staging-preparsenal-tls-secret
-      rules:
-        - host: staging.preparsenal.com
-          http:
-            paths:
-              - path: /
-                pathType: Prefix
-                backend:
-                  service:
-                    name: staging-preparsenal-web
-                    port:
-                      number: 80
+    patch: |-
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: preparsenal-ingress
+      spec:
+        tls:
+          - hosts:
+              - staging.preparsenal.com
+            secretName: staging-preparsenal-tls-secret
+        rules:
+          - host: staging.preparsenal.com
+            http:
+              paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: staging-preparsenal-web
+                      port:
+                        number: 80
+

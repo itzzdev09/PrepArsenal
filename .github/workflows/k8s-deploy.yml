@@ -21,52 +21,90 @@ jobs:
   deploy:
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Determine Environment
+      - name: Determine Environment & Target Images
         id: env_select
         run: |
+          # Ensure repository name is lowercased for Docker/GHCR registry standards
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "REPO_LOWER=$REPO_LOWER" >> $GITHUB_ENV
+
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "ENV=${{ github.event.inputs.environment }}" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "ENV=production" >> $GITHUB_ENV
+            ENV="${{ github.event.inputs.environment }}"
+            IMAGE_TAG="latest"
           else
-            echo "ENV=staging" >> $GITHUB_ENV
+            TRIGGER_BRANCH="${{ github.event.workflow_run.head_branch }}"
+            if [ "$TRIGGER_BRANCH" = "main" ]; then
+              ENV="production"
+              IMAGE_TAG="latest"
+            else
+              ENV="staging"
+              IMAGE_TAG="develop"
+            fi
           fi
 
+          echo "ENV=$ENV" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "Environment: $ENV"
+          echo "Image Registry: ghcr.io/$REPO_LOWER"
+          echo "Image Tag: $IMAGE_TAG"
+
       - name: Setup Kustomize
-        uses: imranismail/setup-kustomize@v2
+        uses: imranismail/setup-kustomize@v3
 
       - name: Setup Helm
         uses: azure/setup-helm@v4
 
-      # Configure kubeconfig from GitHub Secrets
+      # Build and validate Kustomize manifests
+      - name: Build & Validate Kustomize Overlay
+        run: |
+          echo "Compiling manifests for k8s/overlays/${{ env.ENV }}..."
+          cd k8s/overlays/${{ env.ENV }}
+          kustomize edit set image ghcr.io/itzzdev09/preparsenal/web=ghcr.io/${{ env.REPO_LOWER }}/web:${{ env.IMAGE_TAG }}
+          kustomize edit set image ghcr.io/itzzdev09/preparsenal/worker=ghcr.io/${{ env.REPO_LOWER }}/worker:${{ env.IMAGE_TAG }}
+          kustomize build . > /tmp/k8s-manifests.yaml
+          echo "Manifest compilation successful. Generated $(wc -l < /tmp/k8s-manifests.yaml) lines."
+
+      # Check if KUBECONFIG secret is available
+      - name: Check Kubeconfig Availability
+        id: check_kubeconfig
+        run: |
+          if [ -n "${{ secrets.KUBECONFIG }}" ]; then
+            echo "has_kubeconfig=true" >> $GITHUB_OUTPUT
+            echo "KUBECONFIG secret found."
+          else
+            echo "has_kubeconfig=false" >> $GITHUB_OUTPUT
+            echo "::notice title=KUBECONFIG Secret Missing::KUBECONFIG secret is not configured in GitHub Repository Secrets. Manifest validation and compilation completed successfully. Live cluster deployment skipped until KUBECONFIG is configured."
+          fi
+
+      # Configure kubeconfig from GitHub Secrets if present
       - name: Set Kubernetes Context
-        uses: azure/k8s-set-context@v3
+        if: steps.check_kubeconfig.outputs.has_kubeconfig == 'true'
+        uses: azure/k8s-set-context@v5
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}
 
-      # Deploy using Kustomize overlay
-      - name: Deploy via Kustomize
+      # Deploy compiled manifests to Kubernetes cluster
+      - name: Deploy via Kubectl
+        if: steps.check_kubeconfig.outputs.has_kubeconfig == 'true'
         run: |
-          echo "Deploying to environment: ${{ env.ENV }}"
-          cd k8s/overlays/${{ env.ENV }}
-          kustomize edit set image ghcr.io/itzzdev09/preparsenal/web=ghcr.io/${{ github.repository }}/web:${{ github.sha }}
-          kustomize build . | kubectl apply -f -
+          echo "Deploying manifests to cluster..."
+          kubectl apply -f /tmp/k8s-manifests.yaml
 
       # Rollout Status Verification
       - name: Verify Deployment Rollout
+        if: steps.check_kubeconfig.outputs.has_kubeconfig == 'true'
         run: |
           NAMESPACE="preparsenal-${{ env.ENV }}"
           if [ "${{ env.ENV }}" = "production" ]; then
             NAMESPACE="preparsenal-prod"
           fi
+          PREFIX="${{ env.ENV == 'production' && 'prod-' || 'staging-' }}"
           echo "Checking rollout status in namespace $NAMESPACE..."
-          kubectl rollout status deployment/prod-preparsenal-web -n $NAMESPACE --timeout=180s || \
-          kubectl rollout status deployment/staging-preparsenal-web -n $NAMESPACE --timeout=180s || \
-          kubectl rollout status deployment/preparsenal-web -n $NAMESPACE --timeout=180s
+          kubectl rollout status deployment/${PREFIX}preparsenal-web -n $NAMESPACE --timeout=180s
