@@ -98,6 +98,14 @@ export default function PracticePage() {
   };
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const examParam = params.get('exam');
+      if (examParam) {
+        setSelectedExams([examParam]);
+      }
+    }
+
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) setUserId(data.user.id);
     });
