@@ -33,26 +33,41 @@ class ExamBenchImporter:
     """
     EXAM_MAPPING = {
         'ssc_cgl': 'SSC_CGL',
+        'ssc': 'SSC_CGL',
         'rrb_ntpc': 'RRB_NTPC',
+        'rrb': 'RRB_NTPC',
         'upsc': 'UPSC_APFC',
+        'upsc_epfo': 'UPSC_APFC',
+        'epfo': 'UPSC_APFC',
+        'apfc': 'UPSC_APFC',
         'banking': 'RBI_GRADEB',
         'rbi': 'RBI_GRADEB',
         'nabard': 'NABARD_GRADEA',
         'sebi': 'SEBI_GRADEA',
         'lic': 'LIC_AAO',
+        'irda': 'IRDA',
+        'acio': 'ACIO2',
     }
 
     SUBJECT_MAPPING = {
         'math': 'Quantitative Aptitude',
         'quantitative': 'Quantitative Aptitude',
+        'quant': 'Quantitative Aptitude',
         'reasoning': 'Reasoning',
         'logic': 'Reasoning',
+        'logical reasoning': 'Reasoning',
         'english': 'English',
         'verbal': 'English',
         'general_knowledge': 'General Awareness',
         'general_studies': 'General Awareness',
+        'general awareness': 'General Awareness',
+        'science': 'General Awareness',
+        'history': 'General Awareness',
+        'geography': 'General Awareness',
+        'polity': 'General Awareness',
         'economy': 'Finance & Economics',
         'finance': 'Finance & Economics',
+        'insurance': 'Insurance',
     }
 
     MMLU_TOPIC_MAPPING = {
@@ -60,6 +75,12 @@ class ExamBenchImporter:
         'high_school_physics': ('General Awareness', 'ga_science'),
         'high_school_chemistry': ('General Awareness', 'ga_science'),
         'high_school_biology': ('General Awareness', 'ga_science'),
+        'high_school_geography': ('General Awareness', 'ga_geography'),
+        'high_school_government_and_politics': ('General Awareness', 'ga_polity'),
+        'high_school_macroeconomics': ('General Awareness', 'ga_economy'),
+        'high_school_microeconomics': ('General Awareness', 'ga_economy'),
+        'world_religions': ('General Awareness', 'ga_history'),
+        'prehistory': ('General Awareness', 'ga_history'),
     }
 
     @classmethod
