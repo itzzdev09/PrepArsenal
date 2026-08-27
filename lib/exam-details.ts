@@ -25,6 +25,14 @@ export interface ExamSyllabusSection {
   weightage?: string;
 }
 
+export interface PYQMetric {
+  totalQuestions: number;
+  totalShifts: number | string;
+  provenance: string;
+  coverageYears: string;
+  verifiedPercentage: number;
+}
+
 export interface ExamDetail {
   code: string;
   tagline: string;
@@ -48,6 +56,7 @@ export interface ExamDetail {
     selectionRatio?: string;
     lastCutoff?: string;
   };
+  pyqMetrics?: PYQMetric;
   importantLinks?: { label: string; url: string }[];
   tips: string[];
 }
