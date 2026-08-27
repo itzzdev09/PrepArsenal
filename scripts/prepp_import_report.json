@@ -1,10 +1,10 @@
 {
   "batch": "prepp_shiftwise_2026_08_27",
   "exams": {
-    "ACIO2": {
-      "papers": 19,
+    "RRB_NTPC": {
+      "papers": 100,
       "hindi_skipped": 0,
-      "questions": 1841
+      "questions": 10503
     }
   }
 }
