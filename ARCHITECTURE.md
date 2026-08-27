@@ -13,9 +13,12 @@ PrepArsenal is an AI-powered Govt Exam Prep Platform targeting high-stakes India
   - `trend_analytics`: Stores ML predictions for topics.
   - `ai_conversations`: Chat logs for the tutor.
 - **AI / LLM:** Google Gemini API (via `@google/genai`) for the AI Tutor and Exam Assistant.
-- **Data Pipeline (Python):** 
-  - `dataset_harvester.py`: Scrapes/transforms public datasets (like HuggingFace `cais/mmlu`) into standardized PYQs and pushes them to Supabase.
+- **Data Pipeline (Python & Deterministic Engines):** 
+  - `prepp_scraper.py` & `prepp_pyq_pipeline.py`: Deterministic shift-wise scraper extracting complete exam sittings (100–120 questions/paper with verified options, keys, and solutions) directly from source hydration payloads (`__NEXT_DATA__`).
+  - `pdf_pyq_pipeline.py` & `pyq_parser.py`: Multi-source PDF extraction pipeline with regex parsing, topic taxonomy matching, and Devanagari noise filtering.
+  - `dataset_harvester.py`: Transforms public benchmark items (ExamBench/MMLU) into standardized PYQ format.
   - `ml_trend_engine.py`: Uses exponential recency-weighted moving averages (EWMA) to predict topic probabilities based on historical frequency.
+  - Question Pool: Over 25,866+ verified PYQs across 9 competitive exams.
 
 ## The Future Data Pivot (Turso Strategy)
 **The Problem:** Supabase's free tier is generous (500 MB DB storage) and can hold ~250,000 text questions. However, if we scale to millions of questions, add high-dimensional `pgvector` embeddings for semantic search, or store extensive OCR text from NCERTs, we will hit the free tier ceiling.
