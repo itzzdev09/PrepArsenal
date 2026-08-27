@@ -138,6 +138,13 @@ def main():
             db.table('topics').upsert({'id': topic_id, 'name': name, 'subject': subject}).execute()
 
     report = {'batch': BATCH, 'exams': {}}
+    if REPORT_PATH.exists():
+        try:
+            prev_report = json.loads(REPORT_PATH.read_text())
+            if isinstance(prev_report, dict) and 'exams' in prev_report:
+                report['exams'].update(prev_report['exams'])
+        except Exception:
+            pass
     grand_total = 0
 
     for exam_code in exam_codes:
