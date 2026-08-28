@@ -416,7 +416,6 @@ export default function FormulaVaultPage() {
         }
 
         .vault-search-box:focus {
-          transform: translate(-1px, -1px);
           box-shadow: 4px 4px 0 #172033;
         }
 
@@ -467,8 +466,8 @@ export default function FormulaVaultPage() {
         }
 
         .sketch-btn:hover {
-          transform: translate(2px, 2px);
-          box-shadow: 1px 1px 0 #172033;
+          transform: translateY(-1px);
+          box-shadow: 2px 2px 0 #172033;
         }
 
         .sketch-btn.starred-btn.active {
@@ -630,8 +629,8 @@ export default function FormulaVaultPage() {
         }
 
         .formula-card-item:hover {
-          transform: translate(-2px, -2px);
-          box-shadow: 6px 6px 0 #172033;
+          transform: translateY(-2px);
+          box-shadow: 4px 6px 0 #172033;
         }
 
         .card-header-bar {

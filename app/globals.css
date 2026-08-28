@@ -1347,15 +1347,12 @@ body {
   background: #fffdf5 !important; border: 2px solid #172033 !important; border-radius: 5px 10px 6px 8px !important; box-shadow: 3px 3px 0 #172033 !important;
 }
 
-/* Subtle colored paper layers shared by every authenticated study screen. */
-.sketch-app-shell [class*="card"], .sketch-app-shell [class*="panel"], .sketch-app-shell [class*="box"] {
-  border-color: #172033 !important;
-  border-radius: 5px 10px 6px 8px !important;
-}
-.sketch-app-shell [class*="card"]:nth-child(4n + 1), .sketch-app-shell [class*="panel"]:nth-child(4n + 1), .sketch-app-shell [class*="box"]:nth-child(4n + 1) { background-color: #e8f1ff !important; }
-.sketch-app-shell [class*="card"]:nth-child(4n + 2), .sketch-app-shell [class*="panel"]:nth-child(4n + 2), .sketch-app-shell [class*="box"]:nth-child(4n + 2) { background-color: #fff4b8 !important; }
-.sketch-app-shell [class*="card"]:nth-child(4n + 3), .sketch-app-shell [class*="panel"]:nth-child(4n + 3), .sketch-app-shell [class*="box"]:nth-child(4n + 3) { background-color: #e1f3eb !important; }
-.sketch-app-shell [class*="card"]:nth-child(4n + 4), .sketch-app-shell [class*="panel"]:nth-child(4n + 4), .sketch-app-shell [class*="box"]:nth-child(4n + 4) { background-color: #fdeceb !important; }
+/* Subtle colored paper layers shared by specific study widgets without overriding sub-components. */
+.sketch-app-shell .dash-palette-1 { background-color: #e8f1ff !important; }
+.sketch-app-shell .dash-palette-2 { background-color: #fff4b8 !important; }
+.sketch-app-shell .dash-palette-3 { background-color: #e1f3eb !important; }
+.sketch-app-shell .dash-palette-4 { background-color: #fdeceb !important; }
+
 .sketch-app-shell .btn, .sketch-app-shell .count-btn, .sketch-app-shell .quick-action, .sketch-app-shell [class*="start-btn"] {
   border: 2px solid #172033 !important;
   border-radius: 5px 10px 6px 8px !important;
@@ -1364,23 +1361,14 @@ body {
   color: #172033 !important;
 }
 .sketch-app-shell .btn:hover, .sketch-app-shell .count-btn:hover, .sketch-app-shell .quick-action:hover, .sketch-app-shell [class*="start-btn"]:hover {
-  transform: translate(2px, 2px) rotate(-.4deg) !important;
-  box-shadow: 1px 1px 0 #172033 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 2px 2px 0 #172033 !important;
   background: #d9ecff !important;
 }
 .sketch-app-shell h1, .sketch-app-shell h2, .sketch-app-shell h3 { font-family: var(--font-kalam), "Segoe Print", cursive; color: #172033; }
 .sketch-app-shell [class*="header"] { border-color: #172033 !important; background: transparent !important; }
 
-/* Physical, hand-cut interaction surfaces. */
-.sketch-app-shell [class*="card"], .sketch-app-shell [class*="panel"], .sketch-app-shell [class*="box"], .sketch-app-shell [class*="item"], .sketch-app-shell [class*="tile"] {
-  box-shadow: 4px 4px 0 #172033 !important;
-  transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease !important;
-}
-.sketch-app-shell a[class*="card"]:hover, .sketch-app-shell a[class*="item"]:hover,
-.sketch-app-shell [class*="card"]:hover, .sketch-app-shell [class*="panel"]:hover, .sketch-app-shell [class*="box"]:hover, .sketch-app-shell [class*="tile"]:hover {
-  transform: translate(2px, 2px) rotate(-.25deg) !important;
-  box-shadow: 2px 2px 0 #172033 !important;
-}
+/* Physical, hand-cut interaction surfaces without rotation/wobble jitter. */
 .sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout),
 .sketch-app-shell .tag, .sketch-app-shell .tab, .sketch-app-shell .option-item {
   border: 2px solid #172033 !important;
@@ -1390,11 +1378,11 @@ body {
 }
 .sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout):hover,
 .sketch-app-shell .tag:hover, .sketch-app-shell .tab:hover, .sketch-app-shell .option-item:hover {
-  transform: translate(2px, 2px) rotate(-.35deg) !important;
-  box-shadow: 1px 1px 0 #172033 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 2px 2px 0 #172033 !important;
 }
 .sketch-app-shell button:not(.sketch-app-menu):not(.sketch-app-signout):active,
-.sketch-app-shell .option-item:active { transform: translate(3px, 3px) !important; box-shadow: 0 0 0 #172033 !important; }
+.sketch-app-shell .option-item:active { transform: translateY(1px) !important; box-shadow: 1px 1px 0 #172033 !important; }
 
 /* Occasional ink arrows make the study flow feel like a working notebook. */
 .sketch-app-shell .dash-section-title, .sketch-app-shell .select-header h1, .sketch-app-shell .page-header h1 {

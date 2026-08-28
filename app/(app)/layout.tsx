@@ -307,7 +307,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           display: none;
         }
         .sketch-app-nav a:hover {
-          transform: translateX(2px) rotate(-0.3deg);
+          transform: translateX(3px);
           background: #eef5ed;
           border-color: #172033;
         }
@@ -426,8 +426,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           color: #fff;
         }
         .app-top-button:hover {
-          transform: translate(2px, 2px) rotate(-0.4deg);
-          box-shadow: 1px 1px 0 #172033;
+          transform: translateY(-1px);
+          box-shadow: 2px 2px 0 #172033;
         }
         .sketch-app-menu {
           display: none;
