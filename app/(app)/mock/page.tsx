@@ -84,10 +84,6 @@ export default function MockTestConfigPage() {
           border-color: var(--border-default);
           transform: translateY(-4px);
         }
-        .exam-card.selected {
-          border-color: var(--accent-blue);
-          background: rgba(59, 130, 246, 0.05);
-        }
         
         .ec-icon {
           display: grid;
@@ -175,26 +171,40 @@ export default function MockTestConfigPage() {
       </div>
 
       <div className="exam-grid">
-        {exams.map(exam => (
-          <div 
-            key={exam.code}
-            className={`exam-card ${selectedExam === exam.code ? 'selected' : ''}`}
-            onClick={() => setSelectedExam(exam.code)}
-          >
-            <div className={`ec-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
-              {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={58} height={58} />}
-            </div>
-            <div className="ec-name">{exam.name}</div>
-            <div className="ec-meta">
-              <span>{exam.totalQuestions} Questions</span>
-              <span>{exam.totalTime} Minutes</span>
-              <span>-{exam.negativeMark} Negative Marking</span>
-              <div className="ec-db-count">
-                DB Pool: {counts[exam.code] || 0} real questions
+        {exams.map(exam => {
+          const isSelected = selectedExam === exam.code;
+          return (
+            <div 
+              key={exam.code}
+              className="exam-card"
+              onClick={() => setSelectedExam(exam.code)}
+              style={{
+                border: isSelected ? '3px solid #3b82f6' : '2px solid var(--border-subtle)',
+                background: isSelected ? 'rgba(59, 130, 246, 0.2)' : 'var(--bg-card)',
+                boxShadow: isSelected ? '0 0 25px rgba(59, 130, 246, 0.5)' : 'none',
+                transform: isSelected ? 'translateY(-5px) scale(1.02)' : 'none',
+                borderRadius: '1rem',
+                padding: '1.5rem',
+                cursor: 'pointer',
+                transition: 'all 200ms',
+                textAlign: 'center'
+              }}
+            >
+              <div className={`ec-icon ${getExamLogo(exam.code) ? '' : 'no-logo'}`}>
+                {getExamLogo(exam.code) && <Image src={getExamLogo(exam.code)} alt="" width={58} height={58} />}
+              </div>
+              <div className="ec-name" style={{ color: isSelected ? '#3b82f6' : 'inherit' }}>{exam.name}</div>
+              <div className="ec-meta">
+                <span>{exam.totalQuestions} Questions</span>
+                <span>{exam.totalTime} Minutes</span>
+                <span>-{exam.negativeMark} Negative Marking</span>
+                <div className="ec-db-count">
+                  DB Pool: {counts[exam.code] || 0} real questions
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="start-action">

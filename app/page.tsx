@@ -798,7 +798,6 @@ export default function LandingPage() {
                 Trends
               </Link>
               <Link href="/dashboard" className="sketch-button">
-                <Sparkles size={19} strokeWidth={3} />
                 Start Free
               </Link>
             </nav>
@@ -808,7 +807,6 @@ export default function LandingPage() {
         <section className="hero">
           <div className="hero-copy">
             <div className="paper-tag">
-              <Sparkles size={18} strokeWidth={3} />
               Built by an aspirant, for aspirants
             </div>
 
@@ -980,7 +978,6 @@ export default function LandingPage() {
               </p>
             </div>
             <Link href="/dashboard" className="sketch-button">
-              <Sparkles size={20} strokeWidth={3} />
               Go to Dashboard
             </Link>
           </div>
