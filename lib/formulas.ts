@@ -1748,5 +1748,359 @@ export const FORMULA_DB: Formula[] = [
     },
     tip: 'Converting percentages to fractions simplifies quantitative word problems into simple integer arithmetic.',
     example: '37.5% of 640 = (3 × 12.5%) of 640 = (3/8) × 640 = 3 × 80 = 240.'
+  },
+
+  // =========================================================================
+  // FINANCIAL & COMMERCIAL MATHEMATICS (Banking, Discount, Perpetuity, Shares)
+  // =========================================================================
+  {
+    id: 'fin-ear-1',
+    name: 'Effective Annual Rate (EAR) from Nominal Compounding',
+    category: 'Arithmetic',
+    subcategory: 'Financial Math',
+    content: 'EAR = (1 + r / m)^m - 1',
+    variables: {
+      EAR: 'Effective annual percentage yield / true interest earned per year',
+      r: 'Nominal annual interest rate (in decimal format, e.g. 0.12 for 12%)',
+      m: 'Compounding frequency per year (m=2 half-yearly, m=4 quarterly, m=12 monthly)'
+    },
+    tip: 'For continuous compounding: EAR = e^r - 1.',
+    example: '12% nominal compounded quarterly (m=4): EAR = (1 + 0.12/4)⁴ - 1 = (1.03)⁴ - 1 = 1.1255 - 1 = 12.55%.'
+  },
+  {
+    id: 'fin-perp-1',
+    name: 'Perpetuity & Growing Perpetuity Present Value',
+    category: 'Arithmetic',
+    subcategory: 'Financial Math',
+    content: 'PV_constant = C / r  |  PV_growing = C1 / (r - g)',
+    variables: {
+      PV: 'Present value of infinite cash flows',
+      C: 'Constant periodic cash flow amount',
+      C1: 'First period cash flow in growing perpetuity',
+      r: 'Discount rate / required rate of return per period',
+      g: 'Constant perpetual growth rate of cash flow (where r > g)'
+    },
+    tip: 'Crucial for RBI Grade B & SEBI Grade A finance and valuation questions.',
+    example: 'A perpetual bond pays ₹6,000 annually at a 10% discount rate: PV = 6000 / 0.10 = ₹60,000.'
+  },
+  {
+    id: 'fin-disc-1',
+    name: "True Discount, Banker's Discount & Banker's Gain",
+    category: 'Arithmetic',
+    subcategory: 'Commercial & Discount Math',
+    content: 'BG = BD - TD = (TD)² / PW = (TD × r × t) / 100  |  Sum = (BD × TD) / (BD - TD)',
+    variables: {
+      PW: 'Present Worth (the money value right now)',
+      TD: 'True Discount (Interest on Present Worth: PW × r × t / 100)',
+      BD: 'Banker’s Discount (Simple Interest on the face value / bill sum: Sum × r × t / 100)',
+      BG: 'Banker’s Gain (the difference BD - TD, which equals simple interest on TD)',
+      Sum: 'Face value / Total bill amount payable at future due date'
+    },
+    tip: 'Banker’s Gain is ALWAYS the simple interest on the True Discount.',
+    example: 'If BD = ₹360 and TD = ₹300: Sum = (360 × 300)/(360 - 300) = 108000/60 = ₹1,800. Banker’s Gain BG = 360 - 300 = ₹60.'
+  },
+  {
+    id: 'fin-shares-1',
+    name: 'Stocks, Shares, Dividend Yield & Rate of Return',
+    category: 'Arithmetic',
+    subcategory: 'Stocks & Shares',
+    content: 'Annual Income = No. of Shares × Face Value × (Dividend Rate / 100)  |  Yield % = (Dividend / Market Value) × 100',
+    variables: {
+      'Face Value': 'Nominal / par value printed on the share certificate (usually ₹10 or ₹100)',
+      'Market Value': 'Current buying / selling cash price per share in the market',
+      'Dividend %': 'Percentage dividend declared on FACE VALUE (never on market value)',
+      'Yield %': 'Actual percentage rate of return earned on the invested money'
+    },
+    tip: 'Dividend is ALWAYS calculated on Face Value. Investment is ALWAYS calculated on Market Value + Brokerage.',
+    example: 'A ₹100 share bought at ₹125 pays 15% dividend: Annual Income = 100 × 15% = ₹15. Yield % = (15 / 125) × 100 = 12%.'
+  },
+
+  // =========================================================================
+  // KINEMATICS & PHYSICS APTITUDE (SSC JE, RRB NTPC, CDS, NDA, CSAT)
+  // =========================================================================
+  {
+    id: 'kin-motion-1',
+    name: 'Uniform Acceleration Kinematics & n-th Second Distance',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Kinematics & Motion',
+    content: 'v = u + at  |  s = ut + (1/2)at²  |  v² = u² + 2as  |  s_n = u + (a/2)(2n - 1)',
+    variables: {
+      u: 'Initial velocity (m/s)',
+      v: 'Final velocity after time t (m/s)',
+      a: 'Constant acceleration (m/s²)',
+      t: 'Time elapsed (seconds)',
+      s: 'Total displacement covered in t seconds (m)',
+      s_n: 'Displacement covered exclusively during the n-th second (m)'
+    },
+    tip: 'Under free fall: replace a with +g (downward, ≈ 9.8 m/s²) or -g (upward).',
+    example: 'Body starts from rest (u=0) with a=4 m/s²: Distance in 5th second s₅ = 0 + (4/2)(2×5 - 1) = 2 × 9 = 18 meters.'
+  },
+  {
+    id: 'kin-proj-1',
+    name: 'Projectile Motion: Time of Flight, Max Height & Range',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Kinematics & Motion',
+    content: 'T = (2u sin θ) / g  |  H_max = (u² sin² θ) / (2g)  |  R = (u² sin 2θ) / g',
+    variables: {
+      u: 'Launch projection speed (m/s)',
+      θ: 'Angle of projection with the horizontal ground (degrees)',
+      g: 'Acceleration due to gravity (≈ 9.8 or 10 m/s²)',
+      T: 'Total flight time in air until landing',
+      H_max: 'Maximum vertical height reached at apex',
+      R: 'Horizontal distance / range covered from launch to landing'
+    },
+    tip: 'Maximum range occurs at angle θ = 45°, where R_max = u² / g.',
+    example: 'u = 20 m/s, θ = 30°, g = 10 m/s²: T = (2 × 20 × sin 30°)/10 = (40 × 0.5)/10 = 2s. Range R = (400 × sin 60°)/10 = 40 × 0.866 = 34.64m.'
+  },
+  {
+    id: 'kin-circ-1',
+    name: 'Circular Motion: Angular Velocity & Centripetal Acceleration',
+    category: 'Speed, Time & Motion',
+    subcategory: 'Kinematics & Motion',
+    content: 'ω = 2π / T = 2πf  |  v = r × ω  |  a_c = v² / r = ω² × r',
+    variables: {
+      ω: 'Angular velocity (rad/s)',
+      T: 'Time period for one complete revolution (s)',
+      f: 'Frequency of rotation (Hz or rev/s)',
+      v: 'Linear tangential speed (m/s)',
+      r: 'Radius of the circular trajectory (m)',
+      a_c: 'Centripetal radial acceleration directed toward the center (m/s²)'
+    },
+    tip: 'In a clock: Minute hand ω = 360° / 60 min = 6°/min; Hour hand ω = 360° / 720 min = 0.5°/min.',
+    example: 'Radius r = 2m, rotates at 3 rad/s: Linear speed v = 2 × 3 = 6 m/s. Centripetal acceleration a_c = 6² / 2 = 18 m/s².'
+  },
+
+  // =========================================================================
+  // ADVANCED COORDINATE GEOMETRY & CONICS
+  // =========================================================================
+  {
+    id: 'geo-shoe-1',
+    name: 'Shoelace Formula: Area of Any Polygon from Coordinates',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Coordinate Geometry',
+    content: 'Area = (1/2) | (x1·y2 + x2·y3 + ... + xn·y1) - (y1·x2 + y2·x3 + ... + yn·x1) |',
+    variables: {
+      '(x1,y1), ...': 'Coordinates of the polygon vertices listed in strict counter-clockwise or clockwise order',
+      Area: 'Absolute enclosed polygonal area'
+    },
+    tip: 'Works universally for triangles (3 vertices), quadrilaterals (4 vertices), and n-gons.',
+    example: 'Triangle (0,0), (4,0), (0,3): Cross products (0×0 + 4×3 + 0×0) - (0×4 + 0×0 + 3×0) = 12 - 0 = 12. Area = 12 / 2 = 6 sq units.'
+  },
+  {
+    id: 'geo-circle-eqn',
+    name: 'General Equation of Circle, Center, Radius & Tangent Length',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Conics & Circles',
+    content: 'x² + y² + 2gx + 2fy + c = 0  ==>  Center = (-g, -f), Radius = √(g² + f² - c)  |  Tangent Length L = √(x1² + y1² + 2gx1 + 2fy1 + c)',
+    variables: {
+      'Center (-g, -f)': 'Center coordinates of the circle',
+      Radius: '√(g² + f² - c) [requires g² + f² - c ≥ 0]',
+      '(x1, y1)': 'External point coordinates from which tangents are drawn to the circle',
+      L: 'Length of the tangent segment from external point to the point of contact'
+    },
+    tip: 'If (x1, y1) lies on the circle, L = 0. If inside the circle, L is imaginary (no real tangents).',
+    example: 'Circle x² + y² - 6x + 8y - 11 = 0: g=-3, f=4, c=-11. Center=(3, -4), Radius = √(9 + 16 - (-11)) = √36 = 6.'
+  },
+  {
+    id: 'geo-parabola-1',
+    name: 'Standard Parabola: Vertex, Focus, Directrix & Tangent Slope Form',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Conics & Circles',
+    content: 'y² = 4ax  ==>  Focus = (a, 0), Directrix: x = -a, Latus Rectum = 4a  |  Tangent (slope m): y = mx + a/m',
+    variables: {
+      a: 'Focal parameter distance (vertex to focus)',
+      'Latus Rectum': 'Chord passing through focus perpendicular to axis (length = 4a)',
+      m: 'Slope of the tangent line (m ≠ 0)'
+    },
+    tip: 'The condition for line y = mx + c to touch parabola y² = 4ax is c = a / m.',
+    example: 'For y² = 12x (4a=12 => a=3): Focus = (3, 0), Directrix: x = -3. Tangent with slope m=1 is y = 1x + 3/1 => y = x + 3.'
+  },
+  {
+    id: 'geo-ellipse-1',
+    name: 'Standard Ellipse: Eccentricity, Foci, Latus Rectum & Area',
+    category: 'Geometry & Mensuration',
+    subcategory: 'Conics & Circles',
+    content: '(x² / a²) + (y² / b²) = 1  ==>  e = √(1 - b²/a²)  |  Foci = (±ae, 0)  |  Latus Rectum = 2b²/a  |  Area = π·a·b',
+    variables: {
+      a: 'Semi-major axis length (where a > b)',
+      b: 'Semi-minor axis length',
+      e: 'Eccentricity (0 < e < 1 for ellipse)',
+      Area: 'Total enclosed ellipse area = πab'
+    },
+    tip: 'If a = b, the ellipse becomes a circle with eccentricity e = 0 and Area = πa².',
+    example: 'x²/25 + y²/16 = 1 (a=5, b=4): e = √(1 - 16/25) = √(9/25) = 3/5 = 0.6. Foci = (±3, 0). Area = π × 5 × 4 = 20π.'
+  },
+
+  // =========================================================================
+  // LOGICAL & ANALYTICAL REASONING EXPANSIONS
+  // =========================================================================
+  {
+    id: 'lr-ineq-1',
+    name: 'Mathematical Inequalities & Coded Reasoning Rules',
+    category: 'Logical Reasoning',
+    subcategory: 'Inequalities & Coding',
+    content: 'Priority Hierarchy: [ > ] over [ >= ] over [ = ]  |  Opposite Signs (e.g. A > B < C) ==> No Definite Relation',
+    variables: {
+      'Direct Path': 'If all signs point in the same direction, highest priority operator wins (e.g. A >= B > C = D ==> A > D is True)',
+      'Blocked Path': 'Presence of opposing signs (like > and <, or >= and <=) breaks direct chain; conclusion is "Cannot be Determined"',
+      'Either-Or Rule': 'If relation is blocked, check for 3 possibilities (<, =, >) between same subject-predicate'
+    },
+    tip: 'Super high frequency in Banking (IBPS PO, SBI PO, RBI) reasoning sections.',
+    example: 'Statement: P >= Q = R > S. Conclusion 1: P > S (True, > overrides >=). Conclusion 2: P = S (False).'
+  },
+  {
+    id: 'lr-circle-seat',
+    name: 'Circular & Linear Seating Arrangement Orientations',
+    category: 'Logical Reasoning',
+    subcategory: 'Seating Arrangement',
+    content: 'Facing Center: Left = Clockwise, Right = Anti-Clockwise  |  Facing Outside: Left = Anti-Clockwise, Right = Clockwise',
+    variables: {
+      'Opposite in 8-person circle': 'Opposite person is exactly (n/2) = 4 positions away in either direction',
+      'Immediate Left / Right': 'Adjacent seat in specified rotation direction',
+      'Linear North': 'Right is to the viewer’s right, Left is to the viewer’s left',
+      'Linear South': 'Right is to the viewer’s left, Left is to the viewer’s right'
+    },
+    tip: 'Always start circular puzzles from the person with the most connected placement clues.',
+    example: '8 people facing center: A is sitting opposite E (4 seats away). B is second to left of A => B is 2 positions clockwise from A.'
+  },
+  {
+    id: 'lr-mat-puzzle',
+    name: 'Missing Number & Matrix Reasoning Patterns',
+    category: 'Logical Reasoning',
+    subcategory: 'Matrix & Puzzles',
+    content: 'Row/Col Patterns: (A + B) × C  |  A² + B² = C  |  (A × B) / K = C  |  Sum of all elements = Constant',
+    variables: {
+      'Row-wise Scan': 'Check horizontal sum, product, square relations between elements',
+      'Column-wise Scan': 'Check vertical arithmetic progressions or powers',
+      'Center Box Puzzles': 'Central number is often generated by operations on the 4 surrounding corner numbers'
+    },
+    tip: 'If numbers increase dramatically in the bottom row/column, look for multiplication or sum of squares.',
+    example: 'Row 1: [3, 4, 25] (3² + 4² = 25). Row 2: [5, 12, 169] (5² + 12² = 169). Row 3: [7, 24, ?] => 7² + 24² = 49 + 576 = 625.'
+  },
+
+  // =========================================================================
+  // ADVANCED ALGEBRA, NUMBER THEORY & SEQUENCES
+  // =========================================================================
+  {
+    id: 'alg-euler-totient',
+    name: "Euler's Totient Function φ(N) & Euler's Remainder Theorem",
+    category: 'Algebra & Numbers',
+    subcategory: 'Number Theory',
+    content: 'φ(N) = N × ∏ (1 - 1/p)  |  a^φ(N) ≡ 1 (mod N)  [when gcd(a, N) = 1]',
+    variables: {
+      N: 'Positive integer with prime factorization N = p1^a1 · p2^a2 · ...',
+      'φ(N)': 'Count of positive integers up to N that are coprime to N',
+      'p1, p2, ...': 'Distinct prime factors of N',
+      a: 'Any integer coprime to N'
+    },
+    tip: 'Fermat’s Little Theorem is just the special prime case of Euler’s Theorem where φ(p) = p - 1.',
+    example: 'For N = 12 (prime factors 2 and 3): φ(12) = 12 × (1 - 1/2) × (1 - 1/3) = 12 × (1/2) × (2/3) = 4 (coprimes are 1, 5, 7, 11). Remainder of 5⁴ mod 12 = 1.'
+  },
+  {
+    id: 'alg-hp-seq',
+    name: 'Harmonic Progression (HP) Term & AM-GM-HM Relation',
+    category: 'Algebra & Numbers',
+    subcategory: 'Progressions & Series',
+    content: 'n-th term of HP = 1 / [ a + (n - 1)d ]  |  HM of two numbers (a, b) = 2ab / (a + b)  |  GM² = AM × HM',
+    variables: {
+      'HP sequence': 'A sequence whose reciprocals form an Arithmetic Progression (AP)',
+      a: 'First term of the corresponding reciprocal AP',
+      d: 'Common difference of reciprocal AP',
+      AM: '(a + b) / 2',
+      GM: '√(a · b)',
+      HM: '2ab / (a + b)'
+    },
+    tip: 'For positive numbers, AM ≥ GM ≥ HM always holds; equality occurs only when all numbers are equal.',
+    example: 'Find HM of 4 and 12: HM = (2 × 4 × 12) / (4 + 12) = 96 / 16 = 6. Check: AM = (4+12)/2 = 8, GM = √(4×12) = √48. GM² = 48 = 8 × 6 = AM × HM.'
+  },
+  {
+    id: 'alg-newton-roots',
+    name: 'Newton-Girard Sum of Roots for Quadratics & Cubics',
+    category: 'Algebra & Numbers',
+    subcategory: 'Quadratic & Polynomials',
+    content: 'For ax² + bx + c = 0 with roots α, β:  α² + β² = S1² - 2P  |  α³ + β³ = S1³ - 3P·S1',
+    variables: {
+      S1: 'Sum of roots = α + β = -b / a',
+      P: 'Product of roots = α · β = c / a',
+      'α² + β²': '(α + β)² - 2αβ',
+      'α³ + β³': '(α + β)³ - 3αβ(α + β)'
+    },
+    tip: 'Allows calculating high-power symmetric expressions without ever solving for individual irrational roots.',
+    example: 'x² - 5x + 6 = 0 (S1=5, P=6): α² + β² = 5² - 2(6) = 25 - 12 = 13. α³ + β³ = 5³ - 3(6)(5) = 125 - 90 = 35.'
+  },
+  {
+    id: 'alg-crt-1',
+    name: 'Chinese Remainder Theorem (Coprime Moduli)',
+    category: 'Algebra & Numbers',
+    subcategory: 'Number Theory',
+    content: 'If x ≡ r1 (mod m1) and x ≡ r2 (mod m2) with gcd(m1, m2) = 1:  x ≡ (r1·M1·y1 + r2·M2·y2) (mod M)',
+    variables: {
+      'm1, m2': 'Pairwise coprime moduli (e.g. 3 and 5)',
+      M: 'Total product modulus = m1 × m2',
+      M1: 'M / m1 = m2, M2 = M / m2 = m1',
+      'y1, y2': 'Modular inverses: (M1 · y1) ≡ 1 (mod m1), (M2 · y2) ≡ 1 (mod m2)'
+    },
+    tip: 'Quick check: Test multiples of largest modulus m2 added to remainder r2 until condition for m1 is satisfied.',
+    example: 'Find smallest x where x ≡ 2 (mod 3) and x ≡ 3 (mod 5): Test numbers mod 5: 3 (3 mod 3=0), 3+5=8 (8 mod 3=2 ✓). Smallest solution x = 8.'
+  },
+
+  // =========================================================================
+  // VEDIC & MENTAL MATH SHORTCUTS
+  // =========================================================================
+  {
+    id: 'trk-cube-2digit',
+    name: 'Fast Cubing of 2-Digit Numbers (Algebraic Ratio Method)',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: '(10a + b)³ = a³ || (3a²b) || (3ab²) || b³',
+    variables: {
+      a: 'Tens digit of the 2-digit number',
+      b: 'Units digit of the 2-digit number',
+      Method: 'Write 4 terms: a³, a²b, ab², b³ in row 1; double the middle two terms in row 2; add vertically with carries'
+    },
+    tip: 'Much faster than multiplying the number by itself three times.',
+    example: '12³ (a=1, b=2): Terms are 1, 2, 4, 8. Double middle: -, 4, 8, -. Add columns: 1 | (2+4) | (4+8) | 8 = 1 | 6 | 12 | 8 = 1728.'
+  },
+  {
+    id: 'trk-cbrt-exact',
+    name: 'Instant Cube Root of Perfect Cubes (Up to 6 Digits)',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: 'Step 1: Units digit is unique mapping | Step 2: Strike last 3 digits; find nearest cube root for remaining digits',
+    variables: {
+      'Unique Endings': '1->1, 4->4, 5->5, 6->6, 9->9, 0->0',
+      'Swap Pairs': '2 <-> 8 and 3 <-> 7 (sum is 10)',
+      'Remaining Group': 'Remaining leading digits determine the tens digit of the answer'
+    },
+    tip: 'Every single digit 0-9 has a distinct unique cube ending. Cube roots of perfect cubes take < 3 seconds.',
+    example: '∛175616: Last digit 6 => units digit is 6. Strike 616, remaining is 175. Nearest cube <= 175 is 125 (5³). Answer = 56.'
+  },
+  {
+    id: 'trk-pct-swap',
+    name: 'Percentage Reversal / Swap Shortcut (x% of y = y% of x)',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: 'x% of y = (x × y) / 100 = y% of x',
+    variables: {
+      'Swap Principle': 'Multiplication is commutative, so swapping percentage and base produces identical result',
+      Utility: 'Turns awkward percentage calculations into trivial mental math fractions'
+    },
+    tip: 'If calculating x% of y looks hard, flip it to y% of x immediately.',
+    example: 'Find 84% of 50: Swap to 50% of 84 = 84 / 2 = 42. Find 16% of 25: Swap to 25% of 16 = 16 / 4 = 4.'
+  },
+  {
+    id: 'trk-urdhva-mult',
+    name: 'Vedic Vertical & Crosswise Multiplication (Urdhva Tiryagbhyam)',
+    category: 'Tricks & Shortcuts',
+    subcategory: 'Vedic & Mental Math',
+    content: '(ab) × (cd) = (a × c) || (a·d + b·c) || (b × d)  [Single-line 2x2 Multiplication]',
+    variables: {
+      Step1: 'Multiply right column: b × d (write unit digit, carry over)',
+      Step2: 'Cross multiply and add: (a × d) + (b × c) + carry (write unit, carry over)',
+      Step3: 'Multiply left column: a × c + carry'
+    },
+    tip: 'Computes any 2-digit by 2-digit multiplication in a single mental line from right to left.',
+    example: '32 × 41: Right = 2×1 = 2. Cross = (3×1) + (2×4) = 3 + 8 = 11 (write 1, carry 1). Left = 3×4 + 1 = 13. Result = 1312.'
   }
 ];
+
