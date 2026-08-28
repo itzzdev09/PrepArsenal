@@ -5,66 +5,92 @@ import { createClient } from '@/utils/supabase/client';
 import { getFavoriteFormulas, updateFavoriteFormulas } from '@/lib/db';
 import { useRouter } from 'next/navigation';
 import { FORMULA_DB, Formula, FormulaCategory } from '@/lib/formulas';
+import {
+  Zap,
+  Search,
+  Star,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Compass,
+  Calculator,
+  Binary,
+  Layers,
+  Sparkles,
+  HelpCircle,
+  X,
+  LayoutGrid,
+  List,
+  BookOpen,
+  Filter
+} from 'lucide-react';
 
-const CATEGORY_CONFIG: Record<
-  string,
-  { label: string; icon: string; color: string; bg: string; border: string }
-> = {
+interface CategoryStyle {
+  label: string;
+  shortLabel: string;
+  icon: typeof Zap;
+  badgeBg: string;
+  accentBorder: string;
+}
+
+const CATEGORY_STYLES: Record<FormulaCategory | 'All', CategoryStyle> = {
   All: {
     label: 'All Formulas',
-    icon: '⚡',
-    color: '#f8fafc',
-    bg: 'rgba(255, 255, 255, 0.08)',
-    border: 'rgba(255, 255, 255, 0.15)'
+    shortLabel: 'All Formulas',
+    icon: Sparkles,
+    badgeBg: '#e2e8f0',
+    accentBorder: '#172033'
   },
   'Speed, Time & Motion': {
-    label: 'Speed & Motion',
-    icon: '🚤',
-    color: '#38bdf8',
-    bg: 'rgba(56, 189, 248, 0.12)',
-    border: 'rgba(56, 189, 248, 0.3)'
+    label: 'Speed, Time & Motion',
+    shortLabel: 'Speed & Motion',
+    icon: Compass,
+    badgeBg: '#bae6fd',
+    accentBorder: '#0284c7'
   },
   'Logical Reasoning': {
     label: 'Logical Reasoning',
-    icon: '🧠',
-    color: '#c084fc',
-    bg: 'rgba(192, 132, 252, 0.12)',
-    border: 'rgba(192, 132, 252, 0.3)'
+    shortLabel: 'Reasoning',
+    icon: Binary,
+    badgeBg: '#e9d5ff',
+    accentBorder: '#9333ea'
   },
   Arithmetic: {
-    label: 'Arithmetic',
-    icon: '🧮',
-    color: '#34d399',
-    bg: 'rgba(52, 211, 153, 0.12)',
-    border: 'rgba(52, 211, 153, 0.3)'
+    label: 'Arithmetic Aptitude',
+    shortLabel: 'Arithmetic',
+    icon: Calculator,
+    badgeBg: '#bbf7d0',
+    accentBorder: '#16a34a'
   },
   'Algebra & Numbers': {
-    label: 'Algebra & Numbers',
-    icon: '🔢',
-    color: '#fbbf24',
-    bg: 'rgba(251, 191, 36, 0.12)',
-    border: 'rgba(251, 191, 36, 0.3)'
+    label: 'Algebra & Number Systems',
+    shortLabel: 'Algebra & Numbers',
+    icon: Layers,
+    badgeBg: '#fef08a',
+    accentBorder: '#ca8a04'
   },
   'Geometry & Mensuration': {
-    label: 'Geometry & 3D',
-    icon: '📐',
-    color: '#f472b6',
-    bg: 'rgba(244, 114, 182, 0.12)',
-    border: 'rgba(244, 114, 182, 0.3)'
+    label: 'Geometry & 3D Mensuration',
+    shortLabel: 'Geometry & 3D',
+    icon: Compass,
+    badgeBg: '#fbcfe8',
+    accentBorder: '#db2777'
   },
   'Modern Math & Stats': {
-    label: 'Modern Math & Stats',
-    icon: '🎲',
-    color: '#818cf8',
-    bg: 'rgba(129, 140, 248, 0.12)',
-    border: 'rgba(129, 140, 248, 0.3)'
+    label: 'Modern Math & Statistics',
+    shortLabel: 'Modern Math',
+    icon: BookOpen,
+    badgeBg: '#c7d2fe',
+    accentBorder: '#4f46e5'
   },
   'Tricks & Shortcuts': {
-    label: 'Tricks & Shortcuts',
-    icon: '🪄',
-    color: '#fb923c',
-    bg: 'rgba(251, 146, 60, 0.12)',
-    border: 'rgba(251, 146, 60, 0.3)'
+    label: 'Vedic Tricks & Mental Math',
+    shortLabel: 'Vedic Tricks',
+    icon: Zap,
+    badgeBg: '#fed7aa',
+    accentBorder: '#ea580c'
   }
 };
 
@@ -76,7 +102,9 @@ export default function FormulaVaultPage() {
   const [subcategoryFilter, setSubcategoryFilter] = useState<string>('All');
   const [onlyFavorites, setOnlyFavorites] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [expandedDetails, setExpandedDetails] = useState<Record<string, boolean>>({});
+  const [expandedExamples, setExpandedExamples] = useState<Record<string, boolean>>({});
+  const [allExpanded, setAllExpanded] = useState<boolean>(false);
+  const [viewLayout, setViewLayout] = useState<'grid' | 'compact'>('grid');
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
@@ -122,14 +150,24 @@ export default function FormulaVaultPage() {
     }, 1800);
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedDetails((prev) => ({
+  const toggleExample = (id: string) => {
+    setExpandedExamples((prev) => ({
       ...prev,
       [id]: !prev[id]
     }));
   };
 
-  // Extract available subcategories based on active category
+  const toggleAllExamples = () => {
+    const nextState = !allExpanded;
+    setAllExpanded(nextState);
+    const updated: Record<string, boolean> = {};
+    FORMULA_DB.forEach((f) => {
+      if (f.example) updated[f.id] = nextState;
+    });
+    setExpandedExamples(updated);
+  };
+
+  // Subcategories available for active category
   const availableSubcategories = useMemo(() => {
     const formulas =
       categoryFilter === 'All'
@@ -139,7 +177,7 @@ export default function FormulaVaultPage() {
     return ['All', ...subcats];
   }, [categoryFilter]);
 
-  // Reset subcategory if category changed and current subcategory is not in list
+  // Reset subcategory if category changes
   useEffect(() => {
     if (subcategoryFilter !== 'All' && !availableSubcategories.includes(subcategoryFilter)) {
       setSubcategoryFilter('All');
@@ -172,7 +210,7 @@ export default function FormulaVaultPage() {
     });
   }, [categoryFilter, subcategoryFilter, onlyFavorites, favorites, search]);
 
-  // Sort: favorites first, then preserve taxonomy order
+  // Sort: favorites first, then preserve taxonomy
   const sortedFormulas = useMemo(() => {
     return [...filteredFormulas].sort((a, b) => {
       const aFav = favorites.includes(a.id);
@@ -185,33 +223,49 @@ export default function FormulaVaultPage() {
 
   if (loading) {
     return (
-      <div className="vault-loading">
-        <div className="loading-spinner">⚡</div>
-        <p>Loading Formula Vault...</p>
+      <div className="vault-loading-container">
+        <div className="vault-spinner">
+          <Zap size={28} />
+        </div>
+        <p className="loading-text">Loading Formula & Shortcuts Vault...</p>
         <style jsx>{`
-          .vault-loading {
+          .vault-loading-container {
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            min-height: 80vh;
+            justify-content: center;
+            min-height: 70vh;
             gap: 1rem;
-            color: var(--text-secondary);
           }
-          .loading-spinner {
-            font-size: 2.5rem;
-            animation: pulse 1.5s infinite ease-in-out;
+          .vault-spinner {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #fff0a7;
+            border: 2px solid #172033;
+            box-shadow: 3px 3px 0 #172033;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #d9534f;
+            animation: pulse 1.4s infinite ease-in-out;
+          }
+          .loading-text {
+            color: #172033;
+            font-family: var(--font-kalam, 'Segoe UI');
+            font-size: 1.2rem;
+            font-weight: 700;
           }
           @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 1; }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
           }
         `}</style>
       </div>
     );
   }
 
-  const categoryKeys = [
+  const categoryKeys: (FormulaCategory | 'All')[] = [
     'All',
     'Speed, Time & Motion',
     'Logical Reasoning',
@@ -223,291 +277,364 @@ export default function FormulaVaultPage() {
   ];
 
   return (
-    <div className="vault-page">
+    <div className="vault-container">
       <style jsx>{`
-        .vault-page {
-          padding: 2rem 1.5rem;
-          max-width: 1350px;
+        .vault-container {
+          padding: 1.5rem 1.5rem 4rem 1.5rem;
+          max-width: 1400px;
           margin: 0 auto;
-          min-height: 90vh;
         }
 
-        .vault-header {
-          margin-bottom: 2rem;
+        /* --- Hero Header Banner --- */
+        .vault-hero-card {
+          background: #fffdf5;
+          border: 3px solid #172033;
+          border-radius: 8px 16px 10px 14px;
+          box-shadow: 5px 5px 0 #172033;
+          padding: 1.75rem 2rem;
+          margin-bottom: 1.75rem;
+        }
+
+        .hero-top-row {
           display: flex;
           justify-content: space-between;
-          align-items: flex-end;
+          align-items: flex-start;
           flex-wrap: wrap;
-          gap: 1rem;
-          border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-          padding-bottom: 1.5rem;
+          gap: 1.25rem;
         }
 
-        .header-left {
-          max-width: 700px;
+        .hero-title-area {
+          max-width: 780px;
         }
 
-        .vault-title-badge {
+        .hero-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 0.4rem;
           padding: 0.25rem 0.75rem;
-          border-radius: 2rem;
-          font-size: 0.75rem;
+          border-radius: 9999px;
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 0.85rem;
           font-weight: 700;
-          letter-spacing: 0.05em;
-          text-transform: uppercase;
-          background: rgba(245, 158, 11, 0.15);
-          color: #f59e0b;
-          border: 1px solid rgba(245, 158, 11, 0.3);
-          margin-bottom: 0.75rem;
+          background: #fff0a7;
+          color: #172033;
+          border: 2px solid #172033;
+          box-shadow: 2px 2px 0 #172033;
+          margin-bottom: 0.65rem;
         }
 
-        .vault-title {
-          font-size: 2.25rem;
-          font-weight: 800;
-          letter-spacing: -0.02em;
-          margin-bottom: 0.5rem;
-          background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+        .hero-main-title {
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 2.2rem;
+          font-weight: 700;
+          color: #172033;
+          margin-bottom: 0.35rem;
+          line-height: 1.2;
         }
 
-        .vault-subtitle {
-          color: var(--text-secondary, #94a3b8);
+        .hero-subtitle {
+          color: #475569;
           font-size: 0.95rem;
-          line-height: 1.5;
+          line-height: 1.55;
         }
 
-        .vault-stats {
+        .hero-stat-badges {
           display: flex;
           align-items: center;
           gap: 0.75rem;
         }
 
-        .stat-badge {
-          padding: 0.5rem 1rem;
-          background: var(--bg-card, #111827);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-          border-radius: 0.75rem;
-          font-size: 0.85rem;
-          color: var(--text-secondary, #94a3b8);
+        .stat-sketch-box {
+          background: #f8f2df;
+          border: 2px solid #172033;
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 #172033;
+          padding: 0.6rem 1rem;
           display: flex;
           align-items: center;
-          gap: 0.4rem;
+          gap: 0.6rem;
         }
 
-        .stat-badge strong {
-          color: var(--text-primary, #ffffff);
+        .stat-num {
+          font-family: var(--font-mono, monospace);
+          font-size: 1.3rem;
+          font-weight: 800;
+          color: #172033;
         }
 
-        /* Controls Section */
-        .vault-controls {
+        .stat-lbl {
+          font-size: 0.72rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #64748b;
+        }
+
+        /* --- Toolbar Controls --- */
+        .vault-controls-area {
           display: flex;
           flex-direction: column;
-          gap: 1.25rem;
-          margin-bottom: 2rem;
+          gap: 1rem;
+          margin-bottom: 1.75rem;
         }
 
-        .search-and-actions {
+        .search-actions-row {
           display: flex;
-          gap: 1rem;
           align-items: center;
+          gap: 0.85rem;
           flex-wrap: wrap;
         }
 
-        .search-container {
-          position: relative;
+        .search-input-wrapper {
           flex: 1;
           min-width: 280px;
+          position: relative;
         }
 
-        .search-icon {
+        .search-icon-box {
           position: absolute;
           left: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          color: var(--text-secondary, #94a3b8);
+          color: #64748b;
           pointer-events: none;
-          font-size: 1rem;
+          display: flex;
         }
 
-        .vault-search {
+        .vault-search-box {
           width: 100%;
-          background: var(--bg-card, #0f172a);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
-          padding: 0.85rem 2.75rem 0.85rem 2.75rem;
-          border-radius: 0.85rem;
-          color: var(--text-primary, #f8fafc);
-          outline: none;
+          background: #fffdf5;
+          border: 2.5px solid #172033;
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 #172033;
+          padding: 0.75rem 2.75rem 0.75rem 2.75rem;
+          color: #172033;
           font-size: 0.95rem;
-          transition: all 200ms;
+          font-weight: 600;
+          outline: none;
+          transition: transform 120ms ease;
         }
 
-        .vault-search:focus {
-          border-color: #38bdf8;
-          box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        .vault-search-box:focus {
+          transform: translate(-1px, -1px);
+          box-shadow: 4px 4px 0 #172033;
         }
 
-        .clear-search-btn {
+        .vault-search-box::placeholder {
+          color: #94a3b8;
+          font-weight: 400;
+        }
+
+        .btn-clear-search {
           position: absolute;
-          right: 0.75rem;
+          right: 0.85rem;
           top: 50%;
           transform: translateY(-50%);
           background: transparent;
           border: none;
-          color: var(--text-secondary, #94a3b8);
+          color: #64748b;
           cursor: pointer;
-          font-size: 1rem;
-          padding: 0.25rem 0.5rem;
-          border-radius: 0.35rem;
+          padding: 0.2rem;
+          display: flex;
+        }
+        .btn-clear-search:hover {
+          color: #172033;
         }
 
-        .fav-filter-btn {
+        .control-btns-group {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          background: var(--bg-card, #0f172a);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.12));
-          color: var(--text-secondary, #94a3b8);
-          padding: 0.85rem 1.25rem;
-          border-radius: 0.85rem;
-          font-weight: 600;
-          font-size: 0.9rem;
+          gap: 0.6rem;
+          flex-wrap: wrap;
+        }
+
+        .sketch-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.45rem;
+          padding: 0.65rem 1rem;
+          background: #fffdf5;
+          border: 2.5px solid #172033;
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 #172033;
+          color: #172033;
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 0.95rem;
+          font-weight: 700;
           cursor: pointer;
-          transition: all 200ms;
+          transition: transform 130ms ease, box-shadow 130ms ease, background 130ms ease;
           white-space: nowrap;
         }
 
-        .fav-filter-btn:hover {
-          border-color: #f59e0b;
-          color: #f59e0b;
+        .sketch-btn:hover {
+          transform: translate(2px, 2px);
+          box-shadow: 1px 1px 0 #172033;
         }
 
-        .fav-filter-btn.active {
-          background: rgba(245, 158, 11, 0.15);
-          border-color: #f59e0b;
-          color: #f59e0b;
+        .sketch-btn.starred-btn.active {
+          background: #fff0a7;
+          border-color: #172033;
         }
 
-        /* Category Tabs */
-        .category-tabs {
+        .view-layout-toggle {
           display: flex;
-          gap: 0.6rem;
+          background: #fffdf5;
+          border: 2.5px solid #172033;
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 #172033;
+          padding: 0.2rem;
+          gap: 0.2rem;
+        }
+
+        .layout-tab-btn {
+          padding: 0.45rem 0.65rem;
+          border: none;
+          background: transparent;
+          border-radius: 4px;
+          color: #64748b;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 120ms ease;
+        }
+
+        .layout-tab-btn.active {
+          background: #172033;
+          color: #ffffff;
+        }
+
+        /* --- Category Pills Row --- */
+        .category-tab-scroll {
+          display: flex;
+          gap: 0.55rem;
           overflow-x: auto;
-          padding-bottom: 0.4rem;
+          padding-bottom: 0.35rem;
           scrollbar-width: thin;
         }
 
-        .cat-tab {
+        .cat-sketch-tab {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          background: var(--bg-card, #0f172a);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-          padding: 0.6rem 1.1rem;
-          border-radius: 2rem;
+          gap: 0.45rem;
+          padding: 0.55rem 1rem;
+          background: #fffdf5;
+          border: 2px solid #172033;
+          border-radius: 9999px;
+          box-shadow: 2px 2px 0 #172033;
+          color: #172033;
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 0.92rem;
+          font-weight: 700;
           cursor: pointer;
-          color: var(--text-secondary, #94a3b8);
-          font-size: 0.85rem;
-          font-weight: 600;
           white-space: nowrap;
-          transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 120ms ease, background 120ms ease;
         }
 
-        .cat-tab:hover {
-          color: var(--text-primary, #ffffff);
-          border-color: rgba(255, 255, 255, 0.2);
+        .cat-sketch-tab:hover {
           transform: translateY(-1px);
+          background: #f1f5f9;
         }
 
-        .cat-tab.active {
-          background: var(--cat-bg, rgba(255, 255, 255, 0.12));
-          color: var(--cat-color, #ffffff);
-          border-color: var(--cat-border, rgba(255, 255, 255, 0.3));
-          box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3);
+        .cat-sketch-tab.active {
+          background: #172033;
+          color: #ffffff;
+          box-shadow: 3px 3px 0 #d9534f;
         }
 
-        .cat-count {
-          font-size: 0.75rem;
-          padding: 0.15rem 0.45rem;
-          border-radius: 1rem;
-          background: rgba(0, 0, 0, 0.25);
-          opacity: 0.85;
+        .cat-num-pill {
+          font-family: var(--font-mono, monospace);
+          font-size: 0.72rem;
+          font-weight: 800;
+          padding: 0.1rem 0.45rem;
+          border-radius: 9999px;
+          background: #f1f5f9;
+          color: #172033;
+          border: 1px solid #172033;
         }
 
-        /* Subcategory Chips */
-        .subcategory-bar {
+        .cat-sketch-tab.active .cat-num-pill {
+          background: #fff0a7;
+          color: #172033;
+        }
+
+        /* --- Subcategory Chips --- */
+        .subcat-chips-bar {
           display: flex;
+          align-items: center;
           gap: 0.45rem;
           overflow-x: auto;
-          padding-bottom: 0.3rem;
-          align-items: center;
+          padding-bottom: 0.25rem;
           scrollbar-width: none;
         }
 
-        .subcat-label {
+        .subcat-lead-label {
+          display: flex;
+          align-items: center;
+          gap: 0.3rem;
           font-size: 0.75rem;
-          font-weight: 700;
+          font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: var(--text-secondary, #64748b);
-          margin-right: 0.3rem;
+          color: #64748b;
           white-space: nowrap;
         }
 
-        .subcat-chip {
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.06);
-          padding: 0.35rem 0.8rem;
-          border-radius: 0.6rem;
+        .subcat-chip-btn {
+          background: #fffdf5;
+          border: 1.5px solid #172033;
+          padding: 0.3rem 0.75rem;
+          border-radius: 6px;
           font-size: 0.8rem;
-          color: var(--text-secondary, #94a3b8);
+          font-weight: 600;
+          color: #172033;
           cursor: pointer;
           white-space: nowrap;
-          transition: all 180ms;
+          transition: all 130ms ease;
         }
 
-        .subcat-chip:hover {
-          color: var(--text-primary, #ffffff);
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.15);
+        .subcat-chip-btn:hover {
+          background: #f1f5f9;
         }
 
-        .subcat-chip.active {
-          background: rgba(56, 189, 248, 0.15);
-          color: #38bdf8;
-          border-color: rgba(56, 189, 248, 0.4);
-          font-weight: 600;
+        .subcat-chip-btn.active {
+          background: #d9ecff;
+          border-width: 2px;
+          box-shadow: 2px 2px 0 #172033;
+          font-weight: 700;
         }
 
-        /* Grid */
-        .formula-grid {
+        /* --- Formula Cards Grid --- */
+        .formula-cards-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
           gap: 1.5rem;
         }
 
-        /* Formula Card */
-        .formula-card {
-          background: var(--bg-card, #0f172a);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
-          border-radius: 1.15rem;
+        .formula-cards-grid.compact-mode {
+          grid-template-columns: 1fr;
+          gap: 1rem;
+        }
+
+        /* --- Ultra-Readable Formula Card --- */
+        .formula-card-item {
+          background: #fffdf5;
+          border: 2.5px solid #172033;
+          border-radius: 8px 12px 9px 11px;
+          box-shadow: 4px 4px 0 #172033;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
+          transition: transform 140ms ease, box-shadow 140ms ease;
           position: relative;
-          transition: transform 220ms, border-color 220ms, box-shadow 220ms;
-          overflow: hidden;
         }
 
-        .formula-card:hover {
-          transform: translateY(-3px);
-          border-color: var(--card-border-hover, rgba(255, 255, 255, 0.2));
-          box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4);
+        .formula-card-item:hover {
+          transform: translate(-2px, -2px);
+          box-shadow: 6px 6px 0 #172033;
         }
 
-        .fc-top-bar {
+        .card-header-bar {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
@@ -515,372 +642,420 @@ export default function FormulaVaultPage() {
           margin-bottom: 0.85rem;
         }
 
-        .fc-badges {
+        .card-badge-cluster {
           display: flex;
           flex-wrap: wrap;
           align-items: center;
           gap: 0.4rem;
         }
 
-        .fc-category-badge {
-          font-size: 0.7rem;
-          font-weight: 700;
+        .category-tag-badge {
+          font-size: 0.72rem;
+          font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.04em;
           padding: 0.2rem 0.6rem;
-          border-radius: 0.4rem;
+          border-radius: 4px;
+          color: #172033;
+          border: 1.5px solid #172033;
         }
 
-        .fc-subcat-badge {
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: var(--text-secondary, #94a3b8);
-          background: rgba(255, 255, 255, 0.05);
-          padding: 0.2rem 0.5rem;
-          border-radius: 0.4rem;
-          border: 1px solid rgba(255, 255, 255, 0.05);
+        .subcat-tag-badge {
+          font-size: 0.72rem;
+          font-weight: 700;
+          color: #475569;
+          background: #f8f2df;
+          padding: 0.2rem 0.55rem;
+          border-radius: 4px;
+          border: 1.5px solid #cbd5e1;
         }
 
-        .fc-fav-btn {
-          background: none;
+        .star-fav-button {
+          background: transparent;
           border: none;
-          font-size: 1.3rem;
           cursor: pointer;
-          opacity: 0.4;
-          padding: 0.1rem;
-          transition: transform 200ms, opacity 200ms;
-          line-height: 1;
+          color: #94a3b8;
+          padding: 0.2rem;
+          display: flex;
+          transition: transform 140ms ease, color 140ms ease;
         }
 
-        .fc-fav-btn:hover {
-          opacity: 0.9;
-          transform: scale(1.2);
+        .star-fav-button:hover {
+          color: #f59e0b;
+          transform: scale(1.15);
         }
 
-        .fc-fav-btn.is-fav {
-          opacity: 1;
+        .star-fav-button.is-active {
           color: #f59e0b;
         }
 
-        .fc-name {
+        .card-formula-title {
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 1.25rem;
           font-weight: 700;
-          font-size: 1.15rem;
-          color: var(--text-primary, #f8fafc);
-          line-height: 1.4;
+          color: #172033;
+          line-height: 1.35;
           margin-bottom: 1rem;
         }
 
-        /* Formula Box */
-        .fc-formula-box {
-          position: relative;
-          background: var(--bg-input, #090d16);
-          border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.09));
-          border-radius: 0.85rem;
-          padding: 1.15rem 1rem;
+        /* --- Deep Contrast Chalkboard Equation Box --- */
+        .chalkboard-box {
+          background: #0f172a;
+          border: 2px solid #172033;
+          border-radius: 6px;
+          padding: 1rem 1.15rem;
           margin-bottom: 1rem;
           display: flex;
-          align-items: center;
           justify-content: space-between;
-          gap: 0.75rem;
+          align-items: flex-start;
+          gap: 1rem;
+          box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
-        .fc-content {
-          font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
-          font-size: 1.05rem;
-          font-weight: 600;
-          color: #f1f5f9;
-          line-height: 1.5;
-          word-break: break-word;
+        .chalkboard-lines {
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.45rem;
         }
 
-        .copy-formula-btn {
-          background: rgba(255, 255, 255, 0.07);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          color: var(--text-secondary, #94a3b8);
-          border-radius: 0.5rem;
-          padding: 0.4rem 0.6rem;
-          cursor: pointer;
-          font-size: 0.75rem;
-          font-weight: 600;
+        .math-line-row {
+          font-family: var(--font-mono, monospace);
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: #ffffff;
+          line-height: 1.6;
+          word-break: break-word;
+          letter-spacing: 0.02em;
           display: flex;
-          align-items: center;
-          gap: 0.35rem;
-          transition: all 180ms;
+          align-items: baseline;
+          gap: 0.4rem;
+        }
+
+        .math-bullet {
+          color: #38bdf8;
+          font-size: 0.9rem;
+          user-select: none;
           flex-shrink: 0;
         }
 
-        .copy-formula-btn:hover {
-          background: rgba(255, 255, 255, 0.15);
+        .copy-chalkboard-btn {
+          background: #1e293b;
+          border: 1.5px solid #475569;
           color: #ffffff;
+          border-radius: 5px;
+          padding: 0.35rem 0.65rem;
+          cursor: pointer;
+          font-size: 0.75rem;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.35rem;
+          transition: all 130ms ease;
+          flex-shrink: 0;
         }
 
-        .copy-formula-btn.copied {
-          background: rgba(52, 211, 153, 0.2);
-          border-color: #34d399;
-          color: #34d399;
+        .copy-chalkboard-btn:hover {
+          background: #334155;
+          border-color: #94a3b8;
         }
 
-        /* Variables */
-        .fc-variables {
+        .copy-chalkboard-btn.is-copied {
+          background: #065f46;
+          border-color: #10b981;
+          color: #a7f3d0;
+        }
+
+        /* --- Variables Breakdown --- */
+        .variables-container {
           display: flex;
           flex-direction: column;
           gap: 0.4rem;
           margin-bottom: 1rem;
         }
 
-        .fc-vars-title {
+        .vars-mini-title {
           font-size: 0.7rem;
-          font-weight: 700;
+          font-weight: 800;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--text-secondary, #64748b);
-          margin-bottom: 0.1rem;
+          letter-spacing: 0.06em;
+          color: #64748b;
         }
 
-        .fc-vars-list {
+        .vars-tags-flow {
           display: flex;
           flex-wrap: wrap;
           gap: 0.4rem;
         }
 
-        .var-pill {
-          font-size: 0.78rem;
-          background: rgba(255, 255, 255, 0.04);
-          border: 1px solid rgba(255, 255, 255, 0.06);
+        .var-pill-badge {
+          background: #f8f2df;
+          border: 1.5px solid #cbd5e1;
           padding: 0.25rem 0.6rem;
-          border-radius: 0.45rem;
-          color: var(--text-secondary, #cbd5e1);
-          line-height: 1.35;
+          border-radius: 4px;
+          font-size: 0.82rem;
+          color: #1e293b;
+          line-height: 1.4;
         }
 
-        .var-key {
-          font-weight: 700;
-          color: #38bdf8;
-          font-family: 'JetBrains Mono', monospace;
+        .var-symbol {
+          font-family: var(--font-mono, monospace);
+          font-weight: 800;
+          color: #1d4ed8;
+          background: #e0f2fe;
+          padding: 0.05rem 0.35rem;
+          border-radius: 3px;
+          border: 1px solid #bae6fd;
+          margin-right: 0.25rem;
         }
 
-        /* Pro Tip & Example section */
-        .fc-extra-section {
+        /* --- Pro-Tip and Worked Example (High Contrast) --- */
+        .card-extra-blocks {
           margin-top: auto;
-          padding-top: 0.75rem;
-          border-top: 1px dashed rgba(255, 255, 255, 0.08);
           display: flex;
           flex-direction: column;
-          gap: 0.6rem;
+          gap: 0.65rem;
+          padding-top: 0.75rem;
+          border-top: 2px dashed #cbd5e1;
         }
 
-        .tip-box {
-          background: rgba(245, 158, 11, 0.08);
-          border-left: 3px solid #f59e0b;
-          padding: 0.6rem 0.85rem;
-          border-radius: 0 0.5rem 0.5rem 0;
-          font-size: 0.8rem;
-          color: #fbbf24;
-          line-height: 1.45;
+        .tip-sketch-card {
+          background: #fffbeb;
+          border: 2px solid #b45309;
+          border-radius: 6px;
+          padding: 0.65rem 0.9rem;
         }
 
-        .tip-header {
-          font-weight: 700;
-          font-size: 0.72rem;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-          margin-bottom: 0.2rem;
+        .tip-card-header {
           display: flex;
           align-items: center;
-          gap: 0.3rem;
-        }
-
-        .example-box {
-          background: rgba(56, 189, 248, 0.06);
-          border-left: 3px solid #38bdf8;
-          padding: 0.6rem 0.85rem;
-          border-radius: 0 0.5rem 0.5rem 0;
-          font-size: 0.8rem;
-          color: #bae6fd;
-          line-height: 1.45;
-        }
-
-        .example-header {
-          font-weight: 700;
-          font-size: 0.72rem;
+          gap: 0.35rem;
+          font-size: 0.75rem;
+          font-weight: 800;
           text-transform: uppercase;
-          letter-spacing: 0.04em;
-          margin-bottom: 0.2rem;
+          letter-spacing: 0.05em;
+          color: #92400e;
+          margin-bottom: 0.25rem;
+        }
+
+        .tip-card-body {
+          font-size: 0.85rem;
+          line-height: 1.5;
+          color: #1f2937;
+          font-weight: 500;
+        }
+
+        .example-sketch-card {
+          background: #f0f9ff;
+          border: 2px solid #0284c7;
+          border-radius: 6px;
+          padding: 0.65rem 0.9rem;
+        }
+
+        .example-card-header {
           display: flex;
           align-items: center;
-          gap: 0.3rem;
+          gap: 0.35rem;
+          font-size: 0.75rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #0369a1;
+          margin-bottom: 0.25rem;
         }
 
-        .expand-btn {
+        .example-card-body {
+          font-size: 0.85rem;
+          line-height: 1.55;
+          color: #0f172a;
+          font-weight: 500;
+        }
+
+        .example-toggle-action {
           background: transparent;
           border: none;
-          color: var(--text-secondary, #94a3b8);
-          font-size: 0.78rem;
-          font-weight: 600;
+          color: #475569;
+          font-size: 0.82rem;
+          font-weight: 700;
           cursor: pointer;
-          padding: 0.3rem 0;
-          display: inline-flex;
+          display: flex;
           align-items: center;
-          gap: 0.3rem;
-          transition: color 150ms;
+          gap: 0.35rem;
+          padding: 0.2rem 0;
+          transition: color 130ms ease;
         }
 
-        .expand-btn:hover {
-          color: #ffffff;
+        .example-toggle-action:hover {
+          color: #0284c7;
         }
 
-        /* Empty State */
-        .empty-state {
+        /* --- Empty Results --- */
+        .empty-vault-state {
           grid-column: 1 / -1;
           text-align: center;
-          padding: 4rem 1.5rem;
-          background: var(--bg-card, #0f172a);
-          border: 1px dashed var(--border-subtle, rgba(255, 255, 255, 0.1));
-          border-radius: 1.25rem;
+          padding: 4.5rem 1.5rem;
+          background: #fffdf5;
+          border: 3px dashed #172033;
+          border-radius: 12px;
+          box-shadow: 4px 4px 0 #172033;
         }
 
-        .empty-icon {
-          font-size: 3rem;
+        .empty-icon-circle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          background: #fff0a7;
+          border: 2px solid #172033;
+          color: #172033;
           margin-bottom: 1rem;
         }
 
-        .empty-title {
-          font-size: 1.25rem;
+        .empty-main-text {
+          font-family: var(--font-kalam, 'Segoe UI');
+          font-size: 1.4rem;
           font-weight: 700;
-          color: var(--text-primary, #ffffff);
-          margin-bottom: 0.5rem;
+          color: #172033;
+          margin-bottom: 0.4rem;
         }
 
-        .empty-desc {
-          color: var(--text-secondary, #94a3b8);
-          font-size: 0.9rem;
-          margin-bottom: 1.5rem;
+        .empty-desc-text {
+          color: #64748b;
+          font-size: 0.95rem;
+          max-width: 460px;
+          margin: 0 auto 1.5rem auto;
+          line-height: 1.5;
         }
 
-        .reset-filter-btn {
-          background: #38bdf8;
-          color: #0f172a;
-          border: none;
-          padding: 0.6rem 1.25rem;
-          border-radius: 0.75rem;
-          font-weight: 700;
-          font-size: 0.85rem;
-          cursor: pointer;
-          transition: all 180ms;
-        }
-
-        .reset-filter-btn:hover {
-          background: #7dd3fc;
-          transform: translateY(-1px);
-        }
-
-        @media (max-width: 768px) {
-          .vault-page {
-            padding: 1.25rem 1rem;
+        @media (max-width: 860px) {
+          .vault-container {
+            padding: 1rem 0.75rem 3rem 0.75rem;
           }
-          .vault-title {
-            font-size: 1.75rem;
+          .hero-main-title {
+            font-size: 1.8rem;
           }
-          .formula-grid {
+          .formula-cards-grid {
             grid-template-columns: 1fr;
           }
         }
       `}</style>
 
-      {/* Header */}
-      <div className="vault-header">
-        <div className="header-left">
-          <div className="vault-title-badge">
-            <span>⚡ High-Yield Vault</span>
+      {/* Hero Header Banner */}
+      <div className="vault-hero-card">
+        <div className="hero-top-row">
+          <div className="hero-title-area">
+            <div className="hero-badge">
+              <Zap size={14} />
+              <span>High-Yield Revision Desk</span>
+            </div>
+            <h1 className="hero-main-title">Formula & Shortcuts Vault</h1>
+            <p className="hero-subtitle">
+              Master formulas for Boats & Streams, Speed Time Distance, Trains, Logical Reasoning,
+              Clocks, Calendars, Syllogisms, Arithmetic, Algebra, Geometry, and Vedic math tricks.
+            </p>
           </div>
-          <h1 className="vault-title">Formula & Shortcuts Vault</h1>
-          <p className="vault-subtitle">
-            Master cheat sheet for Quantitative Aptitude, Boat & Stream problems, Speed Motion,
-            Logical Reasoning, Clocks, Calendars, Syllogisms, and Vedic shortcuts.
-          </p>
-        </div>
 
-        <div className="vault-stats">
-          <div className="stat-badge">
-            <span>📚</span>
-            <span>
-              Total: <strong>{FORMULA_DB.length}</strong>
-            </span>
-          </div>
-          <div className="stat-badge">
-            <span>⭐</span>
-            <span>
-              Starred: <strong>{favorites.length}</strong>
-            </span>
+          <div className="hero-stat-badges">
+            <div className="stat-sketch-box">
+              <BookOpen size={20} color="#1d4ed8" />
+              <div>
+                <div className="stat-num">{FORMULA_DB.length}</div>
+                <div className="stat-lbl">Formulas</div>
+              </div>
+            </div>
+
+            <div className="stat-sketch-box">
+              <Star size={20} color="#b45309" />
+              <div>
+                <div className="stat-num">{favorites.length}</div>
+                <div className="stat-lbl">Starred</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Controls & Filters */}
-      <div className="vault-controls">
-        {/* Search and Starred Toggle */}
-        <div className="search-and-actions">
-          <div className="search-container">
-            <span className="search-icon">🔍</span>
+      {/* Controls & Filter Bar */}
+      <div className="vault-controls-area">
+        <div className="search-actions-row">
+          <div className="search-input-wrapper">
+            <span className="search-icon-box">
+              <Search size={18} />
+            </span>
             <input
-              className="vault-search"
+              type="text"
+              className="vault-search-box"
               placeholder="Search formulas, concepts, or tricks (e.g. Boat, Stream, Syllogism, Clock, CI)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
             {search && (
               <button
-                className="clear-search-btn"
+                className="btn-clear-search"
                 onClick={() => setSearch('')}
-                title="Clear search"
+                title="Clear search query"
               >
-                ✕
+                <X size={16} />
               </button>
             )}
           </div>
 
-          <button
-            className={`fav-filter-btn ${onlyFavorites ? 'active' : ''}`}
-            onClick={() => setOnlyFavorites(!onlyFavorites)}
-          >
-            <span>{onlyFavorites ? '⭐ Starred Only' : '☆ Show Starred'}</span>
-            <span className="cat-count">({favorites.length})</span>
-          </button>
+          <div className="control-btns-group">
+            <button
+              className={`sketch-btn starred-btn ${onlyFavorites ? 'active' : ''}`}
+              onClick={() => setOnlyFavorites(!onlyFavorites)}
+            >
+              <Star size={16} fill={onlyFavorites ? '#f59e0b' : 'none'} />
+              <span>{onlyFavorites ? 'Starred Only' : 'Show Starred'}</span>
+              <span className="cat-num-pill">({favorites.length})</span>
+            </button>
+
+            <button className="sketch-btn" onClick={toggleAllExamples}>
+              <Lightbulb size={16} />
+              <span>{allExpanded ? 'Collapse All Examples' : 'Expand All Examples'}</span>
+            </button>
+
+            <div className="view-layout-toggle">
+              <button
+                className={`layout-tab-btn ${viewLayout === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewLayout('grid')}
+                title="Grid Cards"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                className={`layout-tab-btn ${viewLayout === 'compact' ? 'active' : ''}`}
+                onClick={() => setViewLayout('compact')}
+                title="Compact List"
+              >
+                <List size={16} />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Primary Category Tabs */}
-        <div className="category-tabs">
+        <div className="category-tab-scroll">
           {categoryKeys.map((catKey) => {
-            const config = CATEGORY_CONFIG[catKey] || {
-              label: catKey,
-              icon: '📌',
-              color: '#ffffff',
-              bg: 'rgba(255,255,255,0.1)',
-              border: 'rgba(255,255,255,0.2)'
-            };
+            const styleConfig = CATEGORY_STYLES[catKey];
+            const Icon = styleConfig.icon;
             const count = categoryCounts[catKey] || 0;
             const isActive = categoryFilter === catKey;
 
             return (
               <button
                 key={catKey}
-                className={`cat-tab ${isActive ? 'active' : ''}`}
-                style={
-                  {
-                    '--cat-color': config.color,
-                    '--cat-bg': config.bg,
-                    '--cat-border': config.border
-                  } as React.CSSProperties
-                }
+                className={`cat-sketch-tab ${isActive ? 'active' : ''}`}
                 onClick={() => {
                   setCategoryFilter(catKey);
                   setSubcategoryFilter('All');
                 }}
               >
-                <span>{config.icon}</span>
-                <span>{config.label}</span>
-                <span className="cat-count">{count}</span>
+                <Icon size={16} />
+                <span>{styleConfig.shortLabel}</span>
+                <span className="cat-num-pill">{count}</span>
               </button>
             );
           })}
@@ -888,12 +1063,15 @@ export default function FormulaVaultPage() {
 
         {/* Subcategory Topic Chips */}
         {availableSubcategories.length > 2 && (
-          <div className="subcategory-bar">
-            <span className="subcat-label">Topic:</span>
+          <div className="subcat-chips-bar">
+            <span className="subcat-lead-label">
+              <Filter size={13} />
+              <span>Topic:</span>
+            </span>
             {availableSubcategories.map((subcat) => (
               <button
                 key={subcat}
-                className={`subcat-chip ${subcategoryFilter === subcat ? 'active' : ''}`}
+                className={`subcat-chip-btn ${subcategoryFilter === subcat ? 'active' : ''}`}
                 onClick={() => setSubcategoryFilter(subcat)}
               >
                 {subcat}
@@ -904,121 +1082,131 @@ export default function FormulaVaultPage() {
       </div>
 
       {/* Formula Cards Grid */}
-      <div className="formula-grid">
+      <div className={`formula-cards-grid ${viewLayout === 'compact' ? 'compact-mode' : ''}`}>
         {sortedFormulas.map((f) => {
           const isFav = favorites.includes(f.id);
           const isCopied = copiedId === f.id;
-          const isExpanded = !!expandedDetails[f.id];
-          const catConfig = CATEGORY_CONFIG[f.category] || {
-            color: '#38bdf8',
-            bg: 'rgba(56, 189, 248, 0.12)',
-            border: 'rgba(56, 189, 248, 0.3)'
-          };
+          const isExpanded = !!expandedExamples[f.id];
+          const styleConfig = CATEGORY_STYLES[f.category] || CATEGORY_STYLES.All;
+
+          // Split multi-part formulas separated by "|" for crystal clear math line layout
+          const equationLines = f.content.split(/\s*\|\s*/);
 
           return (
-            <div
-              key={f.id}
-              className="formula-card"
-              style={
-                {
-                  '--card-border-hover': catConfig.border
-                } as React.CSSProperties
-              }
-            >
-              {/* Header Badges & Favorite Button */}
-              <div className="fc-top-bar">
-                <div className="fc-badges">
+            <div key={f.id} className="formula-card-item">
+              {/* Header Badges & Favorite Action */}
+              <div className="card-header-bar">
+                <div className="card-badge-cluster">
                   <span
-                    className="fc-category-badge"
+                    className="category-tag-badge"
                     style={{
-                      backgroundColor: catConfig.bg,
-                      color: catConfig.color,
-                      border: `1px solid ${catConfig.border}`
+                      backgroundColor: styleConfig.badgeBg
                     }}
                   >
                     {f.category}
                   </span>
-                  {f.subcategory && (
-                    <span className="fc-subcat-badge">{f.subcategory}</span>
-                  )}
+                  {f.subcategory && <span className="subcat-tag-badge">{f.subcategory}</span>}
                 </div>
 
                 <button
-                  className={`fc-fav-btn ${isFav ? 'is-fav' : ''}`}
+                  className={`star-fav-button ${isFav ? 'is-active' : ''}`}
                   onClick={() => toggleFavorite(f.id)}
-                  title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+                  title={isFav ? 'Remove from starred' : 'Add to starred'}
                 >
-                  {isFav ? '⭐' : '☆'}
+                  <Star size={19} fill={isFav ? '#f59e0b' : 'none'} />
                 </button>
               </div>
 
-              {/* Formula Title */}
-              <div className="fc-name">{f.name}</div>
+              {/* Title */}
+              <h3 className="card-formula-title">{f.name}</h3>
 
-              {/* Core Formula Box */}
-              <div className="fc-formula-box">
-                <div className="fc-content">{f.content}</div>
+              {/* Deep Chalkboard Equation Showcase */}
+              <div className="chalkboard-box">
+                <div className="chalkboard-lines">
+                  {equationLines.map((line, idx) => (
+                    <div key={idx} className="math-line-row">
+                      <span className="math-bullet">▸</span>
+                      <span>{line}</span>
+                    </div>
+                  ))}
+                </div>
+
                 <button
-                  className={`copy-formula-btn ${isCopied ? 'copied' : ''}`}
+                  className={`copy-chalkboard-btn ${isCopied ? 'is-copied' : ''}`}
                   onClick={() => copyToClipboard(f)}
                   title="Copy formula expression"
                 >
-                  {isCopied ? '✓ Copied' : '📋 Copy'}
+                  {isCopied ? (
+                    <>
+                      <Check size={13} />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={13} />
+                      <span>Copy</span>
+                    </>
+                  )}
                 </button>
               </div>
 
-              {/* Variable Notation Tags */}
+              {/* Variables Legend */}
               {f.variables && Object.keys(f.variables).length > 0 && (
-                <div className="fc-variables">
-                  <div className="fc-vars-title">Variables & Legend</div>
-                  <div className="fc-vars-list">
-                    {Object.entries(f.variables).map(([k, v]) => (
-                      <span key={k} className="var-pill">
-                        <span className="var-key">{k}</span> = {v}
+                <div className="variables-container">
+                  <div className="vars-mini-title">Variables & Definitions</div>
+                  <div className="vars-tags-flow">
+                    {Object.entries(f.variables).map(([key, desc]) => (
+                      <span key={key} className="var-pill-badge">
+                        <span className="var-symbol">{key}</span>: {desc}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Pro Tip & Example */}
+              {/* Pro-Tip & Worked Solution (Maximum Contrast) */}
               {(f.tip || f.example) && (
-                <div className="fc-extra-section">
+                <div className="card-extra-blocks">
+                  {/* Pro-Tip */}
                   {f.tip && (
-                    <div className="tip-box">
-                      <div className="tip-header">
-                        <span>💡</span> Pro-Tip & Pitfall Alert
+                    <div className="tip-sketch-card">
+                      <div className="tip-card-header">
+                        <Lightbulb size={14} />
+                        <span>Exam Pro-Tip & Trap Warning</span>
                       </div>
-                      <div>{f.tip}</div>
+                      <div className="tip-card-body">{f.tip}</div>
                     </div>
                   )}
 
+                  {/* Worked Example */}
                   {f.example && (
                     <>
                       {isExpanded ? (
-                        <div className="example-box">
-                          <div className="example-header">
-                            <span>📝</span> Practical Application
+                        <div className="example-sketch-card">
+                          <div className="example-card-header">
+                            <BookOpen size={14} />
+                            <span>Step-by-Step Worked Solution</span>
                           </div>
-                          <div>{f.example}</div>
+                          <div className="example-card-body">{f.example}</div>
                         </div>
-                      ) : (
-                        <button
-                          className="expand-btn"
-                          onClick={() => toggleExpand(f.id)}
-                        >
-                          <span>▶</span> Show Example Solution
-                        </button>
-                      )}
+                      ) : null}
 
-                      {isExpanded && (
-                        <button
-                          className="expand-btn"
-                          onClick={() => toggleExpand(f.id)}
-                        >
-                          <span>▼</span> Hide Example
-                        </button>
-                      )}
+                      <button
+                        className="example-toggle-action"
+                        onClick={() => toggleExample(f.id)}
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp size={15} />
+                            <span>Hide Solution</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={15} />
+                            <span>View Worked Solution Example</span>
+                          </>
+                        )}
+                      </button>
                     </>
                   )}
                 </div>
@@ -1027,16 +1215,19 @@ export default function FormulaVaultPage() {
           );
         })}
 
-        {/* Empty Search Result State */}
+        {/* Empty State */}
         {sortedFormulas.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🔍</div>
-            <div className="empty-title">No formulas or shortcuts found</div>
-            <p className="empty-desc">
-              We couldn&apos;t find any cards matching your current filter criteria.
+          <div className="empty-vault-state">
+            <div className="empty-icon-circle">
+              <HelpCircle size={28} />
+            </div>
+            <h3 className="empty-main-text">No matching formulas found</h3>
+            <p className="empty-desc-text">
+              We couldn&apos;t find any cards matching &ldquo;{search}&rdquo;. Try resetting the
+              category filter or clearing your search keywords.
             </p>
             <button
-              className="reset-filter-btn"
+              className="sketch-btn"
               onClick={() => {
                 setSearch('');
                 setCategoryFilter('All');
