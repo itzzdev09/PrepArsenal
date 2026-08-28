@@ -52,10 +52,12 @@ async function callGemini(messages: ChatMessage[], systemPrompt: string): Promis
         },
         generationConfig: {
           temperature: 0.6,
-          maxOutputTokens: 2048,
-          // gemini-3.6-flash is a "thinking" model — without this it burns the
-          // output budget on internal reasoning tokens before any visible text.
-          thinkingConfig: { thinkingBudget: 0 },
+          // gemini-3.6-flash is a "thinking" model: reasoning tokens count
+          // against maxOutputTokens, so keep plenty of headroom for the answer.
+          maxOutputTokens: 8192,
+          // This model rejects thinkingBudget: 0 (400 INVALID_ARGUMENT). Give it
+          // a small positive budget instead of trying to disable thinking.
+          thinkingConfig: { thinkingBudget: 512 },
         }
       })
     }
@@ -67,8 +69,14 @@ async function callGemini(messages: ChatMessage[], systemPrompt: string): Promis
   }
 
   const data = await response.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
-  
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  // Empty text usually means the thinking budget consumed the whole response
+  // (finishReason: MAX_TOKENS). Treat it as a failure so Groq can take over.
+  if (!text) {
+    throw new Error(`Gemini returned no text (finishReason: ${data.candidates?.[0]?.finishReason ?? 'unknown'})`);
+  }
+
   return { content: text };
 }
 
@@ -91,7 +99,9 @@ async function callGroq(messages: ChatMessage[], systemPrompt: string): Promise<
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'llama3-70b-8192',
+      // llama3-70b-8192 was decommissioned by Groq. See:
+      // https://console.groq.com/docs/deprecations
+      model: 'openai/gpt-oss-120b',
       messages: formattedMessages,
       temperature: 0.6,
       max_tokens: 2048
