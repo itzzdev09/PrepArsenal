@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { createClient } from '@/utils/supabase/client';
 import { getFavoriteFormulas, updateFavoriteFormulas } from '@/lib/db';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Lightbulb,
   Compass,
   Calculator,
@@ -24,7 +26,8 @@ import {
   LayoutGrid,
   List,
   BookOpen,
-  Filter
+  Filter,
+  SlidersHorizontal
 } from 'lucide-react';
 
 interface CategoryStyle {
@@ -105,7 +108,11 @@ export default function FormulaVaultPage() {
   const [expandedExamples, setExpandedExamples] = useState<Record<string, boolean>>({});
   const [allExpanded, setAllExpanded] = useState<boolean>(false);
   const [viewLayout, setViewLayout] = useState<'grid' | 'compact'>('grid');
+  const [wrapTopics, setWrapTopics] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
+
+  const subcatRowRef = useRef<HTMLDivElement>(null);
+  const catRowRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
   const router = useRouter();
@@ -165,6 +172,18 @@ export default function FormulaVaultPage() {
       if (f.example) updated[f.id] = nextState;
     });
     setExpandedExamples(updated);
+  };
+
+  const scrollSubcats = (amount: number) => {
+    if (subcatRowRef.current) {
+      subcatRowRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
+  };
+
+  const scrollCategories = (amount: number) => {
+    if (catRowRef.current) {
+      catRowRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    }
   };
 
   // Subcategories available for active category
@@ -412,7 +431,7 @@ export default function FormulaVaultPage() {
           font-size: 0.95rem;
           font-weight: 600;
           outline: none;
-          transition: transform 120ms ease;
+          transition: box-shadow 120ms ease;
         }
 
         .vault-search-box:focus {
@@ -503,13 +522,51 @@ export default function FormulaVaultPage() {
           color: #ffffff;
         }
 
-        /* --- Category Pills Row --- */
+        /* --- Category Slider Controls --- */
+        .category-slider-wrapper {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          position: relative;
+        }
+
+        .slider-arrow-btn {
+          width: 34px;
+          height: 34px;
+          border: 2px solid #172033;
+          border-radius: 50%;
+          background: #fffdf5;
+          box-shadow: 2px 2px 0 #172033;
+          color: #172033;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          transition: all 120ms ease;
+        }
+
+        .slider-arrow-btn:hover {
+          background: #fff0a7;
+          transform: scale(1.08);
+        }
+
         .category-tab-scroll {
+          flex: 1;
           display: flex;
           gap: 0.55rem;
           overflow-x: auto;
-          padding-bottom: 0.35rem;
+          padding: 0.2rem 0.2rem 0.4rem 0.2rem;
           scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .category-tab-scroll::-webkit-scrollbar {
+          height: 5px;
+        }
+        .category-tab-scroll::-webkit-scrollbar-thumb {
+          background: #94a3b8;
+          border-radius: 4px;
         }
 
         .cat-sketch-tab {
@@ -528,6 +585,7 @@ export default function FormulaVaultPage() {
           cursor: pointer;
           white-space: nowrap;
           transition: transform 120ms ease, background 120ms ease;
+          flex-shrink: 0;
         }
 
         .cat-sketch-tab:hover {
@@ -557,50 +615,133 @@ export default function FormulaVaultPage() {
           color: #172033;
         }
 
-        /* --- Subcategory Chips --- */
-        .subcat-chips-bar {
+        /* --- Subcategory Topics Section & Slider --- */
+        .subcat-topics-section {
+          background: #fffdf5;
+          border: 2px solid #172033;
+          border-radius: 8px;
+          box-shadow: 3px 3px 0 #172033;
+          padding: 0.75rem 1rem;
+          display: flex;
+          flex-direction: column;
+          gap: 0.6rem;
+        }
+
+        .subcat-header-row {
           display: flex;
           align-items: center;
-          gap: 0.45rem;
-          overflow-x: auto;
-          padding-bottom: 0.25rem;
-          scrollbar-width: none;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.6rem;
         }
 
         .subcat-lead-label {
           display: flex;
           align-items: center;
-          gap: 0.3rem;
-          font-size: 0.75rem;
+          gap: 0.35rem;
+          font-size: 0.8rem;
           font-weight: 800;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          color: #64748b;
-          white-space: nowrap;
+          color: #172033;
+          font-family: var(--font-kalam, 'Segoe UI');
+        }
+
+        .subcat-tools-group {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .topic-dropdown-select {
+          background: #f8f2df;
+          border: 1.5px solid #172033;
+          border-radius: 6px;
+          padding: 0.25rem 0.6rem;
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: #172033;
+          cursor: pointer;
+          outline: none;
+        }
+
+        .toggle-wrap-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          background: #f8f2df;
+          border: 1.5px solid #172033;
+          border-radius: 6px;
+          padding: 0.25rem 0.65rem;
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: #172033;
+          cursor: pointer;
+          transition: all 120ms ease;
+        }
+
+        .toggle-wrap-btn:hover {
+          background: #fff0a7;
+        }
+
+        .subcat-slider-container {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+
+        .subcat-chips-bar {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 0.45rem;
+          overflow-x: auto;
+          padding: 0.2rem 0.2rem 0.45rem 0.2rem;
+          scrollbar-width: thin;
+          scrollbar-color: #94a3b8 #f1f5f9;
+        }
+
+        .subcat-chips-bar.is-wrapped {
+          flex-wrap: wrap;
+          overflow-x: visible;
+        }
+
+        .subcat-chips-bar::-webkit-scrollbar {
+          height: 6px;
+        }
+        .subcat-chips-bar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
+        }
+        .subcat-chips-bar::-webkit-scrollbar-thumb {
+          background: #64748b;
+          border-radius: 4px;
         }
 
         .subcat-chip-btn {
-          background: #fffdf5;
+          background: #f8f2df;
           border: 1.5px solid #172033;
-          padding: 0.3rem 0.75rem;
+          padding: 0.35rem 0.85rem;
           border-radius: 6px;
-          font-size: 0.8rem;
-          font-weight: 600;
+          font-size: 0.82rem;
+          font-weight: 700;
           color: #172033;
           cursor: pointer;
           white-space: nowrap;
           transition: all 130ms ease;
+          flex-shrink: 0;
         }
 
         .subcat-chip-btn:hover {
-          background: #f1f5f9;
+          background: #e2e8f0;
+          transform: translateY(-1px);
         }
 
         .subcat-chip-btn.active {
-          background: #d9ecff;
-          border-width: 2px;
+          background: #2563eb;
+          color: #ffffff;
+          border-color: #172033;
           box-shadow: 2px 2px 0 #172033;
-          font-weight: 700;
         }
 
         /* --- Formula Cards Grid --- */
@@ -1035,47 +1176,127 @@ export default function FormulaVaultPage() {
           </div>
         </div>
 
-        {/* Primary Category Tabs */}
-        <div className="category-tab-scroll">
-          {categoryKeys.map((catKey) => {
-            const styleConfig = CATEGORY_STYLES[catKey];
-            const Icon = styleConfig.icon;
-            const count = categoryCounts[catKey] || 0;
-            const isActive = categoryFilter === catKey;
+        {/* Category Tabs with Left & Right Slider Controls */}
+        <div className="category-slider-wrapper">
+          <button
+            className="slider-arrow-btn"
+            onClick={() => scrollCategories(-220)}
+            title="Slide categories left"
+            aria-label="Slide categories left"
+          >
+            <ChevronLeft size={18} />
+          </button>
 
-            return (
-              <button
-                key={catKey}
-                className={`cat-sketch-tab ${isActive ? 'active' : ''}`}
-                onClick={() => {
-                  setCategoryFilter(catKey);
-                  setSubcategoryFilter('All');
-                }}
-              >
-                <Icon size={16} />
-                <span>{styleConfig.shortLabel}</span>
-                <span className="cat-num-pill">{count}</span>
-              </button>
-            );
-          })}
+          <div className="category-tab-scroll" ref={catRowRef}>
+            {categoryKeys.map((catKey) => {
+              const styleConfig = CATEGORY_STYLES[catKey];
+              const Icon = styleConfig.icon;
+              const count = categoryCounts[catKey] || 0;
+              const isActive = categoryFilter === catKey;
+
+              return (
+                <button
+                  key={catKey}
+                  className={`cat-sketch-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setCategoryFilter(catKey);
+                    setSubcategoryFilter('All');
+                  }}
+                >
+                  <Icon size={16} />
+                  <span>{styleConfig.shortLabel}</span>
+                  <span className="cat-num-pill">{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            className="slider-arrow-btn"
+            onClick={() => scrollCategories(220)}
+            title="Slide categories right"
+            aria-label="Slide categories right"
+          >
+            <ChevronRight size={18} />
+          </button>
         </div>
 
-        {/* Subcategory Topic Chips */}
+        {/* Subcategory Topics Section with Interactive Slider, Dropdown & Expand All View */}
         {availableSubcategories.length > 2 && (
-          <div className="subcat-chips-bar">
-            <span className="subcat-lead-label">
-              <Filter size={13} />
-              <span>Topic:</span>
-            </span>
-            {availableSubcategories.map((subcat) => (
-              <button
-                key={subcat}
-                className={`subcat-chip-btn ${subcategoryFilter === subcat ? 'active' : ''}`}
-                onClick={() => setSubcategoryFilter(subcat)}
+          <div className="subcat-topics-section">
+            <div className="subcat-header-row">
+              <div className="subcat-lead-label">
+                <Filter size={15} />
+                <span>Select Specific Topic ({availableSubcategories.length - 1} available):</span>
+              </div>
+
+              <div className="subcat-tools-group">
+                {/* Quick Dropdown selector for direct access */}
+                <select
+                  className="topic-dropdown-select"
+                  value={subcategoryFilter}
+                  onChange={(e) => setSubcategoryFilter(e.target.value)}
+                  title="Direct Topic Selector"
+                >
+                  {availableSubcategories.map((subcat) => (
+                    <option key={subcat} value={subcat}>
+                      {subcat === 'All' ? 'All Topics' : subcat}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Toggle between 1-line Slider and Full Multi-line Grid Tray */}
+                <button
+                  className="toggle-wrap-btn"
+                  onClick={() => setWrapTopics(!wrapTopics)}
+                  title={wrapTopics ? 'Switch to slider view' : 'Expand full topic list'}
+                >
+                  <SlidersHorizontal size={13} />
+                  <span>{wrapTopics ? 'Show as Slider' : 'View Full List'}</span>
+                  {wrapTopics ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Slider or Multi-Line Tray */}
+            <div className="subcat-slider-container">
+              {!wrapTopics && (
+                <button
+                  className="slider-arrow-btn"
+                  onClick={() => scrollSubcats(-220)}
+                  title="Slide topics left"
+                  aria-label="Slide topics left"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+              )}
+
+              <div
+                className={`subcat-chips-bar ${wrapTopics ? 'is-wrapped' : ''}`}
+                ref={subcatRowRef}
               >
-                {subcat}
-              </button>
-            ))}
+                {availableSubcategories.map((subcat) => (
+                  <button
+                    key={subcat}
+                    className={`subcat-chip-btn ${subcategoryFilter === subcat ? 'active' : ''}`}
+                    onClick={() => setSubcategoryFilter(subcat)}
+                  >
+                    {subcat}
+                  </button>
+                ))}
+              </div>
+
+              {!wrapTopics && (
+                <button
+                  className="slider-arrow-btn"
+                  onClick={() => scrollSubcats(220)}
+                  title="Slide topics right"
+                  aria-label="Slide topics right"
+                >
+                  <ChevronRight size={18} />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
