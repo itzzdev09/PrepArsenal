@@ -2,6 +2,7 @@
 // Server-only: reads non-public API keys, must only be imported from Route Handlers / Server Components.
 import { retrieveRelevantPassages, buildRagPromptContext, type RagSearchResult } from './rag/rag-engine';
 import { querySemanticCache, storeInSemanticCache } from './cache/semantic-cache';
+import { queryVectorCache, storeVectorCache } from './cache/semantic-cache-store';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -397,28 +398,41 @@ function localFallback(messages: ChatMessage[], citations: RagSearchResult[]): L
 
 /**
  * Main chat function:
- * 1. Semantic vector cache lookup (~0ms)
+ * 1. Semantic cache lookup — L1 in-process, then L2 Supabase/pgvector
  * 2. RAG retrieval of textbook citations
  * 3. Multi-provider failover with per-key quota cooldowns
- * 4. Cache write-back
+ * 4. Cache write-back to L1 + L2
  * 5. RAG-only local fallback
  */
 export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
   const startTime = Date.now();
   const lastUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content || '';
 
-  // 1. Semantic cache
+  // 1. Semantic cache — L1 in-process (instant), then L2 pgvector (persistent, shared across instances)
   if (lastUserMessage) {
-    const cacheResult = querySemanticCache(lastUserMessage, 0.86);
-    if (cacheResult.hit && cacheResult.content) {
-      const citations = retrieveRelevantPassages(lastUserMessage, { topK: 2 });
+    const l1 = querySemanticCache(lastUserMessage, 0.86);
+    if (l1.hit && l1.content) {
       return {
-        content: cacheResult.content,
+        content: l1.content,
         provider: 'semantic-cache',
         cached: true,
-        similarityScore: cacheResult.similarity,
+        similarityScore: l1.similarity,
         latencyMs: Date.now() - startTime,
-        citations,
+        citations: retrieveRelevantPassages(lastUserMessage, { topK: 2 }),
+      };
+    }
+
+    const l2 = await queryVectorCache(lastUserMessage);
+    if (l2) {
+      // Promote into L1 so the next identical hit skips the DB + embedding round-trip.
+      storeInSemanticCache(lastUserMessage, l2.content, l2.provider);
+      return {
+        content: l2.content,
+        provider: 'semantic-cache',
+        cached: true,
+        similarityScore: l2.similarity,
+        latencyMs: Date.now() - startTime,
+        citations: retrieveRelevantPassages(lastUserMessage, { topK: 2 }),
       };
     }
   }
@@ -440,6 +454,9 @@ export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
       try {
         const content = await provider.run(key, messages, fullSystemPrompt);
         storeInSemanticCache(lastUserMessage, content, provider.name);
+        // L2 write-back. The embedding is served from the memo populated by the
+        // L2 lookup above, so this is just one DB upsert. Never throws.
+        await storeVectorCache(lastUserMessage, content, provider.name);
         return {
           content,
           provider: provider.name,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProviderStatus } from "@/lib/llm";
+import { vectorCacheAvailable } from "@/lib/cache/semantic-cache-store";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export async function GET() {
     },
     services: {
       supabase: process.env.NEXT_PUBLIC_SUPABASE_URL ? "configured" : "unconfigured",
+      persistentSemanticCache: vectorCacheAvailable() ? "configured" : "unconfigured",
     },
     llmProviders: getProviderStatus(),
   };
