@@ -8,6 +8,18 @@ import {
   getTursoDatabaseMetrics 
 } from './turso';
 import { questions as seedQuestions, exams as seedExams, type Question } from './data';
+import {
+  getCachedQuestions,
+  cacheQuestions,
+  getCachedExams,
+  cacheExams,
+  getCachedTopics,
+  cacheTopics,
+  checkRateLimit,
+  invalidateQuestionsCache,
+  invalidateExamsCache,
+  invalidateTopicsCache
+} from './cache/redis-cache';
 
 export interface UserProfile {
   id: string;
@@ -139,6 +151,13 @@ export async function saveAdminQuestion(
     console.warn('Supabase question upsert notice:', err);
   }
 
+  // Invalidate relevant cache entries
+  await invalidateQuestionsCache({
+    examCode: question.examCode,
+    subject: question.subject,
+    topic: question.topic,
+  });
+
   return true;
 }
 
@@ -153,6 +172,9 @@ export async function deleteAdminQuestion(
   } catch (err) {
     console.warn('Supabase question delete notice:', err);
   }
+
+  // Invalidate all question caches since we don't have the question details
+  await invalidateQuestionsCache();
 
   return true;
 }
@@ -393,33 +415,103 @@ export async function saveChatHistory(supabase: SupabaseClient, userId: string, 
 
 // Data Fetching for Practice Mode (Edge Turso with Supabase & local fallback)
 export async function getExams(supabase: SupabaseClient) {
+  // Check Redis cache first
+  const cached = await getCachedExams();
+  if (cached && cached.length > 0) {
+    return cached;
+  }
+
+  // Rate limiting check
+  const rateLimit = await checkRateLimit('getExams', 'global', 200);
+  if (!rateLimit.allowed) {
+    console.warn('Rate limit exceeded for getExams, serving stale cache if available');
+    return cached || [];
+  }
+
   try {
     const tursoExams = await getTursoExams();
-    if (tursoExams && tursoExams.length > 0) return tursoExams;
+    if (tursoExams && tursoExams.length > 0) {
+      await cacheExams(tursoExams);
+      return tursoExams;
+    }
   } catch {
     // Fallback to Supabase
   }
 
   const { data } = await supabase.from('exams').select('*');
-  return data || [];
+  const result = data || [];
+  
+  // Cache the result
+  if (result.length > 0) {
+    await cacheExams(result);
+  }
+  
+  return result;
 }
 
-export async function getTopics(supabase: SupabaseClient) {
+export async function getTopics(supabase: SupabaseClient, subject?: string) {
+  // Check Redis cache first
+  const cached = await getCachedTopics(subject);
+  if (cached && cached.length > 0) {
+    return cached;
+  }
+
+  // Rate limiting check
+  const rateLimit = await checkRateLimit('getTopics', `global:${subject || 'all'}`, 300);
+  if (!rateLimit.allowed) {
+    console.warn('Rate limit exceeded for getTopics, serving stale cache if available');
+    return cached || [];
+  }
+
   try {
-    const tursoTopics = await getTursoTopics();
-    if (tursoTopics && tursoTopics.length > 0) return tursoTopics;
+    const tursoTopics = await getTursoTopics(subject);
+    if (tursoTopics && tursoTopics.length > 0) {
+      await cacheTopics(tursoTopics, subject);
+      return tursoTopics;
+    }
   } catch {
     // Fallback to Supabase
   }
 
-  const { data } = await supabase.from('topics').select('*');
-  return data || [];
+  let query = supabase.from('topics').select('*');
+  if (subject) query = query.eq('subject', subject);
+  
+  const { data } = await query;
+  const result = data || [];
+  
+  // Cache the result
+  if (result.length > 0) {
+    await cacheTopics(result, subject);
+  }
+  
+  return result;
 }
 
 export async function getQuestions(
   supabase: SupabaseClient, 
   filters?: { examCode?: string; subject?: string; topic?: string; tier?: string; limit?: number }
 ) {
+  // Check Redis cache first
+  const cacheFilters = {
+    examCode: filters?.examCode,
+    subject: filters?.subject,
+    topic: filters?.topic,
+    limit: filters?.limit || 100,
+  };
+  
+  const cached = await getCachedQuestions(cacheFilters);
+  if (cached && cached.data.length > 0) {
+    return cached.data;
+  }
+
+  // Rate limiting check
+  const rateLimitKey = `${filters?.examCode || 'all'}:${filters?.subject || 'all'}:${filters?.topic || 'all'}`;
+  const rateLimit = await checkRateLimit('getQuestions', rateLimitKey, 500);
+  if (!rateLimit.allowed) {
+    console.warn('Rate limit exceeded for getQuestions, serving stale cache if available');
+    return cached?.data || [];
+  }
+
   try {
     const tursoQuestions = await getTursoQuestions({
       examCode: filters?.examCode,
@@ -427,7 +519,10 @@ export async function getQuestions(
       topic: filters?.topic,
       limit: filters?.limit || 100,
     });
-    if (tursoQuestions && tursoQuestions.length > 0) return tursoQuestions;
+    if (tursoQuestions && tursoQuestions.length > 0) {
+      await cacheQuestions(cacheFilters, tursoQuestions);
+      return tursoQuestions;
+    }
   } catch {
     // Fallback to Supabase
   }
@@ -451,10 +546,14 @@ export async function getQuestions(
     if (filters?.examCode) seeded = seeded.filter(q => q.examCode === filters.examCode);
     if (filters?.subject) seeded = seeded.filter(q => q.subject === filters.subject);
     if (filters?.topic) seeded = seeded.filter(q => q.topic === filters.topic);
-    return seeded.slice(0, filters?.limit || 100);
+    const result = seeded.slice(0, filters?.limit || 100);
+    
+    // Cache even the seed data
+    await cacheQuestions(cacheFilters, result);
+    return result;
   }
 
-  return data.map(q => ({
+  const result = data.map(q => ({
     id: q.id,
     examCode: q.exam_code,
     year: q.year,
@@ -469,6 +568,10 @@ export async function getQuestions(
     difficulty: q.difficulty,
     metadata: q.metadata,
   }));
+  
+  // Cache the result
+  await cacheQuestions(cacheFilters, result);
+  return result;
 }
 
 export interface QuestionTextMatch {
