@@ -2,39 +2,171 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { BrainCircuit, ChartNoAxesCombined, Target, TrendingUp } from 'lucide-react';
+import { BrainCircuit, ChartNoAxesCombined, ChevronDown, ChevronRight, Layers, Target, TrendingUp } from 'lucide-react';
 import { exams } from '@/lib/data';
 import { getTrends, getTopics, averagePerYear, trendYears, type TrendAnalytics } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 import { getExamLogo } from '@/lib/exam-logos';
+import { computeEnsembleBatch, type EnrichedTrend, type SignalBreakdown } from '@/lib/adaptive/trend-engine';
 
+// ── Inline Sparkline SVG ─────────────────────────────────────────────
+function Sparkline({ data, width = 100, height = 28, color = '#3b82f6' }: {
+  data: number[];
+  width?: number;
+  height?: number;
+  color?: string;
+}) {
+  if (data.length < 2) return <span style={{ color: 'var(--text-tertiary)', fontSize: '0.75rem' }}>—</span>;
+
+  const max = Math.max(1, ...data);
+  const min = Math.min(0, ...data);
+  const range = max - min || 1;
+  const pad = 2;
+  const usableW = width - pad * 2;
+  const usableH = height - pad * 2;
+
+  const points = data.map((v, i) => {
+    const x = pad + (i / (data.length - 1)) * usableW;
+    const y = pad + usableH - ((v - min) / range) * usableH;
+    return `${x},${y}`;
+  });
+
+  const fillPoints = [
+    `${pad},${pad + usableH}`,
+    ...points,
+    `${pad + usableW},${pad + usableH}`,
+  ];
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: 'block' }}>
+      <defs>
+        <linearGradient id={`spark-grad-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+        </linearGradient>
+      </defs>
+      <polygon
+        points={fillPoints.join(' ')}
+        fill={`url(#spark-grad-${color.replace('#', '')})`}
+      />
+      <polyline
+        points={points.join(' ')}
+        fill="none"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      {/* Latest point dot */}
+      {data.length > 0 && (() => {
+        const lastX = pad + ((data.length - 1) / (data.length - 1)) * usableW;
+        const lastY = pad + usableH - ((data[data.length - 1] - min) / range) * usableH;
+        return <circle cx={lastX} cy={lastY} r="3" fill={color} />;
+      })()}
+    </svg>
+  );
+}
+
+// ── Signal Breakdown Bar ─────────────────────────────────────────────
+function SignalBar({ signals }: { signals: SignalBreakdown[] }) {
+  const colors = ['#3b82f6', '#8b5cf6', '#f59e0b', '#10b981', '#ec4899'];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.75rem 0' }}>
+      {signals.map((s, i) => (
+        <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.78rem' }}>
+          <span style={{ width: '120px', color: 'var(--text-secondary)', fontWeight: 600, flexShrink: 0 }}>{s.name}</span>
+          <div style={{ flex: 1, height: '8px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
+            <div
+              style={{
+                width: `${Math.max(2, s.score)}%`,
+                height: '100%',
+                background: colors[i % colors.length],
+                borderRadius: '4px',
+                transition: 'width 0.6s ease',
+              }}
+            />
+          </div>
+          <span style={{
+            width: '42px',
+            textAlign: 'right',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 700,
+            color: colors[i % colors.length],
+          }}>
+            {s.score.toFixed(0)}
+          </span>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)', width: '20px', textAlign: 'right' }}>
+            ×{(s.weight * 100).toFixed(0)}%
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Tier Badge ─────────────────────────────────────────────
+function TierBadge({ tier }: { tier: string }) {
+  const styles: Record<string, { bg: string; color: string }> = {
+    'Very High': { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
+    'High': { bg: 'rgba(59,130,246,0.12)', color: '#3b82f6' },
+    'Moderate': { bg: 'rgba(245,158,11,0.12)', color: '#f59e0b' },
+    'Low': { bg: 'rgba(244,63,94,0.12)', color: '#f43f5e' },
+    'Very Low': { bg: 'rgba(107,114,128,0.12)', color: '#6b7280' },
+  };
+  const s = styles[tier] || styles['Moderate'];
+  return (
+    <span style={{
+      fontSize: '0.68rem',
+      fontWeight: 700,
+      padding: '0.15rem 0.5rem',
+      borderRadius: '0.35rem',
+      background: s.bg,
+      color: s.color,
+      textTransform: 'uppercase',
+      letterSpacing: '0.04em',
+    }}>
+      {tier}
+    </span>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────────────
 export default function TrendsPage() {
   const [selectedExam, setSelectedExam] = useState('SSC_CGL');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [sortBy, setSortBy] = useState<'prediction' | 'frequency' | 'name'>('prediction');
-  
+  const [expandedTopic, setExpandedTopic] = useState<string | null>(null);
+
   const [dbTrends, setDbTrends] = useState<TrendAnalytics[]>([]);
+  const [allExamTrends, setAllExamTrends] = useState<TrendAnalytics[]>([]);
   const [dbTopics, setDbTopics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const supabase = createClient();
 
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const [trends, topics] = await Promise.all([
+      const [trends, allTrends, topics] = await Promise.all([
         getTrends(supabase, [selectedExam]),
-        getTopics(supabase)
+        getTrends(supabase), // all exams for cross-exam spillover
+        getTopics(supabase),
       ]);
       setDbTrends(trends);
+      setAllExamTrends(allTrends);
       setDbTopics(topics);
       setLoading(false);
     }
     loadData();
   }, [selectedExam, supabase]);
 
+  // Compute ensemble predictions
+  const enrichedTrends: EnrichedTrend[] = useMemo(() => {
+    return computeEnsembleBatch(dbTrends, allExamTrends);
+  }, [dbTrends, allExamTrends]);
+
   const examTrends = useMemo(() => {
-    let trends = [...dbTrends];
+    let trends = [...enrichedTrends];
     if (selectedSubject) {
       trends = trends.filter(t => {
         const topic = dbTopics.find(top => top.id === t.topic_id);
@@ -43,7 +175,7 @@ export default function TrendsPage() {
     }
     // Sort
     if (sortBy === 'prediction') {
-      trends.sort((a, b) => b.prediction_score - a.prediction_score);
+      trends.sort((a, b) => b.ensemble.score - a.ensemble.score);
     } else if (sortBy === 'frequency') {
       trends.sort((a, b) => averagePerYear(b) - averagePerYear(a));
     } else {
@@ -54,46 +186,26 @@ export default function TrendsPage() {
       });
     }
     return trends;
-  }, [dbTrends, selectedSubject, sortBy, dbTopics]);
+  }, [enrichedTrends, selectedSubject, sortBy, dbTopics]);
 
   const exam = exams.find(e => e.code === selectedExam);
   const subjects = [...new Set(examTrends.map(t => dbTopics.find(top => top.id === t.topic_id)?.subject).filter(Boolean))];
 
-  // Compute top predictions
-  const topPredictions = [...examTrends].sort((a, b) => b.prediction_score - a.prediction_score).slice(0, 5);
+  // Top predictions (by ensemble score)
+  const topPredictions = [...examTrends].sort((a, b) => b.ensemble.score - a.ensemble.score).slice(0, 5);
 
-  // Topics whose share of the paper is growing: compare the most recent year
-  // against the mean of the earlier ones. This is measured from real question
-  // counts, unlike the old "Getting Harder" card, which read a difficulty label
-  // inferred from question text length.
-  const rising = [...examTrends]
-    .map(t => {
-      const years = Object.keys(t.yearly_frequencies || {}).map(Number).sort((a, b) => a - b);
-      if (years.length < 2) return null;
-      const latest = t.yearly_frequencies[String(years[years.length - 1])] ?? 0;
-      const earlier = years.slice(0, -1).map(y => t.yearly_frequencies[String(y)] ?? 0);
-      const earlierAvg = earlier.reduce((s, n) => s + n, 0) / earlier.length;
-      if (earlierAvg <= 0 || latest <= earlierAvg) return null;
-      return { trend: t, latest, earlierAvg, growth: (latest - earlierAvg) / earlierAvg };
-    })
-    .filter((x): x is NonNullable<typeof x> => x !== null)
-    .sort((a, b) => b.growth - a.growth);
+  // Signal heatmap — top 10 topics × 5 signals
+  const heatmapData = [...examTrends]
+    .sort((a, b) => b.ensemble.score - a.ensemble.score)
+    .slice(0, 8)
+    .map(t => ({
+      name: dbTopics.find(top => top.id === t.topic_id)?.name || t.topic_id,
+      signals: t.ensemble.signals,
+      score: t.ensemble.score,
+    }));
 
-  const getHeatLevel = (score: number): string => {
-    if (score >= 95) return 'heat-5';
-    if (score >= 85) return 'heat-4';
-    if (score >= 75) return 'heat-3';
-    if (score >= 60) return 'heat-2';
-    if (score >= 40) return 'heat-1';
-    return 'heat-0';
-  };
-
-  // Years actually present in this exam's data, rather than a fixed window.
+  // Years actually present in this exam's data
   const years = trendYears(examTrends);
-  const maxFreq = Math.max(
-    1,
-    ...examTrends.flatMap(t => Object.values(t.yearly_frequencies || {}))
-  );
 
   if (loading) {
     return (
@@ -198,6 +310,48 @@ export default function TrendsPage() {
 
         .sort-btns { display: flex; gap: 0.35rem; }
 
+        /* Heatmap */
+        .heatmap-grid {
+          display: grid;
+          grid-template-columns: 140px repeat(5, 1fr) 60px;
+          gap: 2px;
+          font-size: 0.72rem;
+        }
+        .heatmap-header {
+          font-weight: 700;
+          color: var(--text-tertiary);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          padding: 0.35rem 0.25rem;
+          text-align: center;
+          font-size: 0.62rem;
+        }
+        .heatmap-label {
+          padding: 0.35rem 0.25rem;
+          color: var(--text-secondary);
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .heatmap-cell {
+          border-radius: 4px;
+          padding: 0.35rem 0.25rem;
+          text-align: center;
+          font-weight: 700;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.7rem;
+          transition: transform 150ms;
+        }
+        .heatmap-cell:hover { transform: scale(1.1); }
+        .heatmap-score {
+          padding: 0.35rem 0.25rem;
+          text-align: center;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+        }
+
         /* Trend Table */
         .trend-table {
           width: 100%;
@@ -227,6 +381,8 @@ export default function TrendsPage() {
         .trend-table tr:hover td {
           background: rgba(59,130,246,0.03);
         }
+        .trend-row-clickable { cursor: pointer; }
+        .trend-row-clickable:hover td { background: rgba(59,130,246,0.05); }
 
         .topic-name {
           font-weight: 600;
@@ -248,46 +404,56 @@ export default function TrendsPage() {
         .pred-med { background: rgba(245,158,11,0.12); color: var(--warning); }
         .pred-low { background: rgba(244,63,94,0.12); color: var(--error); }
 
-        .freq-bar-container { display: flex; gap: 3px; align-items: flex-end; height: 28px; }
-        .freq-bar {
-          width: 20px;
-          border-radius: 2px 2px 0 0;
-          transition: all 200ms;
-          position: relative;
-        }
-        .freq-bar:hover { opacity: 0.8; }
-
-        .difficulty-trend {
-          font-size: 0.8rem;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-          gap: 0.35rem;
-        }
-
         .avg-freq {
           font-family: 'JetBrains Mono', monospace;
           font-weight: 600;
+        }
+
+        .expand-row td {
+          padding: 0 1rem 1rem;
+          background: rgba(59,130,246,0.02);
+        }
+        .expand-content {
+          border: 1px solid var(--border-subtle);
+          border-radius: 0.75rem;
+          padding: 1rem 1.25rem;
+          background: var(--bg-card);
+        }
+        .expand-title {
+          font-size: 0.78rem;
+          font-weight: 700;
+          color: var(--text-secondary);
+          margin-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+        }
+        .expand-summary {
+          font-size: 0.78rem;
+          color: var(--text-tertiary);
+          margin-top: 0.5rem;
+          font-style: italic;
         }
 
         @media (max-width: 768px) {
           .insights-row { grid-template-columns: 1fr; }
           .trend-table { font-size: 0.8rem; }
           .trends-body { padding: 1rem; }
+          .heatmap-grid { font-size: 0.6rem; }
         }
       `}</style>
 
       <div className="trends-header">
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><BrainCircuit size={25} />Trend Explorer</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Analyze topic frequency, difficulty trends, and prediction scores across exams.
+          Ensemble ML predictions — 5 statistical signals blended per topic.
         </p>
         <div className="exam-selector">
           {exams.map(e => (
             <button
               key={e.code}
               className={`exam-btn ${selectedExam === e.code ? 'active' : ''}`}
-              onClick={() => { setSelectedExam(e.code); setSelectedSubject(''); }}
+              onClick={() => { setSelectedExam(e.code); setSelectedSubject(''); setExpandedTopic(null); }}
             >
               {getExamLogo(e.code) ? (
                 <Image className="exam-logo" src={getExamLogo(e.code)!} alt="" width={18} height={18} />
@@ -304,44 +470,64 @@ export default function TrendsPage() {
         {/* Insights Cards */}
         <div className="insights-row">
           <div className="insight-card">
-            <div className="insight-title"><Target size={18} />Top Predicted Topics</div>
+            <div className="insight-title"><Target size={18} />Top Ensemble Predictions</div>
             <div className="insight-list">
               {topPredictions.map(t => {
                 const topic = dbTopics.find(top => top.id === t.topic_id);
                 return (
                   <div key={t.topic_id} className="insight-item">
                     <span className="insight-item-name">{topic?.name || t.topic_id}</span>
-                    <span className="insight-item-val" style={{ color: 'var(--success)' }}>{Number(t.prediction_score).toFixed(1)}%</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <TierBadge tier={t.ensemble.tier} />
+                      <span className="insight-item-val" style={{ color: 'var(--success)' }}>{t.ensemble.score.toFixed(1)}</span>
+                    </span>
                   </div>
                 );
               })}
             </div>
           </div>
           <div className="insight-card">
-            <div className="insight-title"><TrendingUp size={18} />Rising Topics</div>
-            <div className="insight-list">
-              {rising.length === 0 ? (
-                <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-                  No topic is growing against its own history yet
-                </div>
-              ) : (
-                rising.slice(0, 5).map(({ trend, latest, earlierAvg }) => {
-                  const topic = dbTopics.find(top => top.id === trend.topic_id);
-                  return (
-                    <div key={trend.topic_id} className="insight-item">
-                      <span className="insight-item-name">{topic?.name || trend.topic_id}</span>
-                      <span
-                        className="insight-item-val"
-                        style={{ color: 'var(--success)' }}
-                        title={`Latest year: ${latest} questions vs ${earlierAvg.toFixed(1)} average previously`}
-                      >
-                        ↗ {earlierAvg.toFixed(1)} → {latest}
-                      </span>
+            <div className="insight-title"><Layers size={18} />Signal Heatmap (Top 8)</div>
+            {heatmapData.length === 0 ? (
+              <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+                No trend data available for this exam
+              </div>
+            ) : (
+              <div className="heatmap-grid">
+                {/* Headers */}
+                <div className="heatmap-header" style={{ textAlign: 'left' }}>Topic</div>
+                {['EMA', 'Slope', 'Burst', 'Consist', 'X-Exam'].map(h => (
+                  <div key={h} className="heatmap-header">{h}</div>
+                ))}
+                <div className="heatmap-header">Score</div>
+                {/* Rows */}
+                {heatmapData.map(row => (
+                  <>
+                    <div key={`${row.name}-label`} className="heatmap-label" title={row.name}>{row.name}</div>
+                    {row.signals.map((s, i) => {
+                      const intensity = s.score / 100;
+                      const colors = ['59,130,246', '139,92,246', '245,158,11', '16,185,129', '236,72,153'];
+                      return (
+                        <div
+                          key={`${row.name}-${i}`}
+                          className="heatmap-cell"
+                          style={{
+                            background: `rgba(${colors[i]}, ${0.1 + intensity * 0.5})`,
+                            color: `rgba(${colors[i]}, ${0.6 + intensity * 0.4})`,
+                          }}
+                          title={`${s.name}: ${s.score.toFixed(0)} — ${s.description}`}
+                        >
+                          {s.score.toFixed(0)}
+                        </div>
+                      );
+                    })}
+                    <div key={`${row.name}-score`} className="heatmap-score" style={{ color: row.score >= 65 ? 'var(--success)' : row.score >= 45 ? 'var(--warning)' : 'var(--error)' }}>
+                      {row.score.toFixed(0)}
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  </>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -383,12 +569,14 @@ export default function TrendsPage() {
             <table className="trend-table">
               <thead>
                 <tr>
+                  <th style={{ width: '28px' }}></th>
                   <th>Topic</th>
-                  <th>Prediction</th>
+                  <th>Ensemble Score</th>
+                  <th>Confidence</th>
                   <th>
                     {years.length > 0
-                      ? `Yearly Frequency (${years[0]}–${years[years.length - 1]})`
-                      : 'Yearly Frequency'}
+                      ? `Trend (${years[0]}–${years[years.length - 1]})`
+                      : 'Trend'}
                   </th>
                   <th>Avg / Year</th>
                 </tr>
@@ -396,40 +584,76 @@ export default function TrendsPage() {
               <tbody>
                 {examTrends.map(t => {
                   const topic = dbTopics.find(top => top.id === t.topic_id);
+                  const isExpanded = expandedTopic === t.topic_id;
+                  const sparkData = years.map(y => t.yearly_frequencies?.[String(y)] ?? 0);
+                  const sparkColor = t.ensemble.score >= 65 ? '#10b981' : t.ensemble.score >= 45 ? '#f59e0b' : '#f43f5e';
+
                   return (
-                    <tr key={t.topic_id}>
-                      <td>
-                        <div className="topic-name">{topic?.name || t.topic_id}</div>
-                        <div className="topic-subject">{topic?.subject}</div>
-                      </td>
-                      <td>
-                        <span className={`pred-score ${t.prediction_score >= 90 ? 'pred-high' : t.prediction_score >= 70 ? 'pred-med' : 'pred-low'}`}>
-                          {Number(t.prediction_score).toFixed(1)}%
-                        </span>
-                      </td>
-                      <td>
-                        <div className="freq-bar-container">
-                          {years.map(year => {
-                            const freq = t.yearly_frequencies?.[String(year)] ?? 0;
-                            const height = (freq / maxFreq) * 24 + 4;
-                            return (
-                              <div
-                                key={year}
-                                className="freq-bar"
-                                style={{
-                                  height: `${height}px`,
-                                  background: freq > 0 ? `rgba(59, 130, 246, ${0.3 + (freq / maxFreq) * 0.7})` : 'rgba(255,255,255,0.05)',
-                                }}
-                                title={`${year}: ${freq} question${freq === 1 ? '' : 's'}`}
-                              />
-                            );
-                          })}
-                        </div>
-                      </td>
-                      <td>
-                        <span className="avg-freq">{averagePerYear(t).toFixed(1)}</span>
-                      </td>
-                    </tr>
+                    <>
+                      <tr
+                        key={t.topic_id}
+                        className="trend-row-clickable"
+                        onClick={() => setExpandedTopic(isExpanded ? null : t.topic_id)}
+                      >
+                        <td style={{ paddingRight: 0 }}>
+                          {isExpanded
+                            ? <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
+                            : <ChevronRight size={14} style={{ color: 'var(--text-tertiary)' }} />
+                          }
+                        </td>
+                        <td>
+                          <div className="topic-name">{topic?.name || t.topic_id}</div>
+                          <div className="topic-subject">{topic?.subject}</div>
+                        </td>
+                        <td>
+                          <span className={`pred-score ${t.ensemble.score >= 65 ? 'pred-high' : t.ensemble.score >= 45 ? 'pred-med' : 'pred-low'}`}>
+                            {t.ensemble.score.toFixed(1)}
+                          </span>
+                        </td>
+                        <td>
+                          <TierBadge tier={t.ensemble.tier} />
+                        </td>
+                        <td>
+                          <Sparkline data={sparkData} color={sparkColor} width={110} height={28} />
+                        </td>
+                        <td>
+                          <span className="avg-freq">{averagePerYear(t).toFixed(1)}</span>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr key={`${t.topic_id}-expand`} className="expand-row">
+                          <td colSpan={6}>
+                            <div className="expand-content">
+                              <div className="expand-title">
+                                <Layers size={14} />
+                                Signal Decomposition — {topic?.name || t.topic_id}
+                              </div>
+                              <SignalBar signals={t.ensemble.signals} />
+                              <div className="expand-summary">{t.ensemble.summary}</div>
+                              {/* Yearly breakdown */}
+                              <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {years.map(y => {
+                                  const freq = t.yearly_frequencies?.[String(y)] ?? 0;
+                                  return (
+                                    <div key={y} style={{
+                                      padding: '0.25rem 0.5rem',
+                                      borderRadius: '0.35rem',
+                                      background: freq > 0 ? 'rgba(59,130,246,0.1)' : 'var(--bg-input)',
+                                      fontSize: '0.72rem',
+                                      fontFamily: "'JetBrains Mono', monospace",
+                                      fontWeight: 600,
+                                      color: freq > 0 ? 'var(--accent-blue)' : 'var(--text-tertiary)',
+                                    }}>
+                                      {y}: {freq}q
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   );
                 })}
               </tbody>

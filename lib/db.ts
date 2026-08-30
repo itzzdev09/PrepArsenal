@@ -909,3 +909,113 @@ export async function rejectGkItem(
   }
   return true;
 }
+
+// ===== ADMIN: EXPANDED USER MANAGEMENT =====
+
+export interface UserDetailedAnalytics {
+  totalQuestionsAttempted: number;
+  overallAccuracy: number;
+  subjectAccuracy: Record<string, { correct: number; total: number; accuracy: number }>;
+  lastActive: string | null;
+  totalStudyMinutes: number;
+  ncertChaptersRead: number;
+  practiceSessionCount: number;
+  status: 'active' | 'suspended';
+}
+
+export async function getUserDetailedAnalytics(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<UserDetailedAnalytics> {
+  // Fetch profile
+  const { data: profileData } = await supabase
+    .from('profiles')
+    .select('last_study_date, total_study_minutes, exam_dates, status')
+    .eq('id', userId)
+    .single();
+
+  const examDates = (profileData?.exam_dates as Record<string, any>) || {};
+  const ncertProgress = (examDates.ncert_progress as Record<string, any>) || {};
+
+  // Fetch all reviews with subject info
+  const { data: reviews } = await supabase
+    .from('user_question_reviews')
+    .select('is_correct, questions(subject)')
+    .eq('user_id', userId);
+
+  const total = reviews?.length || 0;
+  const correct = reviews?.filter(r => r.is_correct).length || 0;
+
+  // Subject-level breakdown
+  const subjectMap: Record<string, { correct: number; total: number }> = {};
+  (reviews || []).forEach((r: any) => {
+    const sub = r.questions?.subject || 'Unknown';
+    if (!subjectMap[sub]) subjectMap[sub] = { correct: 0, total: 0 };
+    subjectMap[sub].total += 1;
+    if (r.is_correct) subjectMap[sub].correct += 1;
+  });
+
+  const subjectAccuracy: Record<string, { correct: number; total: number; accuracy: number }> = {};
+  for (const [sub, stats] of Object.entries(subjectMap)) {
+    subjectAccuracy[sub] = {
+      ...stats,
+      accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+    };
+  }
+
+  return {
+    totalQuestionsAttempted: total,
+    overallAccuracy: total > 0 ? Math.round((correct / total) * 100) : 0,
+    subjectAccuracy,
+    lastActive: profileData?.last_study_date || null,
+    totalStudyMinutes: profileData?.total_study_minutes || 0,
+    ncertChaptersRead: Object.keys(ncertProgress).length,
+    practiceSessionCount: total, // 1:1 with review rows for now
+    status: (profileData?.status as 'active' | 'suspended') || 'active',
+  };
+}
+
+export async function adminResetStreak(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ streak_count: 0, last_study_date: null })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error resetting user streak:', error);
+    return false;
+  }
+  return true;
+}
+
+export async function exportUserReviewsCSV(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<string> {
+  const { data: reviews } = await supabase
+    .from('user_question_reviews')
+    .select('question_id, is_correct, time_taken_seconds, review_count, last_reviewed_at, next_review_due, questions(exam_code, subject, topic_id, question_text)')
+    .eq('user_id', userId)
+    .order('last_reviewed_at', { ascending: false });
+
+  if (!reviews || reviews.length === 0) return 'No review data found.';
+
+  const headers = ['Question ID', 'Exam', 'Subject', 'Topic', 'Correct', 'Time (s)', 'Reviews', 'Last Reviewed', 'Next Due', 'Question Text'];
+  const rows = reviews.map((r: any) => [
+    r.question_id,
+    r.questions?.exam_code || '',
+    r.questions?.subject || '',
+    r.questions?.topic_id || '',
+    r.is_correct ? 'Yes' : 'No',
+    r.time_taken_seconds,
+    r.review_count,
+    r.last_reviewed_at,
+    r.next_review_due,
+    `"${(r.questions?.question_text || '').replace(/"/g, '""').substring(0, 200)}"`,
+  ]);
+
+  return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+}
