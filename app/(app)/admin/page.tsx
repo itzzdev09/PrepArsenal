@@ -9,20 +9,41 @@ import {
   saveAdminQuestion, 
   deleteAdminQuestion,
   getUserProfile,
-  type UserProfile 
+  getUserDetailedAnalytics,
+  exportUserReviewsCSV,
+  type UserProfile,
+  type UserDetailedAnalytics,
 } from '@/lib/db';
 import { getTursoDatabaseMetrics } from '@/lib/turso';
 import { getSemanticCacheMetrics, clearSemanticCache } from '@/lib/cache/semantic-cache';
 import { exams, questions as seedQuestions, type Question } from '@/lib/data';
+import { 
+  ChevronDown, ChevronRight, Download, RotateCcw, Shield, ShieldOff, 
+  Search, UserX, UserCheck, Crown, User as UserIcon 
+} from 'lucide-react';
+
+// ── Types ────────────────────────────────────────────────────────────
+interface EnrichedUser extends UserProfile {
+  questions_attempted: number;
+  accuracy: number;
+  status: 'active' | 'suspended';
+}
 
 export default function AdminPortalPage() {
   const [mounted, setMounted] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [usersList, setUsersList] = useState<UserProfile[]>([]);
+  const [adminToken, setAdminToken] = useState('');
+  const [usersList, setUsersList] = useState<EnrichedUser[]>([]);
   const [questionsList, setQuestionsList] = useState<Question[]>(seedQuestions);
   const [searchQuestionQuery, setSearchQuestionQuery] = useState('');
   const [selectedSubjectFilter, setSelectedSubjectFilter] = useState('All');
+
+  // User management state
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [userAnalytics, setUserAnalytics] = useState<Record<string, UserDetailedAnalytics>>({});
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Turso & Cache metrics
   const [dbMetrics, setDbMetrics] = useState<{ totalQuestions: number; totalExams: number; totalTopics: number; isOnline: boolean }>({
@@ -71,19 +92,25 @@ export default function AdminPortalPage() {
           return;
         }
 
+        // Get session token for API calls
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) setAdminToken(session.access_token);
+
         setIsAdmin(true);
         setAuthChecking(false);
 
-        const [tMetrics, qs, us] = await Promise.all([
+        // Load data
+        const [tMetrics, qs] = await Promise.all([
           getTursoDatabaseMetrics(),
           getQuestions(supabase, { limit: 100 }),
-          getAllUserProfiles(supabase),
         ]);
 
         if (tMetrics) setDbMetrics(tMetrics);
         if (qs && qs.length > 0) setQuestionsList(qs as Question[]);
-        if (us && us.length > 0) setUsersList(us);
         setCacheMetrics(getSemanticCacheMetrics());
+
+        // Fetch enriched users from admin API
+        await fetchUsers(session?.access_token || '');
       } catch (err) {
         console.warn('Admin portal load notice:', err);
         setAuthChecking(false);
@@ -92,6 +119,88 @@ export default function AdminPortalPage() {
 
     initAdmin();
   }, [supabase]);
+
+  async function fetchUsers(token?: string) {
+    try {
+      const tkn = token || adminToken;
+      if (!tkn) return;
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${tkn}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsersList(data.users || []);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch users from admin API, falling back:', err);
+      // Fallback to direct DB
+      const us = await getAllUserProfiles(supabase);
+      setUsersList(us.map(u => ({ ...u, questions_attempted: 0, accuracy: 0, status: 'active' as const })));
+    }
+  }
+
+  async function handleAdminAction(userId: string, action: string, value?: string) {
+    setActionLoading(`${userId}-${action}`);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ userId, action, value }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+        await fetchUsers();
+      } else {
+        alert(`❌ ${data.error}`);
+      }
+    } catch (err) {
+      alert('❌ Action failed: network error');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleExpandUser(userId: string) {
+    if (expandedUserId === userId) {
+      setExpandedUserId(null);
+      return;
+    }
+    setExpandedUserId(userId);
+
+    // Fetch detailed analytics if not cached
+    if (!userAnalytics[userId]) {
+      try {
+        const analytics = await getUserDetailedAnalytics(supabase, userId);
+        setUserAnalytics(prev => ({ ...prev, [userId]: analytics }));
+      } catch {
+        // Silently fail — the expanded row will show "Loading..."
+      }
+    }
+  }
+
+  async function handleExportCSV(userId: string, userName: string) {
+    setActionLoading(`${userId}-export`);
+    try {
+      const csv = await exportUserReviewsCSV(supabase, userId);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `prep_reviews_${userName.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('❌ CSV export failed');
+    } finally {
+      setActionLoading(null);
+    }
+  }
 
   const handleCreateQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,6 +259,20 @@ export default function AdminPortalPage() {
                           q.topic.toLowerCase().includes(searchQuestionQuery.toLowerCase());
     const matchesSubject = selectedSubjectFilter === 'All' || q.subject === selectedSubjectFilter;
     return matchesSearch && matchesSubject;
+  });
+
+  // User search/filter
+  const filteredUsers = usersList.filter(u => {
+    if (!userSearchQuery) return true;
+    const q = userSearchQuery.toLowerCase();
+    return (
+      (u.full_name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q) ||
+      (u.phone_number || '').toLowerCase().includes(q) ||
+      (u.target_exams || []).some(e => e.toLowerCase().includes(q)) ||
+      (u.role || '').toLowerCase().includes(q) ||
+      (u.status || 'active').toLowerCase().includes(q)
+    );
   });
 
   if (authChecking) {
@@ -307,6 +430,98 @@ export default function AdminPortalPage() {
           text-transform: uppercase;
         }
 
+        .user-row-clickable {
+          cursor: pointer;
+          transition: background 150ms;
+        }
+        .user-row-clickable:hover {
+          background: rgba(59,130,246,0.03);
+        }
+
+        .user-detail-panel {
+          background: var(--bg-secondary);
+          border-bottom: 1px solid var(--border-subtle);
+        }
+        .user-detail-inner {
+          padding: 1.25rem 1.5rem;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 1.5rem;
+        }
+        .detail-section h4 {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: var(--text-tertiary);
+          margin-bottom: 0.75rem;
+          letter-spacing: 0.06em;
+        }
+        .detail-stat {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.3rem 0;
+          font-size: 0.82rem;
+        }
+        .detail-stat-label { color: var(--text-secondary); }
+        .detail-stat-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
+
+        .detail-actions {
+          display: flex;
+          gap: 0.5rem;
+          flex-wrap: wrap;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid var(--border-subtle);
+        }
+        .action-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          padding: 0.4rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 700;
+          border-radius: 0.45rem;
+          border: 1px solid var(--border-subtle);
+          background: var(--bg-card);
+          color: var(--text-secondary);
+          cursor: pointer;
+          transition: all 150ms;
+        }
+        .action-btn:hover { border-color: var(--border-default); color: var(--text-primary); }
+        .action-btn.danger { border-color: rgba(239,68,68,0.3); color: var(--error); }
+        .action-btn.danger:hover { background: rgba(239,68,68,0.08); }
+        .action-btn.success { border-color: rgba(16,185,129,0.3); color: var(--success); }
+        .action-btn.success:hover { background: rgba(16,185,129,0.08); }
+        .action-btn.purple { border-color: rgba(139,92,246,0.3); color: #8b5cf6; }
+        .action-btn.purple:hover { background: rgba(139,92,246,0.08); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .subject-accuracy-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.35rem;
+        }
+        .subj-acc-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 0.25rem 0.5rem;
+          border-radius: 0.3rem;
+          background: var(--bg-input);
+          font-size: 0.75rem;
+        }
+
+        .status-badge {
+          font-size: 0.68rem;
+          font-weight: 700;
+          padding: 0.15rem 0.5rem;
+          border-radius: 999px;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+        .status-active { background: rgba(16,185,129,0.12); color: #10b981; }
+        .status-suspended { background: rgba(239,68,68,0.12); color: #ef4444; }
+
         /* Modal */
         .modal-overlay {
           position: fixed;
@@ -359,6 +574,7 @@ export default function AdminPortalPage() {
         @media (max-width: 800px) {
           .metrics-grid { grid-template-columns: repeat(2, 1fr); }
           .form-grid-2 { grid-template-columns: 1fr; }
+          .user-detail-inner { grid-template-columns: 1fr; }
         }
       `}</style>
 
@@ -501,74 +717,270 @@ export default function AdminPortalPage() {
         </div>
       </div>
 
-      {/* User Management Section */}
+      {/* ═══════════ USER MANAGEMENT SECTION ═══════════ */}
       <div className="section-header">
         <div className="section-title">
-          <span>👥 User Directory & Student Activity</span>
+          <span>👥 User Directory & Management</span>
           <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
-            ({usersList.length > 0 ? usersList.length : 1} active accounts)
+            ({filteredUsers.length} of {usersList.length} users)
           </span>
         </div>
       </div>
 
       <div className="card">
+        {/* User Search */}
+        <div className="filter-bar">
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+            <input
+              type="text"
+              className="search-input"
+              style={{ paddingLeft: '2.25rem', width: '100%' }}
+              placeholder="Search by name, email, phone, exam, role, or status..."
+              value={userSearchQuery}
+              onChange={e => setUserSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
         <div className="table-wrap">
           <table className="admin-table">
             <thead>
               <tr>
+                <th style={{ width: '28px' }}></th>
                 <th>Name / ID</th>
                 <th>Phone</th>
                 <th>Target Exams</th>
                 <th>Streak</th>
+                <th>Questions</th>
+                <th>Accuracy</th>
                 <th>XP & Level</th>
+                <th>Status</th>
                 <th>Role</th>
               </tr>
             </thead>
             <tbody>
-              {usersList.length > 0 ? (
-                usersList.map(u => (
-                  <tr key={u.id}>
-                    <td>
-                      <div style={{ fontWeight: 700 }}>{u.full_name || 'Aspirant'}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{u.id.substring(0, 12)}...</div>
-                    </td>
-                    <td>{u.phone_number || '—'}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                        {(u.target_exams || ['SSC_CGL']).map(code => (
-                          <span key={code} className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
-                            {code}
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map(u => {
+                  const isExpanded = expandedUserId === u.id;
+                  const analytics = userAnalytics[u.id];
+
+                  return (
+                    <>
+                      <tr
+                        key={u.id}
+                        className="user-row-clickable"
+                        onClick={() => handleExpandUser(u.id)}
+                      >
+                        <td style={{ paddingRight: 0 }}>
+                          {isExpanded
+                            ? <ChevronDown size={14} style={{ color: 'var(--text-tertiary)' }} />
+                            : <ChevronRight size={14} style={{ color: 'var(--text-tertiary)' }} />
+                          }
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700 }}>{u.full_name || 'Aspirant'}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>{u.id.substring(0, 12)}...</div>
+                        </td>
+                        <td>{u.phone_number || '—'}</td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                            {(u.target_exams || ['SSC_CGL']).map(code => (
+                              <span key={code} className="badge badge-blue" style={{ fontSize: '0.68rem' }}>
+                                {code}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ color: 'var(--warning)', fontWeight: 700 }}>
+                          🔥 {u.streak_count || 0}d
+                        </td>
+                        <td>
+                          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontWeight: 700 }}>
+                            {u.questions_attempted || 0}
                           </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td style={{ color: 'var(--warning)', fontWeight: 700 }}>
-                      🔥 {u.streak_count || 0}d
-                    </td>
-                    <td>
-                      <strong>{u.xp || 0} XP</strong> (Lvl {u.current_level || 1})
-                    </td>
-                    <td>
-                      <span className="badge badge-purple">{u.role || 'student'}</span>
-                    </td>
-                  </tr>
-                ))
+                        </td>
+                        <td>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 700,
+                            color: (u.accuracy || 0) >= 70 ? 'var(--success)' : (u.accuracy || 0) >= 40 ? 'var(--warning)' : 'var(--error)',
+                          }}>
+                            {u.accuracy || 0}%
+                          </span>
+                        </td>
+                        <td>
+                          <strong>{u.xp || 0} XP</strong> (Lvl {u.current_level || 1})
+                        </td>
+                        <td>
+                          <span className={`status-badge ${u.status === 'suspended' ? 'status-suspended' : 'status-active'}`}>
+                            {u.status || 'active'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="badge badge-purple">{u.role || 'student'}</span>
+                        </td>
+                      </tr>
+                      {/* Expanded Detail Panel */}
+                      {isExpanded && (
+                        <tr key={`${u.id}-detail`} className="user-detail-panel">
+                          <td colSpan={10} style={{ padding: 0 }}>
+                            <div className="user-detail-inner">
+                              {/* Analytics Column */}
+                              <div className="detail-section">
+                                <h4>📊 Analytics</h4>
+                                {analytics ? (
+                                  <>
+                                    <div className="detail-stat">
+                                      <span className="detail-stat-label">Total Questions</span>
+                                      <span className="detail-stat-val">{analytics.totalQuestionsAttempted}</span>
+                                    </div>
+                                    <div className="detail-stat">
+                                      <span className="detail-stat-label">Overall Accuracy</span>
+                                      <span className="detail-stat-val" style={{ color: analytics.overallAccuracy >= 70 ? 'var(--success)' : 'var(--warning)' }}>
+                                        {analytics.overallAccuracy}%
+                                      </span>
+                                    </div>
+                                    <div className="detail-stat">
+                                      <span className="detail-stat-label">Study Time</span>
+                                      <span className="detail-stat-val">{Math.round(analytics.totalStudyMinutes / 60)}h {analytics.totalStudyMinutes % 60}m</span>
+                                    </div>
+                                    <div className="detail-stat">
+                                      <span className="detail-stat-label">NCERT Chapters</span>
+                                      <span className="detail-stat-val">{analytics.ncertChaptersRead}</span>
+                                    </div>
+                                    <div className="detail-stat">
+                                      <span className="detail-stat-label">Last Active</span>
+                                      <span className="detail-stat-val">{analytics.lastActive || 'Never'}</span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>Loading analytics...</div>
+                                )}
+                              </div>
+
+                              {/* Subject Breakdown */}
+                              <div className="detail-section">
+                                <h4>📐 Subject Accuracy</h4>
+                                {analytics && Object.keys(analytics.subjectAccuracy).length > 0 ? (
+                                  <div className="subject-accuracy-grid">
+                                    {Object.entries(analytics.subjectAccuracy).map(([sub, stats]) => (
+                                      <div key={sub} className="subj-acc-item">
+                                        <span style={{ color: 'var(--text-secondary)' }}>{sub.split(' ')[0]}</span>
+                                        <span style={{
+                                          fontWeight: 700,
+                                          fontFamily: "'JetBrains Mono', monospace",
+                                          color: stats.accuracy >= 70 ? 'var(--success)' : stats.accuracy >= 40 ? 'var(--warning)' : 'var(--error)',
+                                        }}>
+                                          {stats.accuracy}% ({stats.correct}/{stats.total})
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : analytics ? (
+                                  <div style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>No subject data yet</div>
+                                ) : (
+                                  <div style={{ color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>Loading...</div>
+                                )}
+                              </div>
+
+                              {/* Account Info */}
+                              <div className="detail-section">
+                                <h4>👤 Account</h4>
+                                <div className="detail-stat">
+                                  <span className="detail-stat-label">User ID</span>
+                                  <span className="detail-stat-val" style={{ fontSize: '0.68rem' }}>{u.id.substring(0, 20)}...</span>
+                                </div>
+                                <div className="detail-stat">
+                                  <span className="detail-stat-label">Joined</span>
+                                  <span className="detail-stat-val">{new Date(u.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <div className="detail-stat">
+                                  <span className="detail-stat-label">Status</span>
+                                  <span className={`status-badge ${u.status === 'suspended' ? 'status-suspended' : 'status-active'}`}>
+                                    {u.status || 'active'}
+                                  </span>
+                                </div>
+                                <div className="detail-stat">
+                                  <span className="detail-stat-label">Role</span>
+                                  <span className="badge badge-purple">{u.role || 'user'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div style={{ padding: '0 1.5rem 1.25rem' }}>
+                              <div className="detail-actions">
+                                <button
+                                  className="action-btn danger"
+                                  disabled={actionLoading === `${u.id}-reset_streak`}
+                                  onClick={(e) => { e.stopPropagation(); handleAdminAction(u.id, 'reset_streak'); }}
+                                >
+                                  <RotateCcw size={13} />
+                                  {actionLoading === `${u.id}-reset_streak` ? 'Resetting...' : 'Reset Streak'}
+                                </button>
+
+                                {u.status === 'active' ? (
+                                  <button
+                                    className="action-btn danger"
+                                    disabled={actionLoading === `${u.id}-change_status`}
+                                    onClick={(e) => { e.stopPropagation(); handleAdminAction(u.id, 'change_status', 'suspended'); }}
+                                  >
+                                    <UserX size={13} />
+                                    {actionLoading === `${u.id}-change_status` ? 'Suspending...' : 'Suspend User'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="action-btn success"
+                                    disabled={actionLoading === `${u.id}-change_status`}
+                                    onClick={(e) => { e.stopPropagation(); handleAdminAction(u.id, 'change_status', 'active'); }}
+                                  >
+                                    <UserCheck size={13} />
+                                    {actionLoading === `${u.id}-change_status` ? 'Reactivating...' : 'Reactivate User'}
+                                  </button>
+                                )}
+
+                                {u.role === 'admin' ? (
+                                  <button
+                                    className="action-btn"
+                                    disabled={actionLoading === `${u.id}-change_role`}
+                                    onClick={(e) => { e.stopPropagation(); handleAdminAction(u.id, 'change_role', 'user'); }}
+                                  >
+                                    <UserIcon size={13} />
+                                    Demote to User
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="action-btn purple"
+                                    disabled={actionLoading === `${u.id}-change_role`}
+                                    onClick={(e) => { e.stopPropagation(); handleAdminAction(u.id, 'change_role', 'admin'); }}
+                                  >
+                                    <Crown size={13} />
+                                    Promote to Admin
+                                  </button>
+                                )}
+
+                                <button
+                                  className="action-btn"
+                                  disabled={actionLoading === `${u.id}-export`}
+                                  onClick={(e) => { e.stopPropagation(); handleExportCSV(u.id, u.full_name || 'user'); }}
+                                >
+                                  <Download size={13} />
+                                  {actionLoading === `${u.id}-export` ? 'Exporting...' : 'Export CSV'}
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })
               ) : (
                 <tr>
-                  <td>
-                    <div style={{ fontWeight: 700 }}>Dev Verma</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>current_active_user</div>
+                  <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-tertiary)' }}>
+                    {userSearchQuery ? 'No users match your search' : 'No users found'}
                   </td>
-                  <td>+91 98765 43210</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>SSC_CGL</span>
-                      <span className="badge badge-blue" style={{ fontSize: '0.68rem' }}>RBI_GRADEB</span>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--warning)', fontWeight: 700 }}>🔥 3d</td>
-                  <td><strong>240 XP</strong> (Lvl 2)</td>
-                  <td><span className="badge badge-purple">Admin</span></td>
                 </tr>
               )}
             </tbody>
