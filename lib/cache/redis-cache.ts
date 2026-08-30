@@ -1,9 +1,7 @@
 // PrepArsenal — Redis Cache Layer for PYQ Database
 // High-performance caching to reduce database reads by 25% with rate limiting
-import 'server-only';
-import Redis from 'ioredis';
 
-let redisClient: Redis | null = null;
+let redisClient: any = null;
 
 // Cache key prefixes
 const CACHE_PREFIXES = {
@@ -22,20 +20,28 @@ const CACHE_TTL = {
 } as const;
 
 /**
- * Initialize Redis client with connection pooling
+ * Initialize Redis client with connection pooling (server-side only)
  */
-export function getRedisClient(): Redis | null {
+export function getRedisClient(): any {
+  if (typeof window !== 'undefined') {
+    return null; // Safe in browser / client components
+  }
+
   if (redisClient) return redisClient;
 
   const redisUrl = process.env.REDIS_URL || process.env.REDIS_URI;
   
   if (!redisUrl) {
-    console.warn('Redis not configured - caching disabled');
     return null;
   }
 
   try {
-    redisClient = new Redis(redisUrl, {
+    // Dynamic require so browser bundlers don't attempt to bundle native net/tls
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const RedisConstructor = require('ioredis');
+    const RedisClass = RedisConstructor.default || RedisConstructor;
+
+    redisClient = new RedisClass(redisUrl, {
       maxRetriesPerRequest: 3,
       retryStrategy: (times: number) => {
         const delay = Math.min(times * 50, 2000);
