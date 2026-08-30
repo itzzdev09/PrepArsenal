@@ -130,3 +130,71 @@ export function buildRagPromptContext(results: RagSearchResult[]): string {
 
   return contextText;
 }
+
+// ────────────────────────────────────────────
+// GraphRAG Multi-Hop Retrieval Integration
+// ────────────────────────────────────────────
+import { buildKnowledgeGraph, graphRAGExpand, buildGraphPromptContext, type GraphRAGContext, type KnowledgeGraph } from '../ai/knowledge-graph';
+import { topics as seedTopics, questions as seedQuestions } from '../data';
+
+export type { GraphRAGContext, KnowledgeGraph };
+
+let defaultGraph: KnowledgeGraph | null = null;
+
+export function getDefaultKnowledgeGraph(): KnowledgeGraph {
+  if (!defaultGraph) {
+    defaultGraph = buildKnowledgeGraph(seedTopics, [], seedQuestions);
+  }
+  return defaultGraph;
+}
+
+export interface HybridGraphRagResult {
+  citations: RagSearchResult[];
+  graphContexts: GraphRAGContext[];
+  combinedPromptContext: string;
+}
+
+/**
+ * Executes hybrid BM25/Vector retrieval + Knowledge Graph traversal
+ */
+export function retrieveWithGraph(
+  query: string,
+  options: { subject?: string; topK?: number; graph?: KnowledgeGraph } = {}
+): HybridGraphRagResult {
+  const citations = retrieveRelevantPassages(query, { subject: options.subject, topK: options.topK ?? 2 });
+  const graph = options.graph || getDefaultKnowledgeGraph();
+
+  // Find candidate topic IDs from citations and query tokens
+  const matchedTopicIds: string[] = [];
+  
+  // From citations
+  for (const c of citations) {
+    const chunkTopic = c.chunk.topic.toLowerCase();
+    for (const [id, node] of graph.nodes) {
+      if (chunkTopic.includes(node.name.toLowerCase()) || node.name.toLowerCase().includes(chunkTopic)) {
+        if (!matchedTopicIds.includes(id)) matchedTopicIds.push(id);
+      }
+    }
+  }
+
+  // From direct keyword matching if no citation topic was matched
+  if (matchedTopicIds.length === 0) {
+    const queryLower = query.toLowerCase();
+    for (const [id, node] of graph.nodes) {
+      if (queryLower.includes(node.name.toLowerCase())) {
+        matchedTopicIds.push(id);
+      }
+    }
+  }
+
+  const graphContexts = graphRAGExpand(graph, matchedTopicIds.slice(0, 3));
+  const ragPrompt = buildRagPromptContext(citations);
+  const graphPrompt = buildGraphPromptContext(graphContexts);
+
+  return {
+    citations,
+    graphContexts,
+    combinedPromptContext: `${ragPrompt}${graphPrompt}`,
+  };
+}
+

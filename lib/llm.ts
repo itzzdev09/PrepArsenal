@@ -1,6 +1,6 @@
 // PrepArsenal — LLM Gateway with RAG Engine, Semantic Cache & Multi-Provider Failover
 // Server-only: reads non-public API keys, must only be imported from Route Handlers / Server Components.
-import { retrieveRelevantPassages, buildRagPromptContext, type RagSearchResult } from './rag/rag-engine';
+import { retrieveRelevantPassages, retrieveWithGraph, type RagSearchResult, type GraphRAGContext } from './rag/rag-engine';
 import { querySemanticCache, storeInSemanticCache } from './cache/semantic-cache';
 import { queryVectorCache, storeVectorCache } from './cache/semantic-cache-store';
 
@@ -17,6 +17,7 @@ export interface LLMResponse {
   similarityScore?: number;
   latencyMs?: number;
   citations?: RagSearchResult[];
+  graphContexts?: GraphRAGContext[];
   error?: string;
   /** Ordered list of providers/keys that were tried and failed before this response. */
   attempts?: string[];
@@ -437,10 +438,9 @@ export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
     }
   }
 
-  // 2. RAG knowledge base retrieval
-  const citations = retrieveRelevantPassages(lastUserMessage, { topK: 2 });
-  const ragPromptContext = buildRagPromptContext(citations);
-  const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}${ragPromptContext}`;
+  // 2. Hybrid RAG knowledge base retrieval + Knowledge Graph traversal (GraphRAG)
+  const { citations, graphContexts, combinedPromptContext } = retrieveWithGraph(lastUserMessage, { topK: 2 });
+  const fullSystemPrompt = `${BASE_SYSTEM_PROMPT}${combinedPromptContext}`;
 
   // 3. Provider failover with key pooling
   const attempts: string[] = [];
@@ -463,6 +463,7 @@ export async function chat(messages: ChatMessage[]): Promise<LLMResponse> {
           cached: false,
           latencyMs: Date.now() - startTime,
           citations,
+          graphContexts,
           attempts: attempts.length ? attempts : undefined,
         };
       } catch (err) {

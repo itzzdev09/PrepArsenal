@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Clock3, NotebookPen, Trash2, CalendarDays } from 'lucide-react';
+import { 
+  CheckCircle2, Clock3, NotebookPen, Trash2, CalendarDays, 
+  Sparkles, BrainCircuit, Network, Target, ArrowRight 
+} from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import { getStudyPlan, updateStudyPlan, type StudyPlanItem } from '@/lib/db';
 import Link from 'next/link';
@@ -11,6 +14,8 @@ export default function PlannerPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [plan, setPlan] = useState<StudyPlanItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiReport, setAiReport] = useState<any>(null);
   
   const supabase = createClient();
   const router = useRouter();
@@ -30,6 +35,30 @@ export default function PlannerPage() {
     }
     loadPlan();
   }, [router, supabase]);
+
+  const handleGenerateAIPlan = async () => {
+    setGeneratingAI(true);
+    try {
+      const res = await fetch('/api/ai/generate-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate AI study plan');
+      }
+
+      const data = await res.json();
+      if (data.plan && data.plan.dbItems) {
+        setPlan(data.plan.dbItems);
+        setAiReport(data);
+      }
+    } catch (err: any) {
+      alert('Error generating AI plan: ' + (err?.message || 'Network error'));
+    } finally {
+      setGeneratingAI(false);
+    }
+  };
 
   const updateItemStatus = async (itemId: string, newStatus: StudyPlanItem['status']) => {
     if (!userId) return;
@@ -74,11 +103,67 @@ export default function PlannerPage() {
           padding: 2rem 2rem 1.5rem;
           background: var(--bg-secondary);
           border-bottom: 1px solid var(--border-subtle);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 1rem;
         }
         .planner-body {
           padding: 2rem;
           max-width: 1200px;
           margin: 0 auto;
+        }
+        .ai-banner {
+          background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.12) 100%);
+          border: 1px solid rgba(139,92,246,0.3);
+          border-radius: 1.25rem;
+          padding: 1.5rem;
+          margin-bottom: 2rem;
+        }
+        .ai-banner-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+        }
+        .ai-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: #c084fc;
+          background: rgba(139,92,246,0.15);
+          padding: 0.25rem 0.6rem;
+          border-radius: 999px;
+          text-transform: uppercase;
+        }
+        .ai-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1rem;
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .ai-stat-card {
+          background: var(--bg-card);
+          padding: 0.75rem 1rem;
+          border-radius: 0.75rem;
+          border: 1px solid var(--border-subtle);
+        }
+        .ai-stat-lbl {
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          color: var(--text-tertiary);
+          font-weight: 700;
+        }
+        .ai-stat-val {
+          font-size: 1.15rem;
+          font-weight: 800;
+          font-family: 'JetBrains Mono', monospace;
+          margin-top: 0.2rem;
         }
         .kanban-board {
           display: grid;
@@ -165,39 +250,89 @@ export default function PlannerPage() {
           color: var(--text-secondary);
           font-size: 0.9rem;
         }
-        .empty-state :global(a) {
-          display: inline-flex !important;
-          align-items: center;
-          margin-top: .8rem !important;
-          padding: .5rem .75rem;
-          border: 2px solid #172033;
-          border-radius: 4px 8px 5px 7px;
-          box-shadow: 2px 2px 0 #172033;
-          background: #d9ecff;
-          color: #172033 !important;
-          font-family: var(--font-kalam), cursive;
-          font-weight: 700;
-          transition: transform 140ms ease, box-shadow 140ms ease;
-        }
-        .empty-state :global(a:hover) {
-          transform: translate(2px, 2px) rotate(-.35deg);
-          box-shadow: 0 0 0 #172033;
-        }
         
         @media (max-width: 900px) {
           .kanban-board { grid-template-columns: 1fr; }
           .kanban-col { min-height: auto; }
+          .ai-stats-grid { grid-template-columns: repeat(2, 1fr); }
         }
       `}</style>
 
       <div className="planner-header">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><CalendarDays size={25} />Smart Study Planner</h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Organize your AI-recommended topics and track your mastery.
-        </p>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+            <CalendarDays size={25} />Smart Study Planner
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            AI-generated adaptive schedules with Knowledge Graph prerequisite diagnosis.
+          </p>
+        </div>
+
+        <button 
+          className="btn btn-primary"
+          onClick={handleGenerateAIPlan}
+          disabled={generatingAI}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            boxShadow: '0 0 15px rgba(139,92,246,0.3)'
+          }}
+        >
+          <Sparkles size={16} />
+          {generatingAI ? 'Diagnosing & Synthesizing Plan...' : '✨ Generate AI Adaptive Plan'}
+        </button>
       </div>
 
       <div className="planner-body">
+        {/* AI Diagnostic Summary Card */}
+        {aiReport && (
+          <div className="ai-banner">
+            <div className="ai-banner-header">
+              <span className="ai-badge"><BrainCircuit size={13} /> AI Mentor Directive ({aiReport.plan?.generatedBy || 'LLM Engine'})</span>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                Target: {aiReport.plan?.weeklyTargetHours || 7} Hours / Week
+              </span>
+            </div>
+            
+            <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+              &ldquo;{aiReport.plan?.coachStrategy}&rdquo;
+            </p>
+
+            <div className="ai-stats-grid">
+              <div className="ai-stat-card">
+                <div className="ai-stat-lbl">Primary Focus Gap</div>
+                <div className="ai-stat-val" style={{ color: 'var(--warning)', fontSize: '0.95rem' }}>
+                  {aiReport.weaknessProfile?.primarySubjectGap}
+                </div>
+              </div>
+
+              <div className="ai-stat-card">
+                <div className="ai-stat-lbl">Critical Weaknesses</div>
+                <div className="ai-stat-val" style={{ color: 'var(--error)' }}>
+                  {aiReport.weaknessProfile?.criticalWeaknesses?.length || 0} Topics
+                </div>
+              </div>
+
+              <div className="ai-stat-card">
+                <div className="ai-stat-lbl">Graph Prereq Bleed</div>
+                <div className="ai-stat-val" style={{ color: '#c084fc' }}>
+                  {aiReport.weaknessProfile?.atRiskPropagated?.reduce((acc: number, a: any) => acc + (a.expandedTopics?.length || 0), 0) || 0} Linked
+                </div>
+              </div>
+
+              <div className="ai-stat-card">
+                <div className="ai-stat-lbl">High-Yield Neglected</div>
+                <div className="ai-stat-val" style={{ color: 'var(--accent-blue)' }}>
+                  {aiReport.weaknessProfile?.neglectedHighYield?.length || 0} Topics
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Kanban Board */}
         <div className="kanban-board">
           {columns.map(col => {
             const colItems = plan.filter(item => item.status === col.id);
@@ -205,14 +340,30 @@ export default function PlannerPage() {
             return (
               <div key={col.id} className="kanban-col">
                 <div className="col-header">
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.45rem' }}><ColumnIcon size={20} />{col.title}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '.45rem' }}>
+                    <ColumnIcon size={20} />{col.title}
+                  </span>
                   <span className="col-count">{colItems.length}</span>
                 </div>
                 
                 {colItems.length === 0 ? (
                   <div className="empty-state">
                     No topics here.<br/>
-                    {col.id === 'todo' && <Link href="/dashboard" style={{ color: 'var(--accent-blue)', textDecoration: 'none', marginTop: '0.5rem', display: 'inline-block' }}>Add from Dashboard →</Link>}
+                    {col.id === 'todo' && (
+                      <button 
+                        onClick={handleGenerateAIPlan}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--accent-blue)',
+                          cursor: 'pointer',
+                          marginTop: '0.5rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        Auto-fill with AI Plan →
+                      </button>
+                    )}
                   </div>
                 ) : (
                   colItems.map(item => (
@@ -235,7 +386,7 @@ export default function PlannerPage() {
                           fontWeight: 600
                         }}
                       >
-                          Practice PYQs
+                        Practice Topic PYQs 🚀
                       </Link>
 
                       <div className="item-actions">

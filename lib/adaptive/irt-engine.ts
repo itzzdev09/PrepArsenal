@@ -31,18 +31,11 @@ export interface IRTDiagnosticReport {
   recommendations: string[];
 }
 
-// Default parameter generator for questions
+import { getCalibratedQuestionIrtParams } from '../ai/difficulty-classifier';
+
+// ML-powered parameter generator for adaptive testing & item response theory
 export function getQuestionIrtParams(q: Question): IRTItemParameters {
-  let difficulty = 0;
-  if (q.difficulty === 'easy') difficulty = -1.2;
-  else if (q.difficulty === 'hard') difficulty = 1.5;
-  else difficulty = 0.1; // medium
-
-  // Pseudo-random deterministic discrimination based on question length and options
-  const discrimination = 1.2 + (q.questionText.length % 5) * 0.15;
-  const guessing = 0.25;
-
-  return { discrimination, difficulty, guessing };
+  return getCalibratedQuestionIrtParams(q);
 }
 
 /**
