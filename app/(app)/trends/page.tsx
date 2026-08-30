@@ -349,9 +349,10 @@ export default function TrendsPage() {
         /* Heatmap */
         .heatmap-grid {
           display: grid;
-          grid-template-columns: 140px repeat(5, 1fr) 60px;
-          gap: 2px;
+          grid-template-columns: 120px repeat(5, minmax(42px, 1fr)) 48px;
+          gap: 3px;
           font-size: 0.72rem;
+          min-width: 400px;
         }
         .heatmap-header {
           font-weight: 700;
