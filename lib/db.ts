@@ -8,18 +8,6 @@ import {
   getTursoDatabaseMetrics 
 } from './turso';
 import { questions as seedQuestions, exams as seedExams, type Question } from './data';
-import {
-  getCachedQuestions,
-  cacheQuestions,
-  getCachedExams,
-  cacheExams,
-  getCachedTopics,
-  cacheTopics,
-  checkRateLimit,
-  invalidateQuestionsCache,
-  invalidateExamsCache,
-  invalidateTopicsCache
-} from './cache/redis-cache';
 
 export interface UserProfile {
   id: string;

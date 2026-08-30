@@ -1,6 +1,6 @@
 // PrepArsenal — Redis Cache Layer for PYQ Database
 // High-performance caching to reduce database reads by 25% with rate limiting
-
+import 'server-only';
 import Redis from 'ioredis';
 
 let redisClient: Redis | null = null;
