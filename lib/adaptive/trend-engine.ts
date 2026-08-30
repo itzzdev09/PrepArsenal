@@ -27,8 +27,12 @@ export interface SignalBreakdown {
 }
 
 export interface EnsemblePrediction {
-  /** Final blended score 0–100. */
+  /** Priority index 0–100 — how strongly the blend favours revising this topic now. */
   score: number;
+  /** Concrete forecast: projected number of questions in the next exam cycle. */
+  expectedQuestions: number;
+  /** Probability (0–100) the topic shows up at all in the next exam cycle. */
+  appearanceProbability: number;
   /** Per-signal breakdown for UI explainability. */
   signals: SignalBreakdown[];
   /** Human-readable summary of why the prediction is high/low. */
@@ -199,6 +203,53 @@ export function computeCrossExamSpillover(
 }
 
 // ────────────────────────────────────────────
+// Concrete Forecast: projected question count next cycle
+// ────────────────────────────────────────────
+// Level from a raw (un-normalised) EMA, nudged by half a step of the
+// OLS trajectory so a clearly rising topic is projected slightly higher
+// and a fading one slightly lower.  Never negative.
+
+export function projectNextYear(trend: TrendAnalytics): number {
+  const { counts } = extractTimeSeries(trend);
+  if (counts.length === 0) return 0;
+  if (counts.length === 1) return counts[0];
+
+  const alpha = 0.4;
+  let ema = counts[0];
+  for (let i = 1; i < counts.length; i++) {
+    ema = alpha * counts[i] + (1 - alpha) * ema;
+  }
+
+  const n = counts.length;
+  const meanX = (n - 1) / 2;
+  const meanY = counts.reduce((s, c) => s + c, 0) / n;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (i - meanX) * (counts[i] - meanY);
+    den += (i - meanX) ** 2;
+  }
+  const slope = den === 0 ? 0 : num / den;
+
+  return Math.max(0, ema + slope * 0.5);
+}
+
+// Probability the topic appears at all next cycle — driven by how many
+// past years it never missed, plus a bonus/penalty for recent activity.
+export function appearanceProbability(trend: TrendAnalytics): number {
+  const { counts } = extractTimeSeries(trend);
+  if (counts.length === 0) return 0;
+
+  const consistency = computeConsistency(trend); // 0–100
+  const recentLen = Math.min(2, counts.length);
+  const recentAvg =
+    counts.slice(-recentLen).reduce((s, c) => s + c, 0) / recentLen;
+  const recentBonus = recentAvg >= 1 ? 20 : recentAvg > 0 ? 10 : -15;
+
+  return clamp100(consistency * 0.85 + recentBonus);
+}
+
+// ────────────────────────────────────────────
 // Ensemble Blend
 // ────────────────────────────────────────────
 
@@ -263,13 +314,27 @@ export function ensemblePrediction(
   else if (score >= 25) tier = 'Low';
   else tier = 'Very Low';
 
-  // Human-readable summary (top 2 contributing signals)
+  const expectedQuestions = Number(projectNextYear(trend).toFixed(1));
+  const appearProb = Math.round(appearanceProbability(trend));
+
+  // Human-readable summary — lead with the concrete forecast, then the
+  // two signals that contributed most to the priority index.
   const sorted = [...signals].sort((a, b) => b.weighted - a.weighted);
   const top1 = sorted[0];
   const top2 = sorted[1];
-  const summary = `Driven by ${top1.name} (${top1.score.toFixed(0)}) and ${top2.name} (${top2.score.toFixed(0)})`;
+  const summary =
+    `≈${expectedQuestions.toFixed(1)} question${expectedQuestions >= 1.5 ? 's' : ''} projected next exam · ` +
+    `${appearProb}% chance to appear. Strongest signals: ${top1.name} (${top1.score.toFixed(0)}) ` +
+    `and ${top2.name} (${top2.score.toFixed(0)}).`;
 
-  return { score: Number(score.toFixed(1)), signals, summary, tier };
+  return {
+    score: Number(score.toFixed(1)),
+    expectedQuestions,
+    appearanceProbability: appearProb,
+    signals,
+    summary,
+    tier,
+  };
 }
 
 // ────────────────────────────────────────────

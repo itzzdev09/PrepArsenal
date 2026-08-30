@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import Image from 'next/image';
 import { BrainCircuit, ChartNoAxesCombined, ChevronDown, ChevronRight, Layers, Target, TrendingUp } from 'lucide-react';
 import { exams } from '@/lib/data';
-import { getTrends, getTopics, averagePerYear, trendYears, type TrendAnalytics } from '@/lib/db';
+import { getTrends, getTopics, getUserProfile, averagePerYear, trendYears, type TrendAnalytics } from '@/lib/db';
 import { createClient } from '@/utils/supabase/client';
 import { getExamLogo } from '@/lib/exam-logos';
 import { computeEnsembleBatch, type EnrichedTrend, type SignalBreakdown } from '@/lib/adaptive/trend-engine';
@@ -141,8 +141,25 @@ export default function TrendsPage() {
   const [allExamTrends, setAllExamTrends] = useState<TrendAnalytics[]>([]);
   const [dbTopics, setDbTopics] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const supabase = createClient();
+
+  // Admin gate — the signal-level analytics cards are admin-only
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const profile = await getUserProfile(supabase, user.id);
+        if (!cancelled) setIsAdmin(profile?.role === 'admin');
+      } catch {
+        if (!cancelled) setIsAdmin(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [supabase]);
 
   useEffect(() => {
     async function loadData() {
@@ -194,15 +211,34 @@ export default function TrendsPage() {
   // Top predictions (by ensemble score)
   const topPredictions = [...examTrends].sort((a, b) => b.ensemble.score - a.ensemble.score).slice(0, 5);
 
-  // Signal heatmap — top 10 topics × 5 signals
+  // Signal heatmap — top 8 topics × 5 signals
   const heatmapData = [...examTrends]
     .sort((a, b) => b.ensemble.score - a.ensemble.score)
     .slice(0, 8)
     .map(t => ({
+      topic_id: t.topic_id,
       name: dbTopics.find(top => top.id === t.topic_id)?.name || t.topic_id,
       signals: t.ensemble.signals,
       score: t.ensemble.score,
+      expectedQuestions: t.ensemble.expectedQuestions,
     }));
+
+  // Plain-language conclusion drawn from the heatmap
+  const heatmapInsight = useMemo(() => {
+    if (heatmapData.length === 0) return '';
+    const labels = heatmapData[0].signals.map(s => s.name);
+    const avg = labels.map((_, i) =>
+      heatmapData.reduce((s, r) => s + (r.signals[i]?.score || 0), 0) / heatmapData.length
+    );
+    const topSig = labels[avg.indexOf(Math.max(...avg))];
+    const rising = heatmapData.filter(
+      r => (r.signals[1]?.score || 0) >= 60 && (r.signals[2]?.score || 0) >= 60
+    );
+    const risingTxt = rising.length
+      ? `${rising.length} topic${rising.length > 1 ? 's' : ''} pair a rising trajectory with a recent burst (${rising.slice(0, 3).map(r => r.name).join(', ')}) — treat these as the highest-urgency revision targets.`
+      : 'No topic currently shows both a rising trajectory and a recent burst, so no single topic is spiking right now.';
+    return `${topSig} is the dominant driver across the top ${heatmapData.length} topics. ${risingTxt}`;
+  }, [heatmapData]);
 
   // Years actually present in this exam's data
   const years = trendYears(examTrends);
@@ -446,7 +482,7 @@ export default function TrendsPage() {
       <div className="trends-header">
         <h1 style={{ fontSize: '1.5rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '.5rem' }}><BrainCircuit size={25} />Trend Explorer</h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-          Ensemble ML predictions — 5 statistical signals blended per topic.
+          Projected question counts and appearance odds for the next exam cycle — a 5-signal statistical blend per topic.
         </p>
         <div className="exam-selector">
           {exams.map(e => (
@@ -467,69 +503,126 @@ export default function TrendsPage() {
       </div>
 
       <div className="trends-body">
-        {/* Insights Cards */}
+        {/* Insights Cards — admin only */}
+        {isAdmin && (
         <div className="insights-row">
           <div className="insight-card">
-            <div className="insight-title"><Target size={18} />Top Ensemble Predictions</div>
+            <div className="insight-title">
+              <Target size={18} />Top Predicted Topics — Next Exam
+            </div>
             <div className="insight-list">
               {topPredictions.map(t => {
                 const topic = dbTopics.find(top => top.id === t.topic_id);
+                const e = t.ensemble;
                 return (
-                  <div key={t.topic_id} className="insight-item">
-                    <span className="insight-item-name">{topic?.name || t.topic_id}</span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <TierBadge tier={t.ensemble.tier} />
-                      <span className="insight-item-val" style={{ color: 'var(--success)' }}>{t.ensemble.score.toFixed(1)}</span>
+                  <div
+                    key={t.topic_id}
+                    className="insight-item"
+                    style={{ cursor: 'pointer', gap: '0.75rem' }}
+                    onClick={() => { setSortBy('prediction'); setExpandedTopic(t.topic_id); }}
+                    title="Open this topic's signal breakdown below"
+                  >
+                    <span style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', minWidth: 0 }}>
+                      <span className="insight-item-name" style={{ fontWeight: 600 }}>{topic?.name || t.topic_id}</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+                        {e.appearanceProbability}% chance to appear · priority {e.score.toFixed(0)}/100
+                      </span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                      <TierBadge tier={e.tier} />
+                      <span className="insight-item-val" style={{ color: 'var(--accent-blue)', whiteSpace: 'nowrap' }}>
+                        ≈{e.expectedQuestions.toFixed(1)} Q
+                      </span>
                     </span>
                   </div>
                 );
               })}
             </div>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', marginTop: '0.85rem', lineHeight: 1.55 }}>
+              <strong>≈ Q</strong> = projected question count in the next exam cycle (recent-weighted level + trajectory).
+              <strong> Priority</strong> blends all 5 signals; <strong>chance to appear</strong> comes from year-over-year consistency and recent activity.
+            </div>
           </div>
+
           <div className="insight-card">
-            <div className="insight-title"><Layers size={18} />Signal Heatmap (Top 8)</div>
+            <div className="insight-title">
+              <Layers size={18} />Signal Heatmap — Top {heatmapData.length} Topics
+            </div>
             {heatmapData.length === 0 ? (
               <div style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
                 No trend data available for this exam
               </div>
             ) : (
-              <div className="heatmap-grid">
-                {/* Headers */}
-                <div className="heatmap-header" style={{ textAlign: 'left' }}>Topic</div>
-                {['EMA', 'Slope', 'Burst', 'Consist', 'X-Exam'].map(h => (
-                  <div key={h} className="heatmap-header">{h}</div>
-                ))}
-                <div className="heatmap-header">Score</div>
-                {/* Rows */}
-                {heatmapData.map(row => (
-                  <>
-                    <div key={`${row.name}-label`} className="heatmap-label" title={row.name}>{row.name}</div>
-                    {row.signals.map((s, i) => {
-                      const intensity = s.score / 100;
-                      const colors = ['59,130,246', '139,92,246', '245,158,11', '16,185,129', '236,72,153'];
+              <>
+                <div style={{ overflowX: 'auto' }}>
+                  <div className="heatmap-grid">
+                    <div className="heatmap-header" style={{ textAlign: 'left' }}>Topic</div>
+                    {[
+                      { k: 'Recent', t: 'Recent-weighted average (EMA) — favours the latest years' },
+                      { k: 'Trend', t: 'Trajectory — is the count rising or falling over time' },
+                      { k: 'Burst', t: 'Spike in the last 1–2 years vs the prior baseline' },
+                      { k: 'Steady', t: 'Share of years the topic appeared at least once' },
+                      { k: 'Sibling', t: 'How the same topic is trending in related exams' },
+                    ].map(h => (
+                      <div key={h.k} className="heatmap-header" title={h.t}>{h.k}</div>
+                    ))}
+                    <div className="heatmap-header" title="Blended priority index 0–100">Prio</div>
+
+                    {heatmapData.map(row => {
+                      const active = expandedTopic === row.topic_id;
                       return (
-                        <div
-                          key={`${row.name}-${i}`}
-                          className="heatmap-cell"
-                          style={{
-                            background: `rgba(${colors[i]}, ${0.1 + intensity * 0.5})`,
-                            color: `rgba(${colors[i]}, ${0.6 + intensity * 0.4})`,
-                          }}
-                          title={`${s.name}: ${s.score.toFixed(0)} — ${s.description}`}
-                        >
-                          {s.score.toFixed(0)}
-                        </div>
+                        <Fragment key={row.topic_id}>
+                          <div
+                            className="heatmap-label"
+                            title={`${row.name} — open breakdown below`}
+                            style={{ cursor: 'pointer', color: active ? 'var(--accent-blue)' : undefined, fontWeight: active ? 700 : 600 }}
+                            onClick={() => { setSortBy('prediction'); setExpandedTopic(active ? null : row.topic_id); }}
+                          >
+                            {row.name}
+                          </div>
+                          {row.signals.map((s, i) => {
+                            const t = Math.max(0, Math.min(1, s.score / 100));
+                            return (
+                              <div
+                                key={i}
+                                className="heatmap-cell"
+                                style={{
+                                  background: `rgba(59,130,246,${(0.06 + t * 0.8).toFixed(3)})`,
+                                  color: t > 0.5 ? '#fff' : 'var(--text-secondary)',
+                                  cursor: 'pointer',
+                                }}
+                                title={`${row.name} — ${s.name}: ${s.score.toFixed(0)}/100\n${s.description}`}
+                                onClick={() => { setSortBy('prediction'); setExpandedTopic(active ? null : row.topic_id); }}
+                              >
+                                {s.score.toFixed(0)}
+                              </div>
+                            );
+                          })}
+                          <div
+                            className="heatmap-score"
+                            style={{ color: row.score >= 65 ? 'var(--success)' : row.score >= 45 ? 'var(--warning)' : 'var(--error)' }}
+                            title={`≈${row.expectedQuestions.toFixed(1)} questions projected next exam`}
+                          >
+                            {row.score.toFixed(0)}
+                          </div>
+                        </Fragment>
                       );
                     })}
-                    <div key={`${row.name}-score`} className="heatmap-score" style={{ color: row.score >= 65 ? 'var(--success)' : row.score >= 45 ? 'var(--warning)' : 'var(--error)' }}>
-                      {row.score.toFixed(0)}
-                    </div>
-                  </>
-                ))}
-              </div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.75rem 0 0.5rem', fontSize: '0.62rem', color: 'var(--text-tertiary)' }}>
+                  <span>weak</span>
+                  <div style={{ flex: 1, height: '6px', borderRadius: '3px', background: 'linear-gradient(90deg, rgba(59,130,246,0.06), rgba(59,130,246,0.86))' }} />
+                  <span>strong</span>
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                  {heatmapInsight}
+                </div>
+              </>
             )}
           </div>
         </div>
+        )}
 
         {/* Controls */}
         <div className="controls-bar">
@@ -571,7 +664,8 @@ export default function TrendsPage() {
                 <tr>
                   <th style={{ width: '28px' }}></th>
                   <th>Topic</th>
-                  <th>Ensemble Score</th>
+                  <th title="Blended priority index 0–100 across all 5 signals">Priority</th>
+                  <th title="Projected question count and probability of appearing next exam">Next Exam</th>
                   <th>Confidence</th>
                   <th>
                     {years.length > 0
@@ -611,6 +705,12 @@ export default function TrendsPage() {
                           </span>
                         </td>
                         <td>
+                          <span className="avg-freq" style={{ color: 'var(--accent-blue)' }}>≈{t.ensemble.expectedQuestions.toFixed(1)}q</span>
+                          <span style={{ display: 'block', fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>
+                            {t.ensemble.appearanceProbability}% to appear
+                          </span>
+                        </td>
+                        <td>
                           <TierBadge tier={t.ensemble.tier} />
                         </td>
                         <td>
@@ -622,7 +722,7 @@ export default function TrendsPage() {
                       </tr>
                       {isExpanded && (
                         <tr key={`${t.topic_id}-expand`} className="expand-row">
-                          <td colSpan={6}>
+                          <td colSpan={7}>
                             <div className="expand-content">
                               <div className="expand-title">
                                 <Layers size={14} />
